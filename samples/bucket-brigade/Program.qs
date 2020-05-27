@@ -5,7 +5,7 @@
     
 
     @EntryPoint()
-    operation HelloQ() : Unit {
+    operation HelloQ(numQubits : Int) : Unit {
         Message("Hello quantum world!");
     }
 }
