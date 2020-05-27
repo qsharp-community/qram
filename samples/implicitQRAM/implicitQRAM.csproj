@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.Quantum.Sdk/0.11.2004.2825">
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\qram.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+  </PropertyGroup>
+
+</Project>

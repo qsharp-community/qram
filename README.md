@@ -7,7 +7,10 @@ The proposals for qRAM fall into two main catagories, implicit memory and explic
 Currently planned proposals that will be implemented in this library include:
 
 ### Implicit Memory
-- [Bucket Brigade]()
+- Bucket Brigade
+    - [Original Proposal](https://arxiv.org/abs/1502.03450)
+    - Improvements
+    - etc.
 
 ### Explicit Memory
 - 
