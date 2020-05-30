@@ -2,6 +2,7 @@
 
     open Microsoft.Quantum.Arithmetic;
     open Microsoft.Quantum.Canon;
+    open Microsoft.Quantum.Convert;
     open Microsoft.Quantum.Intrinsic;
     open Microsoft.Quantum.Measurement;
     open Qram;
@@ -41,12 +42,12 @@
 //        }
 //    }
 
-    //Generates binary representation of [5,4,1]
-    function GenerateMemoryData() : Bool[][] {
-        let five = [true,false,true];
-        let four = [false,false,true];
-        let one = [false,false,true];
-        return [five, four, one];
+    //Generates binary representation of [5,4,1]=>[3,2,1]
+    function GenerateMemoryData() : (Bool[],Bool[])[] {
+        let fiveGivesThree = (IntAsBoolArray(5,3),IntAsBoolArray(3,2));
+        let fourGivesTwo = (IntAsBoolArray(4,3),IntAsBoolArray(2,2));
+        let oneGivesOne = (IntAsBoolArray(1,3),IntAsBoolArray(1,2));
+        return [fiveGivesThree, fourGivesTwo, oneGivesOne];
     }
 }
 
