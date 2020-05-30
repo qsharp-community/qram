@@ -3,20 +3,28 @@
     open Microsoft.Quantum.Canon;
     open Microsoft.Quantum.Intrinsic;
     open Microsoft.Quantum.Measurement;
-    open Memory;
+    open Qram;
     
 /// dotnet run -- --query false false false
     @EntryPoint()
-    operation TestQRAM(query : Bool[]) : Result {
-        let OnesData = [[true, true, true], [false, true, false]];
-        let BlackBox = ImplicitQRAMOracle(OnesData);
-        using( (register, target) = (Qubit[3], Qubit())){
-            ApplyPauliFromBitString (PauliX, true, query, register);
-            BlackBox::Lookup(register, target);
+    operation TestQRAM(queryAddress : Bool[]) : Result {
+        let data = GenerateMemoryData();
+        let blackBox = SingleImplicitQRAMOracle(data);
+        return QueryAndMeasureQRAM(blackBox, queryAddress);
+
+    }
+
+    operation QueryAndMeasureQRAM(memory : QRAM, queryAddress : Bool[]) : Result {
+        using( (register, target) = (Qubit[memory::AddressSize], Qubit())){
+            ApplyPauliFromBitString (PauliX, true, queryAddress, register);
+            memory::Lookup(register, target);
             ResetAll(register);
             return MResetZ(target);
         }
+    }
 
+    function GenerateMemoryData() : Bool[][] {
+        return [[true, false, true],[false, false, true],[false, false, false]];
     }
 }
 
