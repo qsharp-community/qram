@@ -13,16 +13,43 @@
     // spec for OnesAddress could be an address and value
 
     // TODO: Probably want LittleEndian for address, data can be whatever
-    // Type that 
-    newtype QRAM = (Lookup : ((Qubit[], Qubit) => Unit is Adj + Ctl), AddressSize : Int);
+    // External API exposed type for a QRAM
+    newtype QRAM = (Lookup : ((Qubit[], Qubit[]) => Unit is Adj + Ctl), 
+        AddressSize : Int,
+        DataSize : Int);
 
-    function SingleImplicitQRAMOracle(OnesAddresses : Bool[][]) : QRAM {
-        let addressLength = Length(Head(OnesAddresses));
+    //Internal QRam type for a single QRAM Bit (is composed to form a full memory block)
+    internal newtype SingleBitQRAM = (Lookup : ((Qubit[], Qubit) => Unit is Adj + Ctl), 
+        AddressSize : Int);
+
+    function ImplicitQRAMOracle(dataValues : Bool[][]) : QRAM {
+        let onesAddresses = OnesAddressesFromData(dataValues);
+        let qrams = Mapped(SingleImplicitQRAMOracle, onesAddresses); 
         return Default<QRAM>()
+            w/ Lookup <- ApplyImplicitQRAMOracle(qrams, _, _)
+            w/ AddressSize <- (Head(qrams))::AddressSize
+            w/ DataSize <- Length(qrams);
+    }
+
+    internal operation ApplyImplicitQRAMOracle(
+        Qrams: SingleBitQRAM[], 
+        AddressRegister : Qubit[],
+        TargetRegister : Qubit[]
+    )
+    : Unit is Adj + Ctl {
+        for ((qram, target) in Zip(Qrams, TargetRegister)) {
+            qram::Lookup(AddressRegister, target) ;
+        }
+            
+    }
+
+    internal function SingleImplicitQRAMOracle(OnesAddresses : Bool[][]) : SingleBitQRAM {
+        let addressLength = Length(Head(OnesAddresses));
+        //return QRAM(ApplySingleImplicitQRAMOracle(OnesAddresses, _, _),addressLength);
+        return Default<SingleBitQRAM>()
             w/ Lookup <- ApplySingleImplicitQRAMOracle(OnesAddresses, _, _)
             w/ AddressSize <- addressLength;
     }
-
 
     internal operation ApplySingleImplicitQRAMOracle(
         OnesAddresses: Bool[][], 
@@ -36,13 +63,14 @@
     }
 
     // [5,0,2,8,7]
+    // [[true, false, true], []]
     // Assume that if data is not power of 2, assume rest 0s
     internal function OnesAddressesFromData(dataArray : Bool[][]) : Bool[][][] {
         let numDataBits = Length(Head(dataArray));
         mutable onesAddresses = new Bool[][][numDataBits];
         
-        for (idx in 0..numDataBits) {
-            set onesAddresses w/=idx <- AddressesFromData(ElementsAt(dataArray, idx));
+        for (idx in 0..numDataBits-1) {
+            set onesAddresses w/=idx <- OnesAddressesFromDataValue(ElementsAt(dataArray, idx));
         }
         return onesAddresses;
     }
@@ -51,12 +79,21 @@
 ///////////////////////////////////////////////////////////////////////////
 // UTILITY FUNCTIONS
 ///////////////////////////////////////////////////////////////////////////
-    internal function AddressesFromData(dataArray : Bool[]) : Bool[][] {
+
+    /// # Summary
+    /// Takes the Boolean array representation of an Int and converts to the 
+    /// list of ones addresses needed to represent that Int.
+    /// # Input
+    /// ## dataArray
+    /// A data value in the form of a
+    /// # Output
+    /// 
+    internal function OnesAddressesFromDataValue(dataArray : Bool[]) : Bool[][] {
         mutable onesAddresses = new Bool[][0];
-        let nBits = BitSizeI(Length(dataArray));
+        let nAddressBits = BitSizeI(Length(dataArray));
         for ((idx, bitValue) in Enumerated(dataArray)) {
             if (bitValue) {
-                set onesAddresses += [IntAsBoolArray(idx, nBits)];
+                set onesAddresses += [IntAsBoolArray(idx, nAddressBits)];
             }
         }
         return onesAddresses;
