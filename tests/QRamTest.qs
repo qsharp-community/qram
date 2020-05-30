@@ -48,7 +48,7 @@
     @Test("QuantumSimulator")
     operation RetrieveImplicitQramEmptyResultFalse() : Unit {
         let two = [false,true,false];
-        let data = new Bool[0];
+        let data = new Bool[][0];
         let queryAddress = two;
         let result = CreateQueryAndMeasureQRAM(data, queryAddress);
         EqualityFactI(result, 0, "Expecting False when no match in empty Qram"); 
