@@ -35,4 +35,4 @@ jobs:
       working-directory: src
     
     - name: Push to GitHub Packages
-      run: nuget push drop/*.nupkg -Source "GPR"
+      run: dotnet nuget push drop/*.nupkg 
