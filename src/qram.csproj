@@ -10,6 +10,8 @@
     <Description>Library that implements a variety of quantum RAM proposals in Q#.</Description>
     <Copyright>2020 QSharpCommunity</Copyright>
     <PackageLicenceExpression>MIT</PackageLicenceExpression>
+    <RepositoryUrl>https://github.com/qsharp-community/qram.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 
 </Project>
