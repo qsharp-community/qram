@@ -27,7 +27,7 @@ jobs:
       
     # Runs a set of commands using the runners shell
     - name: .NET pack
-      run: dotnet pack -o ../drop --version-suffix .$GITHUB_RUN_NUMBER
+      run: dotnet pack -o ../drop /p:Version="0.1.$GITHUB_RUN_NUMBER"
       working-directory: src
     
     - name: Add GPR Source
