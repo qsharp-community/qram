@@ -38,3 +38,4 @@ jobs:
     
     - name: Push to GitHub Packages
       run: dotnet nuget push drop/*.nupkg
+      shell: pwsh
