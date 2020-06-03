@@ -19,16 +19,45 @@
         DataSize : Int);
 
     //Internal QRam type for a single QRAM Bit (is composed to form a full memory block)
-    internal newtype SingleBitQRAM = (Lookup : ((Qubit[], Qubit) => Unit is Adj + Ctl), 
-        AddressSize : Int);
+    internal newtype SingleBitQRAM = (Lookup : ((Qubit[], Qubit[]) => Unit is Adj + Ctl));
 
-    function ImplicitQRAMOracle(dataValues : Bool[][]) : QRAM {
-        let onesAddresses = OnesAddressesFromData(dataValues);
-        let qrams = Mapped(SingleImplicitQRAMOracle, onesAddresses); 
+    function ImplicitQRAMOracle(DataValues : (Bool[],Bool[])[]) : QRAM {
+        mutable addressSize = 0;
+        mutable valueSize = 0;
+        for ((address, value)  in DataValues){
+            if(Length(address) > addressSize){
+                set addressSize = Length(address);
+            }
+            if(Length(value) > valueSize){
+                set valueSize = Length(value);
+            }
+        }
+
+        let qrams = Mapped(SingleImplicitQRAMOracle, DataValues); 
         return Default<QRAM>()
             w/ Lookup <- ApplyImplicitQRAMOracle(qrams, _, _)
-            w/ AddressSize <- (Head(qrams))::AddressSize
-            w/ DataSize <- Length(qrams);
+            w/ AddressSize <- addressSize
+            w/ DataSize <- valueSize;
+    }
+    
+    internal function SingleImplicitQRAMOracle(address : Bool[], value : Bool[]) : SingleBitQRAM {
+        return Default<SingleBitQRAM>()
+            w/ Lookup <- ApplySingleImplicitQRAMOracleValues(address, value, _, _);
+    }
+
+    internal operation ApplySingleImplicitQRAMOracleValues(
+        Adress: Bool[], 
+        Values: Bool[],
+        AddressRegister : Qubit[],
+        Target : Qubit[]
+    )
+    : Unit is Adj + Ctl {
+        for((idx,value) in Enumerated(Values)){
+            if(value)
+            {
+                 (ControlledOnBitString(Adress, X))(AddressRegister, Target[idx]);
+            }
+        }
     }
 
     internal operation ApplyImplicitQRAMOracle(
@@ -37,44 +66,10 @@
         TargetRegister : Qubit[]
     )
     : Unit is Adj + Ctl {
-        for ((qram, target) in Zip(Qrams, TargetRegister)) {
-            qram::Lookup(AddressRegister, target) ;
-        }
-            
-    }
-
-    internal function SingleImplicitQRAMOracle(OnesAddresses : Bool[][]) : SingleBitQRAM {
-        let addressLength = Length(Head(OnesAddresses));
-        //return QRAM(ApplySingleImplicitQRAMOracle(OnesAddresses, _, _),addressLength);
-        return Default<SingleBitQRAM>()
-            w/ Lookup <- ApplySingleImplicitQRAMOracle(OnesAddresses, _, _)
-            w/ AddressSize <- addressLength;
-    }
-
-    internal operation ApplySingleImplicitQRAMOracle(
-        OnesAddresses: Bool[][], 
-        AddressRegister : Qubit[],
-        Target : Qubit
-    )
-    : Unit is Adj + Ctl {
-        for (address in OnesAddresses) {
-            (ControlledOnBitString(address, X))(AddressRegister, Target); 
+        for (qram in Qrams) {
+            qram::Lookup(AddressRegister, TargetRegister) ;
         }
     }
-
-    // [5,0,2,8,7]
-    // [[true, false, true], []]
-    // Assume that if data is not power of 2, assume rest 0s
-    internal function OnesAddressesFromData(dataArray : Bool[][]) : Bool[][][] {
-        let numDataBits = Length(Head(dataArray));
-        mutable onesAddresses = new Bool[][][numDataBits];
-        
-        for (idx in 0..numDataBits-1) {
-            set onesAddresses w/=idx <- OnesAddressesFromDataValue(ElementsAt(dataArray, idx));
-        }
-        return onesAddresses;
-    }
-
 
 ///////////////////////////////////////////////////////////////////////////
 // UTILITY FUNCTIONS
