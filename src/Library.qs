@@ -7,24 +7,37 @@
     open Microsoft.Quantum.Intrinsic;
     open Microsoft.Quantum.Arithmetic;
 
-    // Notes:
-    // Target Register might be better?
-    // Can make target register with  loop over target qubits
-    // spec for OnesAddress could be an address and value
+// TODO: Probably want LittleEndian for Qubit[] addresses, data can be whatever
 
-    // TODO: Probably want LittleEndian for address, data can be whatever
-    // External API exposed type for a QRAM
+///////////////////////////////////////////////////////////////////////////
+// PUBLIC API
+///////////////////////////////////////////////////////////////////////////
+
+    /// # Summary
+    /// Type representing a generic QRAM type.
+    /// # Input
+    /// ## Lookup
+    /// The named operation that will look up data from the QRAM.
+    /// ## AddressSize
+    /// The size (number of bits) needed to represent an address for the QRAM.
+    /// ## DataSize
+    /// The size (number of bits) needed to represent a data value for the QRAM.
     newtype QRAM = (Lookup : ((Qubit[], Qubit[]) => Unit is Adj + Ctl), 
         AddressSize : Int,
         DataSize : Int);
 
-    //Internal QRam type for a single QRAM Bit (is composed to form a full memory block)
-    internal newtype SingleBitQRAM = (Lookup : ((Qubit[], Qubit[]) => Unit is Adj + Ctl));
-
-    function ImplicitQRAMOracle(DataValues : (Bool[],Bool[])[]) : QRAM {
+    /// # Summary
+    /// Creates an instance of an implicit QRAM given the data it needs to store.
+    /// # Input
+    /// ## dataValues
+    /// An array of tuples of the form (address, data) where the address and 
+    /// data are boolean arrays representing the integer values.
+    /// # Output
+    /// A `QRAM` type.
+    function ImplicitQRAMOracle(dataValues : (Bool[], Bool[])[]) : QRAM {
         mutable addressSize = 0;
         mutable valueSize = 0;
-        for ((address, value)  in DataValues){
+        for ((address, value) in dataValues){
             if(Length(address) > addressSize){
                 set addressSize = Length(address);
             }
@@ -33,41 +46,71 @@
             }
         }
 
-        let qrams = Mapped(SingleImplicitQRAMOracle, DataValues); 
+        let qrams = Mapped(SingleImplicitQRAMOracle, dataValues); 
         return Default<QRAM>()
             w/ Lookup <- ApplyImplicitQRAMOracle(qrams, _, _)
             w/ AddressSize <- addressSize
             w/ DataSize <- valueSize;
     }
+
+///////////////////////////////////////////////////////////////////////////
+// INTERNAL IMPLEMENTATION
+///////////////////////////////////////////////////////////////////////////
+
+    /// # Summary
+    /// Internal QRam type for a single QRAM Bit (is composed to form a 
+    /// full memory block).
+    /// # Input
+    /// ## Lookup
+    /// The named element that represents a call to the QRAM type.
+    internal newtype SingleValueQRAM = (
+        Lookup : ((Qubit[], Qubit[]) => Unit is Adj + Ctl)
+    );
     
-    internal function SingleImplicitQRAMOracle(address : Bool[], value : Bool[]) : SingleBitQRAM {
-        return Default<SingleBitQRAM>()
+    internal function SingleImplicitQRAMOracle(
+        address : Bool[], 
+        value : Bool[]
+    ) 
+    : SingleValueQRAM {
+        return Default<SingleValueQRAM>()
             w/ Lookup <- ApplySingleImplicitQRAMOracleValues(address, value, _, _);
     }
 
+
     internal operation ApplySingleImplicitQRAMOracleValues(
-        Adress: Bool[], 
-        Values: Bool[],
-        AddressRegister : Qubit[],
-        Target : Qubit[]
+        address: Bool[], 
+        values: Bool[],
+        addressRegister : Qubit[],
+        targetRegister : Qubit[]
     )
     : Unit is Adj + Ctl {
-        for((idx,value) in Enumerated(Values)){
+        for((idx,value) in Enumerated(values)){
             if(value)
             {
-                 (ControlledOnBitString(Adress, X))(AddressRegister, Target[idx]);
+                (ControlledOnBitString(address, X))(addressRegister, targetRegister[idx]);
             }
         }
     }
 
+    /// # Summary
+    /// Takes a mutivalue QRAM exposed in the public API and maps a lookup 
+    /// across an array of `SingleValueQRAM`.
+    ///
+    /// # Input
+    /// ## qrams
+    /// Array of `SingleValueQRAM`s that store all the data values.
+    /// ## addressRegister
+    /// The address that the user wants to lookup.
+    /// ## targetRegister
+    /// The register that the lookup will place the data into.
     internal operation ApplyImplicitQRAMOracle(
-        Qrams: SingleBitQRAM[], 
-        AddressRegister : Qubit[],
-        TargetRegister : Qubit[]
+        qrams: SingleValueQRAM[], 
+        addressRegister : Qubit[],
+        targetRegister : Qubit[]
     )
     : Unit is Adj + Ctl {
-        for (qram in Qrams) {
-            qram::Lookup(AddressRegister, TargetRegister) ;
+        for (qram in qrams) {
+            qram::Lookup(addressRegister, targetRegister) ;
         }
     }
 
@@ -94,56 +137,29 @@
         return onesAddresses;
     }
 
-    internal function ElementsAt<'T>(dataArrayArray : 'T[][], n : Int) : 'T[] {
-        return Mapped(ElementAt<'T>(_, n), dataArrayArray);
+    /// # Summary
+    /// Takes a tuple of nested arrays and returns the $idx^{th}$ item from 
+    /// each array.
+    ///
+    /// # Input
+    /// ## dataArrayArray
+    /// Array of arrays that you want to take the $idx^{th}$ item from.
+    ///
+    /// # Output
+    /// An array of the $idx^{th}$ item from each nested array in dataArrayArray.
+    internal function ElementsAt<'T>(dataArrayArray : 'T[][], idx : Int) : 'T[] {
+        return Mapped(ElementAt<'T>(_, idx), dataArrayArray);
     }
 
+    /// # Summary
+    /// Returns the $n^{th}$ item of an array. Basically a workaround for not 
+    /// having lambdas yet in Q#.
+    /// # Input
+    /// ## array
+    /// An array of type `'T`
+    /// # Output
+    /// The $idx^{th}$ item from `array`.
     internal function ElementAt<'T>(array : 'T[], idx : Int) : 'T {
         return array[idx];
     }
-
-
-
-
-    /// # Summary
-    /// Generates an oracle representing a bucket brigade style qRAM with a 
-    /// list of address locations that contain the value 1.
-    ///
-    /// # Input
-    /// ## Address
-    /// An array of strings that documents the addresses where the value in 
-    /// in memory is 1.
-    ///
-    /// # Remarks
-    /// ## Example
-    /// ```Q#
-    /// operation ReadoutSingleAddress(Memory : QRAM, Address : Bool[]) : Bool {
-    ///     using ((addressQubits, target) = (Qubit[3], Qubit())) {
-    ///         // prepare address value
-    ///         ApplyPauliFromBitString (PauliX, true, Address, addressQubits);
-    ///         QRAM(address, target);
-    ///         return BoolFromResult(MResetZ(target));
-    ///        }  
-    ///     }
-    /// ```
-    ///
-    /// # See Also
-    /// - OperationName
-    ///
-    /// # References
-    /// - [arXiv:0000.0000](https://arxiv.org/abs/0000.0000)
-
-    /// BB has a register of hardware qubits - need to know which of those are
-    /// set to 1; easiest way to do that is to send a string like "0011" to indicate that
-    /// this register is in the state
-    ///
-    /// |0> ------   (qubit 0, address 00)
-    /// |0> ------   (qubit 1, address 01)
-    /// |1> ------   (qubit 2, address 10)
-    /// |1> ------   (qubit 3, address 11)
-    ///
-    /// This is a 2-bit address; so QRAM(00) = 0, QRAM(01) = 0, QRAM(10) = 1, QRAM(11) = 1
-    ///
-    /// The black box has to perform this operation ^^ given the inputs, based on the contents
-    /// of the hardware register it starts with
 }

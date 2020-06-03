@@ -7,16 +7,37 @@
     open Microsoft.Quantum.Measurement;
     open Qram;
     
-/// dotnet run -- --query-address false false
+    /// # Summary
+    /// Does a quick test of creating an implicit QRAM and then looks up a
+    /// specific data value stored in it.
+    /// # Input
+    /// ## queryAddress
+    /// The address you want to lookup.
+    /// # Output
+    /// The data value stored at `queryAddress`.
+    /// # Remarks
+    /// ## Example
+    /// ```ps
+    /// dotnet run -- --query-address false false
+    /// ```
     @EntryPoint()
-    operation TestQRAM(queryAddress : Bool[]) : Int {
-        //
+    operation TestImplicitQRAM(queryAddress : Bool[]) : Int {
+        // Generate a (Bool[], Bool[])
         let data = GenerateMemoryData();
         let blackBox = ImplicitQRAMOracle(data);
         return QueryAndMeasureQRAM(blackBox, queryAddress);
 
     }
 
+    /// # Summary
+    /// Takes a QRAM and tells you what data is stored at a single address.
+    /// # Input
+    /// ## memory
+    /// A QRAM to query.
+    /// ## queryAddress
+    /// The address you want to look up.
+    /// # Output
+    /// The data stored at `queryAddress` expressed as a human readable integer.
     operation QueryAndMeasureQRAM(memory : QRAM, queryAddress : Bool[]) : Int {
         using((addressRegister, targetRegister) = (Qubit[memory::AddressSize], Qubit[memory::DataSize])){
             ApplyPauliFromBitString (PauliX, true, queryAddress, addressRegister);
@@ -26,28 +47,16 @@
         }
     }
 
-//    operation TestSingleQRAM(queryAddress : Bool[]) : Result {
-//        let data = GenerateMemoryData();
-//        let blackBox = SingleImplicitQRAMOracle(data);
-//        return QueryAndMeasureQRAM(blackBox, queryAddress);
-//
-//    }
-//
-//    operation QueryAndMeasureQRAM(memory : QRAM, queryAddress : Bool[]) : Result {
-//        using( (register, target) = (Qubit[memory::AddressSize], Qubit())){
-//            ApplyPauliFromBitString (PauliX, true, queryAddress, register);
-//            memory::Lookup(register, target);
-//            ResetAll(register);
-//            return MResetZ(target);
-//        }
-//    }
-
-    //Generates binary representation of [5,4,1]=>[3,2,1]
-    function GenerateMemoryData() : (Bool[],Bool[])[] {
-        let fiveGivesThree = (IntAsBoolArray(5,3),IntAsBoolArray(3,2));
-        let fourGivesTwo = (IntAsBoolArray(4,3),IntAsBoolArray(2,2));
-        let oneGivesOne = (IntAsBoolArray(1,3),IntAsBoolArray(1,2));
-        return [fiveGivesThree, fourGivesTwo, oneGivesOne];
+    /// # Summary
+    /// Generates sample data of the form (address, dataValue), here the
+    /// hardcoded data being [(5, 3), (4, 2), (1, 1)]. 
+    /// # Output
+    /// Hardcoded data.
+    function GenerateMemoryData() : (Bool[], Bool[])[] {
+        let fiveHasThree = (IntAsBoolArray(5,3),IntAsBoolArray(3,2));
+        let fourHasTwo = (IntAsBoolArray(4,3),IntAsBoolArray(2,2));
+        let oneHasOne = (IntAsBoolArray(1,3),IntAsBoolArray(1,2));
+        return [fiveHasThree, fourHasTwo, oneHasOne];
     }
 }
 
