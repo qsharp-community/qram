@@ -1,4 +1,4 @@
-﻿namespace tests {
+﻿namespace Qram.Tests {
     
     open Microsoft.Quantum.Math;
     open Microsoft.Quantum.Convert;
@@ -12,50 +12,52 @@
 
     @Test("QuantumSimulator")
     operation RetrieveImplicitQramEvenMatchResultsTrue() : Unit {
-        let five = [true,false,true];
-        let seven = [true,true,true]; 
-        let data = [seven,five];
+        let five = IntAsBoolArray(5,3);
+        let fiveHasThree = (five,IntAsBoolArray(3,2));
+        let sevenHasOne = (IntAsBoolArray(7,3),IntAsBoolArray(1,2));
+        let data = [fiveHasThree,sevenHasOne];
         let queryAddress = five;        
         let result = CreateQueryAndMeasureQRAM(data, queryAddress);
-        EqualityFactI(result, 1, "Expecting True when matched"); 
+        EqualityFactI(result, 3, "Expecting item number 5, which is 3 when matched"); 
         Message("Test passed.");
     }
 
     @Test("QuantumSimulator")
     operation RetrieveImplicitQramUnEvenMatchResultsTrue() : Unit {
-        let three = [false,true,false];
-        let five = [true,false,true];
-        let seven = [true,true,true]; 
-        let data = [seven,five, three];
+        let five = IntAsBoolArray(5,3);
+        let fiveHasThree = (five,IntAsBoolArray(3,2));
+        let sevenHasOne = ([true,true,true], [false,true]); 
+        let data = [fiveHasThree,sevenHasOne];
         let queryAddress = five;
         let result = CreateQueryAndMeasureQRAM(data, queryAddress);
-        EqualityFactI(result, 1, "Expecting True when matched"); 
+        EqualityFactI(result, 3, "Expecting 3 when matched"); 
         Message("Test passed.");
     }
 
     @Test("QuantumSimulator")
     operation RetrieveImplicitQramMismatchResultsFalse() : Unit {
-        let two = [false,true,false];
-        let five = [true,false,true];
-        let seven = [true,true,true]; 
-        let data = [seven,five];
+        let fiveHasThree = (IntAsBoolArray(5,3),IntAsBoolArray(3,2));
+        let sevenHasOne = (IntAsBoolArray(7,3),IntAsBoolArray(1,2));
+        let data = [fiveHasThree,sevenHasOne];
+        let two = IntAsBoolArray(2,3);
         let queryAddress = two;
         let result = CreateQueryAndMeasureQRAM(data, queryAddress);
         EqualityFactI(result, 0, "Expecting False when no match"); 
         Message("Test passed.");
     }
 
-    @Test("QuantumSimulator")
-    operation RetrieveImplicitQramEmptyResultFalse() : Unit {
-        let two = [false,true,false];
-        let data = new Bool[][0];
-        let queryAddress = two;
+   @Test("QuantumSimulator")
+    operation RetrieveImplicitQramResultsEndianPreservance() : Unit {
+        let four = IntAsBoolArray(4,3);
+        let fourHasThree = (four,IntAsBoolArray(1,2));
+        let data = [fourHasThree];
+        let queryAddress = four;
         let result = CreateQueryAndMeasureQRAM(data, queryAddress);
-        EqualityFactI(result, 0, "Expecting False when no match in empty Qram"); 
+        EqualityFactI(result, 1, "Expecting 1 when matched. If you see 0 Enidan error is in the address or 2 that means Endian broke in the value"); 
         Message("Test passed.");
     }
 
-    internal operation CreateQueryAndMeasureQRAM(data: Bool[][], queryAddress : Bool[]) : Int {
+    internal operation CreateQueryAndMeasureQRAM(data: (Bool[],Bool[])[], queryAddress : Bool[]) : Int {
         let memory = ImplicitQRAMOracle(data);
         using((addressRegister, targetRegister) = (Qubit[memory::AddressSize], Qubit[memory::DataSize])){
             ApplyPauliFromBitString (PauliX, true, queryAddress, addressRegister);
@@ -64,6 +66,4 @@
             return MeasureInteger(LittleEndian(targetRegister));
         }
     }
-
-
 }
