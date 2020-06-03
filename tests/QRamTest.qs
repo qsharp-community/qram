@@ -61,7 +61,7 @@
         let memory = ImplicitQRAMOracle(data);
         using((addressRegister, targetRegister) = (Qubit[memory::AddressSize], Qubit[memory::DataSize])){
             ApplyPauliFromBitString (PauliX, true, queryAddress, addressRegister);
-            memory::Lookup(addressRegister, targetRegister);
+            memory::Lookup(LittleEndian(addressRegister), targetRegister);
             ResetAll(addressRegister);
             return MeasureInteger(LittleEndian(targetRegister));
         }

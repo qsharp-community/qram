@@ -22,11 +22,12 @@
     /// ```
     @EntryPoint()
     operation TestImplicitQRAM(queryAddress : Bool[]) : Int {
-        // Generate a (Bool[], Bool[])
+        // Generate a (Bool[], Bool[]).
         let data = GenerateMemoryData();
+        // Create the QRAM.
         let blackBox = ImplicitQRAMOracle(data);
+        // Measure and return the data value stored at `queryAddress`.
         return QueryAndMeasureQRAM(blackBox, queryAddress);
-
     }
 
     /// # Summary
@@ -41,7 +42,7 @@
     operation QueryAndMeasureQRAM(memory : QRAM, queryAddress : Bool[]) : Int {
         using((addressRegister, targetRegister) = (Qubit[memory::AddressSize], Qubit[memory::DataSize])){
             ApplyPauliFromBitString (PauliX, true, queryAddress, addressRegister);
-            memory::Lookup(addressRegister, targetRegister);
+            memory::Lookup(LittleEndian(addressRegister), targetRegister);
             ResetAll(addressRegister);
             return MeasureInteger(LittleEndian(targetRegister));
         }

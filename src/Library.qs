@@ -7,8 +7,6 @@
     open Microsoft.Quantum.Intrinsic;
     open Microsoft.Quantum.Arithmetic;
 
-// TODO: Probably want LittleEndian for Qubit[] addresses, data can be whatever
-
 ///////////////////////////////////////////////////////////////////////////
 // PUBLIC API
 ///////////////////////////////////////////////////////////////////////////
@@ -22,7 +20,7 @@
     /// The size (number of bits) needed to represent an address for the QRAM.
     /// ## DataSize
     /// The size (number of bits) needed to represent a data value for the QRAM.
-    newtype QRAM = (Lookup : ((Qubit[], Qubit[]) => Unit is Adj + Ctl), 
+    newtype QRAM = (Lookup : ((LittleEndian, Qubit[]) => Unit is Adj + Ctl), 
         AddressSize : Int,
         DataSize : Int);
 
@@ -63,49 +61,50 @@
     /// # Input
     /// ## Lookup
     /// The named element that represents a call to the QRAM type.
-    internal newtype SingleValueQRAM = (
-        Lookup : ((Qubit[], Qubit[]) => Unit is Adj + Ctl)
+    internal newtype SingleBitQRAM = (
+        Lookup : ((LittleEndian, Qubit[]) => Unit is Adj + Ctl)
     );
     
     internal function SingleImplicitQRAMOracle(
         address : Bool[], 
         value : Bool[]
     ) 
-    : SingleValueQRAM {
-        return Default<SingleValueQRAM>()
+    : SingleBitQRAM {
+        return Default<SingleBitQRAM>()
             w/ Lookup <- ApplySingleImplicitQRAMOracleValues(address, value, _, _);
     }
-
 
     internal operation ApplySingleImplicitQRAMOracleValues(
         address: Bool[], 
         values: Bool[],
-        addressRegister : Qubit[],
+        addressRegister : LittleEndian,
         targetRegister : Qubit[]
     )
     : Unit is Adj + Ctl {
-        for((idx,value) in Enumerated(values)){
-            if(value)
-            {
-                (ControlledOnBitString(address, X))(addressRegister, targetRegister[idx]);
-            }
-        }
+        (ControlledOnBitString(address, ApplyPauliFromBitString(PauliX, true, _, _)))
+            (addressRegister!, (values, targetRegister));
+        //for((idx,value) in Enumerated(values)){
+        //    if(value)
+        //    {
+        //        (ControlledOnBitString(address, X))(addressRegister, targetRegister[idx]);
+        //    }
+        //}
     }
 
     /// # Summary
     /// Takes a mutivalue QRAM exposed in the public API and maps a lookup 
-    /// across an array of `SingleValueQRAM`.
+    /// across an array of `SingleBitQRAM`.
     ///
     /// # Input
     /// ## qrams
-    /// Array of `SingleValueQRAM`s that store all the data values.
+    /// Array of `SingleBitQRAM`s that store all the data values.
     /// ## addressRegister
     /// The address that the user wants to lookup.
     /// ## targetRegister
     /// The register that the lookup will place the data into.
     internal operation ApplyImplicitQRAMOracle(
-        qrams: SingleValueQRAM[], 
-        addressRegister : Qubit[],
+        qrams: SingleBitQRAM[], 
+        addressRegister : LittleEndian,
         targetRegister : Qubit[]
     )
     : Unit is Adj + Ctl {
