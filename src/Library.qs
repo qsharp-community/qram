@@ -24,7 +24,7 @@
     function ImplicitQRAMOracle(DataValues : (Bool[],Bool[])[]) : QRAM {
         mutable addressSize = 0;
         mutable valueSize = 0;
-        for((_,(address,value)) in Enumerated(DataValues)){
+        for ((address, value)  in DataValues){
             if(Length(address) > addressSize){
                 set addressSize = Length(address);
             }
@@ -40,8 +40,7 @@
             w/ DataSize <- valueSize;
     }
     
-    internal function SingleImplicitQRAMOracle(DataValue : (Bool[],Bool[])) : SingleBitQRAM {
-        let (address,value) = DataValue;
+    internal function SingleImplicitQRAMOracle(address : Bool[], value : Bool[]) : SingleBitQRAM {
         return Default<SingleBitQRAM>()
             w/ Lookup <- ApplySingleImplicitQRAMOracleValues(address, value, _, _);
     }
