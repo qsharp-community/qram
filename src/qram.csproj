@@ -4,4 +4,14 @@
     <TargetFramework>netstandard2.1</TargetFramework>
   </PropertyGroup>
 
+  <!--For more info on the package properties check out https://docs.microsoft.com/en-us/dotnet/core/tools/csproj#nuget-metadata-properties -->
+  <PropertyGroup>
+    <PackageId>QSharpCommunity.Libraries.Qram</PackageId>
+    <Description>Library that implements a variety of quantum RAM proposals in Q#.</Description>
+    <Copyright>2020 QSharpCommunity</Copyright>
+    <PackageLicenceExpression>MIT</PackageLicenceExpression>
+    <RepositoryUrl>https://github.com/qsharp-community/qram.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+
 </Project>
