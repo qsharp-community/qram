@@ -21,11 +21,14 @@
     /// dotnet run -- --query-address false false
     /// ```
     @EntryPoint()
-    operation TestImplicitQRAM(queryAddress : Bool[]) : Int {
+    operation TestImplicitQRAM(queryAddress : Int) : Int {
         // Generate a (Bool[], Bool[]).
         let data = GenerateMemoryData();
         // Create the QRAM.
         let blackBox = ImplicitQRAMOracle(data);
+        // Write out some debugging info about our qRAM.
+        Message($"qRAM address size: {blackBox::AddressSize} bits");
+        Message($"qRAM data size:    {blackBox::DataSize} bits");
         // Measure and return the data value stored at `queryAddress`.
         return QueryAndMeasureQRAM(blackBox, queryAddress);
     }
@@ -39,9 +42,10 @@
     /// The address you want to look up.
     /// # Output
     /// The data stored at `queryAddress` expressed as a human readable integer.
-    operation QueryAndMeasureQRAM(memory : QRAM, queryAddress : Bool[]) : Int {
-        using((addressRegister, targetRegister) = (Qubit[memory::AddressSize], Qubit[memory::DataSize])){
-            ApplyPauliFromBitString (PauliX, true, queryAddress, addressRegister);
+    operation QueryAndMeasureQRAM(memory : QRAM, queryAddress : Int) : Int {
+        using ((addressRegister, targetRegister) = (Qubit[memory::AddressSize], Qubit[memory::DataSize])) {
+            // Here!!
+            ApplyPauliFromBitString (PauliX, true, IntAsBoolArray(queryAddress, memory::AddressSize), addressRegister);
             memory::Lookup(LittleEndian(addressRegister), targetRegister);
             ResetAll(addressRegister);
             return MeasureInteger(LittleEndian(targetRegister));
@@ -53,11 +57,10 @@
     /// hardcoded data being [(5, 3), (4, 2), (1, 1)]. 
     /// # Output
     /// Hardcoded data.
-    function GenerateMemoryData() : (Bool[], Bool[])[] {
-        let fiveHasThree = (IntAsBoolArray(5,3),IntAsBoolArray(3,2));
-        let fourHasTwo = (IntAsBoolArray(4,3),IntAsBoolArray(2,2));
-        let oneHasOne = (IntAsBoolArray(1,3),IntAsBoolArray(1,2));
+    function GenerateMemoryData() : (Int, Bool[])[] {
+        let fiveHasThree = (5, IntAsBoolArray(3, 2));
+        let fourHasTwo = (4, IntAsBoolArray(2, 2));
+        let oneHasOne = (1, IntAsBoolArray(1, 2));
         return [fiveHasThree, fourHasTwo, oneHasOne];
     }
 }
-

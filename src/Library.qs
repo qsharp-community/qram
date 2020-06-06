@@ -32,13 +32,12 @@
     /// data are boolean arrays representing the integer values.
     /// # Output
     /// A `QRAM` type.
-    function ImplicitQRAMOracle(dataValues : (Bool[], Bool[])[]) : QRAM {
-        mutable addressSize = 0;
+    function ImplicitQRAMOracle(dataValues : (Int, Bool[])[]) : QRAM {
+        let largestAddress = Microsoft.Quantum.Math.Max(Microsoft.Quantum.Arrays.Mapped(Fst<Int, Bool[]>, dataValues));
         mutable valueSize = 0;
+        
+        // Determine largest size of stored value to set output qubit register size
         for ((address, value) in dataValues){
-            if(Length(address) > addressSize){
-                set addressSize = Length(address);
-            }
             if(Length(value) > valueSize){
                 set valueSize = Length(value);
             }
@@ -47,7 +46,7 @@
         let qrams = Mapped(SingleImplicitQRAMOracle, dataValues); 
         return Default<QRAM>()
             w/ Lookup <- ApplyImplicitQRAMOracle(qrams, _, _)
-            w/ AddressSize <- addressSize
+            w/ AddressSize <- BitSizeI(largestAddress)
             w/ DataSize <- valueSize;
     }
 
@@ -66,7 +65,7 @@
     );
     
     internal function SingleImplicitQRAMOracle(
-        address : Bool[], 
+        address : Int, 
         value : Bool[]
     ) 
     : SingleBitQRAM {
@@ -75,13 +74,13 @@
     }
 
     internal operation ApplySingleImplicitQRAMOracleValues(
-        address: Bool[], 
+        address: Int, 
         values: Bool[],
         addressRegister : LittleEndian,
         targetRegister : Qubit[]
     )
     : Unit is Adj + Ctl {
-        (ControlledOnBitString(address, ApplyPauliFromBitString(PauliX, true, _, _)))
+        (ControlledOnBitString(IntAsBoolArray(address, BitSizeI(address)), ApplyPauliFromBitString(PauliX, true, _, _)))
             (addressRegister!, (values, targetRegister));
         //for((idx,value) in Enumerated(values)){
         //    if(value)
