@@ -33,7 +33,9 @@
     /// # Output
     /// A `QRAM` type.
     function ImplicitQRAMOracle(dataValues : (Int, Bool[])[]) : QRAM {
-        let largestAddress = Microsoft.Quantum.Math.Max(Microsoft.Quantum.Arrays.Mapped(Fst<Int, Bool[]>, dataValues));
+        let largestAddress = Microsoft.Quantum.Math.Max(
+            Microsoft.Quantum.Arrays.Mapped(Fst<Int, Bool[]>, dataValues)
+        );
         mutable valueSize = 0;
         
         // Determine largest size of stored value to set output qubit register size
@@ -43,9 +45,9 @@
             }
         }
 
-        let qrams = Mapped(SingleImplicitQRAMOracle, dataValues); 
+        let qrams = BoundCA(Mapped(SingleValueWriter, dataValues)); 
         return Default<QRAM>()
-            w/ Lookup <- ApplyImplicitQRAMOracle(qrams, _, _)
+            w/ Lookup <- qrams
             w/ AddressSize <- BitSizeI(largestAddress)
             w/ DataSize <- valueSize;
     }
@@ -53,111 +55,44 @@
 ///////////////////////////////////////////////////////////////////////////
 // INTERNAL IMPLEMENTATION
 ///////////////////////////////////////////////////////////////////////////
-
-    /// # Summary
-    /// Internal QRam type for a single QRAM Bit (is composed to form a 
-    /// full memory block).
-    /// # Input
-    /// ## Lookup
-    /// The named element that represents a call to the QRAM type.
-    internal newtype SingleBitQRAM = (
-        Lookup : ((LittleEndian, Qubit[]) => Unit is Adj + Ctl)
-    );
     
-    internal function SingleImplicitQRAMOracle(
-        address : Int, 
-        value : Bool[]
-    ) 
-    : SingleBitQRAM {
-        return Default<SingleBitQRAM>()
-            w/ Lookup <- ApplySingleImplicitQRAMOracleValues(address, value, _, _);
-    }
-
-    internal operation ApplySingleImplicitQRAMOracleValues(
-        address: Int, 
-        values: Bool[],
-        addressRegister : LittleEndian,
-        targetRegister : Qubit[]
-    )
-    : Unit is Adj + Ctl {
-        (ControlledOnBitString(IntAsBoolArray(address, BitSizeI(address)), ApplyPauliFromBitString(PauliX, true, _, _)))
-            (addressRegister!, (values, targetRegister));
-        //for((idx,value) in Enumerated(values)){
-        //    if(value)
-        //    {
-        //        (ControlledOnBitString(address, X))(addressRegister, targetRegister[idx]);
-        //    }
-        //}
+    /// # Summary
+    /// Returns an operation that represents a qRAM with one non-zero data value.
+    /// # Input
+    /// ## address
+    /// The address where the data is non-zero.
+    /// ## value
+    /// The value (as a Bool[]) representing the data at `address`
+    /// # Output
+    /// An operation that can be used to look up data `value` at `address`.
+    internal function SingleValueWriter(address : Int, value : Bool[])
+    : ((LittleEndian, Qubit[]) => Unit is Adj + Ctl) {
+        return WriteSingleValue(address, value, _, _);
     }
 
     /// # Summary
-    /// Takes a mutivalue QRAM exposed in the public API and maps a lookup 
-    /// across an array of `SingleBitQRAM`.
-    ///
+    /// 
     /// # Input
-    /// ## qrams
-    /// Array of `SingleBitQRAM`s that store all the data values.
+    /// ## address
+    /// 
+    /// ## value
+    /// 
     /// ## addressRegister
-    /// The address that the user wants to lookup.
+    /// 
     /// ## targetRegister
-    /// The register that the lookup will place the data into.
-    internal operation ApplyImplicitQRAMOracle(
-        qrams: SingleBitQRAM[], 
+    /// 
+    internal operation WriteSingleValue(
+        address : Int, 
+        value : Bool[],
         addressRegister : LittleEndian,
         targetRegister : Qubit[]
     )
     : Unit is Adj + Ctl {
-        for (qram in qrams) {
-            qram::Lookup(addressRegister, targetRegister) ;
-        }
+        (ControlledOnInt(address, ApplyPauliFromBitString(PauliX, true, value, _)))
+            (addressRegister!, targetRegister);
     }
 
 ///////////////////////////////////////////////////////////////////////////
 // UTILITY FUNCTIONS
 ///////////////////////////////////////////////////////////////////////////
-
-    /// # Summary
-    /// Takes the Boolean array representation of an Int and converts to the 
-    /// list of ones addresses needed to represent that Int.
-    /// # Input
-    /// ## dataArray
-    /// A data value in the form of a
-    /// # Output
-    /// 
-    internal function OnesAddressesFromDataValue(dataArray : Bool[]) : Bool[][] {
-        mutable onesAddresses = new Bool[][0];
-        let nAddressBits = BitSizeI(Length(dataArray));
-        for ((idx, bitValue) in Enumerated(dataArray)) {
-            if (bitValue) {
-                set onesAddresses += [IntAsBoolArray(idx, nAddressBits)];
-            }
-        }
-        return onesAddresses;
-    }
-
-    /// # Summary
-    /// Takes a tuple of nested arrays and returns the $idx^{th}$ item from 
-    /// each array.
-    ///
-    /// # Input
-    /// ## dataArrayArray
-    /// Array of arrays that you want to take the $idx^{th}$ item from.
-    ///
-    /// # Output
-    /// An array of the $idx^{th}$ item from each nested array in dataArrayArray.
-    internal function ElementsAt<'T>(dataArrayArray : 'T[][], idx : Int) : 'T[] {
-        return Mapped(ElementAt<'T>(_, idx), dataArrayArray);
-    }
-
-    /// # Summary
-    /// Returns the $n^{th}$ item of an array. Basically a workaround for not 
-    /// having lambdas yet in Q#.
-    /// # Input
-    /// ## array
-    /// An array of type `'T`
-    /// # Output
-    /// The $idx^{th}$ item from `array`.
-    internal function ElementAt<'T>(array : 'T[], idx : Int) : 'T {
-        return array[idx];
-    }
 }

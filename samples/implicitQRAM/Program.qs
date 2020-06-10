@@ -1,10 +1,12 @@
 ﻿namespace implicitQRAM {
 
+    open Microsoft.Quantum.Diagnostics;
     open Microsoft.Quantum.Arithmetic;
     open Microsoft.Quantum.Canon;
     open Microsoft.Quantum.Convert;
     open Microsoft.Quantum.Intrinsic;
     open Microsoft.Quantum.Measurement;
+    
     open Qram;
     
     /// # Summary
@@ -22,15 +24,15 @@
     /// ```
     @EntryPoint()
     operation TestImplicitQRAM(queryAddress : Int) : Int {
-        // Generate a (Bool[], Bool[]).
+        // Generate a (Int, Bool[]) array of data.
         let data = GenerateMemoryData();
         // Create the QRAM.
-        let blackBox = ImplicitQRAMOracle(data);
+        let memory = ImplicitQRAMOracle(data);
         // Write out some debugging info about our qRAM.
-        Message($"qRAM address size: {blackBox::AddressSize} bits");
-        Message($"qRAM data size:    {blackBox::DataSize} bits");
+        Message($"qRAM address size: {memory::AddressSize} bits");
+        Message($"qRAM data size:    {memory::DataSize} bits");
         // Measure and return the data value stored at `queryAddress`.
-        return QueryAndMeasureQRAM(blackBox, queryAddress);
+        return QueryAndMeasureQRAM(memory, queryAddress);
     }
 
     /// # Summary
@@ -44,7 +46,6 @@
     /// The data stored at `queryAddress` expressed as a human readable integer.
     operation QueryAndMeasureQRAM(memory : QRAM, queryAddress : Int) : Int {
         using ((addressRegister, targetRegister) = (Qubit[memory::AddressSize], Qubit[memory::DataSize])) {
-            // Here!!
             ApplyPauliFromBitString (PauliX, true, IntAsBoolArray(queryAddress, memory::AddressSize), addressRegister);
             memory::Lookup(LittleEndian(addressRegister), targetRegister);
             ResetAll(addressRegister);
