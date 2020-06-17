@@ -1,4 +1,4 @@
-## qRAM Library for Q\#
+# qRAM Library for Q\#
 
 This library implements a variety of different proposals for memory for quantum computers, also commonly called qRAM.
 Want to learn more about what qRAM is?
@@ -19,7 +19,8 @@ This library will help achieve these goals by giving us a concrete way to measur
 
 [![q# code style](https://img.shields.io/badge/code%20style-Q%23-blue)](https://docs.microsoft.com/en-us/quantum/contributing/style-guide?tabs=guidance)
 [![q# APIcode style](https://img.shields.io/badge/code%20style-Q%23%20API-ff69b4)](https://docs.microsoft.com/en-us/quantum/contributing/style-guide?tabs=guidance)
- [![c# APIcode style]( https://img.shields.io/badge/code%20style-C%23-lightgrey)](https://docs.microsoft.com/dotnet/csharp/programming-guide/inside-a-program/coding-conventions)
+[![c# APIcode style](https://img.shields.io/badge/code%20style-C%23-lightgrey)](https://docs.microsoft.com/dotnet/csharp/programming-guide/inside-a-program/coding-conventions)
+[![CoC](https://img.shields.io/badge/code%20of%20conduct-contributor%20covenant-yellow)](CODE_OF_CONDUCT.md)
 
 ## Screenshots
 
@@ -80,8 +81,8 @@ TODO: Link to user manual in docs
 <!--If people like your project they’ll want to learn how they can use it. To do so include step by step guide to use your project.-->
 
 ## Contribute
-TODO: add CONTRIBUTING.md
-<!--Let people know how they can contribute into your project. A [contributing guideline](https://github.com/zulip/zulip-electron/blob/master/CONTRIBUTING.md) will be a big plus.-->
+
+Please see our [contributing guidelines](CONTRIBUTING.md) and our [code of conduct](CODE_OF_CONDUCT.md) before working on a contribution, thanks!
 
 ## Credits
 - Primary developers: @glassnotes, @shikharsingh3, @crazy4pi314
@@ -91,7 +92,6 @@ TODO: add CONTRIBUTING.md
 
 - [WIQCA talk](https://www.wiqca.dev/events/quantum101-qml_qram.html) on qRAM by @glassnotes
 - Live development of this library with @crazy4pi314 on [Twitch](https://twitch.tv/crazy4pi314)
-
 
 ## License
 
