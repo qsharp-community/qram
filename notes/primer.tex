@@ -137,6 +137,21 @@ At each node is a three-level state (a qutrit), with levels denoted by $\ket{\hb
 
 \subsection{Bit query circuit model}
 
+\begin{figure}
+ \centering
+ \includegraphics[scale=0.8]{fig/bb-combined}
+ \caption{\textbf{For pedagogical purposes; not most optimal}. (Top left) A bucket brigade circuit for a 1-qubit address (2 memory cells). (Top right) A bucket brigade circuit for a 2-qubit address. The first 6 gates are a fanout of the address bits to the auxiliary `trigger' register, denoted by $\tau$. A cascade of Toffolis then couples the memory cells to the output. To make the query fully reversible, the fanout component must be repeated. The subscripts on the memory cells are ordered from top to bottom of the address register, i.e. $a_{n-1}, a_{n-2}, \ldots, a_0$. (Bottom) A bucket brigade circuit for a 3-qubit address, highlighting the pattern that emerges in the construction of this circuit. The fanout component is recursive, with the 1- and 2-qubit fanout portions appearing.}
+ \label{fig:bb-combined}
+\end{figure}
+
+
+\begin{figure}
+ \centering
+ \includegraphics[scale=0.8]{fig/bb-2qubit-3bitout}
+ \caption{\textbf{For pedagogical purposes; not most optimal.} Extension of the bucket brigade circuit model to the case where each memory cell contains multiple output bits (in this case, 3). The structure of the circuit is largely the same, except the original trigger register acts on a set of `indicator' qubits representative of each memory cell (highlighted in red). These indicator qubits then control coupling of the memory contents to the set of output bits.}
+\end{figure}
+
+
 \subsection{Phase query circuit model}
 
 \subsection{Analysis}
