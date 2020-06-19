@@ -11,19 +11,48 @@
 // PUBLIC API
 ///////////////////////////////////////////////////////////////////////////
 
+    newtype QRAM = (Lookup : ((Qubit[], Qubit[], Qubit) => Unit is Adj + Ctl), 
+        AddressSize : Int,
+        DataSize : Int);
+
+    function BucketBrigadeQRAMOracle(dataValues : (Int, Bool[])[]) : QRAM {
+        let largestAddress = Microsoft.Quantum.Math.Max(
+            Microsoft.Quantum.Arrays.Mapped(Fst<Int, Bool[]>, dataValues)
+        );
+        mutable valueSize = 0;
+        
+        // Determine largest size of stored value to set output qubit register size
+        for ((address, value) in dataValues){
+            if(Length(value) > valueSize){
+                set valueSize = Length(value);
+            }
+        }
+
+        return Default<QRAM>()
+            w/ Lookup <-  Lookup(_,_,_)
+            w/ AddressSize <- BitSizeI(largestAddress)
+            w/ DataSize <- 1;
+    }
 
 ///////////////////////////////////////////////////////////////////////////
 // INTERNAL IMPLEMENTATION
 ///////////////////////////////////////////////////////////////////////////
     
-    operation Readout(memoryRegister : Qubit[], auxRegister : Qubit[], target : Qubit) : Unit
-    is Adj + Ctl {
+    operation Readout(
+        memoryRegister : Qubit[], 
+        auxRegister : Qubit[], 
+        target : Qubit
+    ) 
+    : Unit is Adj + Ctl {
         let controlPairs = Zip(auxRegister, memoryRegister);
         ApplyToEachCA(CCNOT(_, _, target), controlPairs);
     }
 
-    operation ApplyAddressFanout(addressRegister : Qubit[], auxRegister : Qubit[]) : Unit
-    is Adj + Ctl {
+    operation ApplyAddressFanout(
+        addressRegister : Qubit[], 
+        auxRegister : Qubit[]
+    ) 
+    : Unit is Adj + Ctl {
         for ((idx, addressBit) in Enumerated(addressRegister)) {
             if (idx == 0){
                 Controlled X([addressRegister[0]],auxRegister[1]);
@@ -44,9 +73,9 @@
         target : Qubit
     ) 
     : Unit is Adj + Ctl {
-        using (auxRegister = Qubit[2^Length(addressRegister)]){
-            X(Head(auxRegister));
+        using (auxRegister = Qubit[2^Length(addressRegister)]) {
             within {
+                X(Head(auxRegister));
                 ApplyAddressFanout(addressRegister, auxRegister);
             }
             apply {

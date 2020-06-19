@@ -12,27 +12,27 @@
 ///////////////////////////////////////////////////////////////////////////
 
     /// # Summary
-    /// Type representing a generic QRAM type.
+    /// Type representing a generic QROM type.
     /// # Input
     /// ## Lookup
-    /// The named operation that will look up data from the QRAM.
+    /// The named operation that will look up data from the QROM.
     /// ## AddressSize
-    /// The size (number of bits) needed to represent an address for the QRAM.
+    /// The size (number of bits) needed to represent an address for the QROM.
     /// ## DataSize
-    /// The size (number of bits) needed to represent a data value for the QRAM.
-    newtype QRAM = (Lookup : ((LittleEndian, Qubit[]) => Unit is Adj + Ctl), 
+    /// The size (number of bits) needed to represent a data value for the QROM.
+    newtype QROM = (Lookup : ((LittleEndian, Qubit[]) => Unit is Adj + Ctl), 
         AddressSize : Int,
         DataSize : Int);
 
     /// # Summary
-    /// Creates an instance of an implicit QRAM given the data it needs to store.
+    /// Creates an instance of an implicit QROM given the data it needs to store.
     /// # Input
     /// ## dataValues
     /// An array of tuples of the form (address, data) where the address and 
     /// data are boolean arrays representing the integer values.
     /// # Output
-    /// A `QRAM` type.
-    function ImplicitQRAMOracle(dataValues : (Int, Bool[])[]) : QRAM {
+    /// A `QROM` type.
+    function ImplicitQRAMOracle(dataValues : (Int, Bool[])[]) : QROM {
         let largestAddress = Microsoft.Quantum.Math.Max(
             Microsoft.Quantum.Arrays.Mapped(Fst<Int, Bool[]>, dataValues)
         );
@@ -45,9 +45,9 @@
             }
         }
 
-        let qrams = BoundCA(Mapped(SingleValueWriter, dataValues)); 
-        return Default<QRAM>()
-            w/ Lookup <- qrams
+        let qroms = BoundCA(Mapped(SingleValueWriter, dataValues)); 
+        return Default<QROM>()
+            w/ Lookup <- qroms
             w/ AddressSize <- BitSizeI(largestAddress)
             w/ DataSize <- valueSize;
     }
@@ -57,7 +57,7 @@
 ///////////////////////////////////////////////////////////////////////////
     
     /// # Summary
-    /// Returns an operation that represents a qRAM with one non-zero data value.
+    /// Returns an operation that represents a QROM with one non-zero data value.
     /// # Input
     /// ## address
     /// The address where the data is non-zero.
@@ -91,12 +91,4 @@
         (ControlledOnInt(address, ApplyPauliFromBitString(PauliX, true, value, _)))
             (addressRegister!, targetRegister);
     }
-
-///////////////////////////////////////////////////////////////////////////
-// UTILITY FUNCTIONS
-///////////////////////////////////////////////////////////////////////////
-
-// TODO: data linting function
-// TODO: data manipulation functions (aka. lookup data value given address)
-
 }
