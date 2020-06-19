@@ -1,61 +1,98 @@
 # qRAM Library for Q\#
 
 This library implements a variety of different proposals for memory for quantum computers, also commonly called qRAM.
+Want to learn more about what qRAM is?
+Check out the [primer on memory for quantum computers]() in our docs!
 
-## General project goals
+## Motivation
 
-- Proficiency with Q# as a programming language
-- Understanding the role of qRAM in quantum computing, its benefits, and costs
-- Describe the different memory paradigms in quantum machine learning
+There are many different proposals for qRAM in quantum computing that each have different tradeoffs, and currently come up a lot in quantum machine learning applications.
+We want to better understanding the costs and benefits of different qRAM implementations in quantum machine learning as well as quantum computing more generally.
+This library will help achieve these goals by giving us a concrete way to measure the resources each approach takes; choosing to do this in Q# allows us to leverage the built-in resource estimator to quickly iterate profiling the qRAM implementations and optimizing the circuits.
 
-### Bonus goals
+## Build status
 
-- Actually run a small qRAM on a quantum machine; how well does it work?
-- Describe the different types of classical RAM
-- Describe how one might implement a qRAM in hardware
+[![Run Tests](https://github.com/qsharp-community/qram/workflows/Run%20Tests/badge.svg)](https://github.com/qsharp-community/qram/actions?query=workflow%3A%22Run+Tests%22)
+[![Build and publish NuGet package to GitHub packages](https://github.com/qsharp-community/qram/workflows/Build%20and%20publish%20NuGet%20package%20to%20GitHub%20packages/badge.svg)](https://github.com/qsharp-community/qram/actions?query=workflow%3A%22Build+and+publish+NuGet+package+to+GitHub+packages%22)
 
-## Key Deliverables
+## Code style
 
-- Q# Library, to be released open-source
-  - Implementations:
-    - [ ] Bucket-brigade (original circuit model, and updated constant-depth model)
-    - [ ] Various qROMs
-    - [ ] Quantum state preparation ("select/SWAP" oracles)
-    - [ ] Application-specific qROMs
-  - Samples:
-    - [ ] Instantiation and querying all implemented qRAMs/qROMs
-    - [ ] Resource estimation
-- Written report about the different methods used
+[![q# code style](https://img.shields.io/badge/code%20style-Q%23-blue)](https://docs.microsoft.com/en-us/quantum/contributing/style-guide?tabs=guidance)
+[![q# APIcode style](https://img.shields.io/badge/code%20style-Q%23%20API-ff69b4)](https://docs.microsoft.com/en-us/quantum/contributing/style-guide?tabs=guidance)
+[![c# APIcode style](https://img.shields.io/badge/code%20style-C%23-lightgrey)](https://docs.microsoft.com/dotnet/csharp/programming-guide/inside-a-program/coding-conventions)
+[![CoC](https://img.shields.io/badge/code%20of%20conduct-contributor%20covenant-yellow)](CODE_OF_CONDUCT.md)
 
-### Pre-reading
+## Screenshots
 
-- Learn about how classical RAMs work (bitlines, wordlines, capacitors, structure, etc.)
+**Example of a Bucket Brigade qRAM circuit:**
 
-### Step 1
-- Set up QDK and Python development environments
-- Get acquainted with Q#. Set up QDK and Python
-- Work through some of the quantum katas (on-going)
-- Read original bucket-brigade qRAM papers (https://arxiv.org/abs/0708.1879, https://arxiv.org/pdf/0807.4994)
+![Bucket Brigade qRAM](docs\images\bucketBrigade.gif)
+TODO: Include logo/demo screenshot etc.
 
-### Step 2
-- Read through work with basic qROM circuits (https://arxiv.org/abs/1902.01329)
-- Implement basic large-depth large-width circuits in Q#
-   - Set up framework for random-generation of such circuits (on-going; should do for these, and all future types)
+## Tech/framework used
 
-### Step 3
-- Implement bucket brigade circuits (https://arxiv.org/abs/1502.03450)
-- Implement Alexandru's constant-depth bucket-brigade circuits (https://arxiv.org/abs/2002.09340)
-- Start running circuits in the resources estimator and Toffoli simulator machines (on-going) - with random versions of these circuits, how do the gate counts compare to the ones from our paper?
+**Built with:**
 
-### Step 4
-- Implement Vadym and Guang-How's state preparation circuits (select/SWAP) (https://arxiv.org/abs/1812.00954)
-  - Get an idea of the actual constants in the runtime
-- Implement qROM from "encoding electronic spectra" paper (https://arxiv.org/abs/1805.03662)
+- [Quantum Development Kit](https://docs.microsoft.com/quantum/)
+- [.NET Core SDK 3.1](https://dotnet.microsoft.com/download/dotnet-core/3.1)
+- [Python](https://www.python.org/downloads/)
+- [Visual Studio Code](https://code.visualstudio.com/) and [Visual Studio](https://visualstudio.microsoft.com/)
+- [Jupyter Notebook](https://jupyter.org/)
 
-### Step 5
-- Writing up findings, documenting code, and getting ready for release
-    - Publish on Blog etc.
+## Features
 
-## Helpful Resources
+What makes your project stand out?
+
+## Code Example
+
+TODO: Add more! Fix syntax highlighting
+
+```qsharp
+operation QueryAndMeasureQRAM(memory : QRAM, queryAddress : Int) : Int {
+        using ((addressRegister, targetRegister) = (Qubit[memory::AddressSize], Qubit[memory::DataSize])) {
+            ApplyPauliFromBitString (PauliX, true, IntAsBoolArray(queryAddress, memory::AddressSize), addressRegister);
+            memory::Lookup(LittleEndian(addressRegister), targetRegister);
+            ResetAll(addressRegister);
+            return MeasureInteger(LittleEndian(targetRegister));
+        }
+    }
+```
+<!--Show what the library does as concisely as possible, developers should be able to figure out **how** your project solves their problem by looking at the code example. Make sure the API you are showing off is obvious, and that your code is short and concise.-->
+
+## Installation
+
+TODO:
+- Docker
+- Binder
+- Codespaces
+- Remote dev env
+- local install
+
+## API Reference
+
+TODO: Complete once compiler extension is finalized for scraping API docs
+<!--Depending on the size of the project, if it is small and simple enough the reference docs can be added to the README. For medium size to larger projects it is important to at least provide a link to where the API reference docs live.-->
+
+## Tests
+TODO: Describe and show how to run the tests with code examples.
+
+## How to use?
+TODO: Link to user manual in docs
+<!--If people like your project they’ll want to learn how they can use it. To do so include step by step guide to use your project.-->
+
+## Contribute
+
+Please see our [contributing guidelines](CONTRIBUTING.md) and our [code of conduct](CODE_OF_CONDUCT.md) before working on a contribution, thanks!
+
+## Credits
+- Primary developers: @glassnotes, @shikharsingh3, @crazy4pi314
+- Code review and API design assistance: @RolfHuisman, @cgranade
+
+#### Anything else that seems useful
+
 - [WIQCA talk](https://www.wiqca.dev/events/quantum101-qml_qram.html) on qRAM by @glassnotes
 - Live development of this library with @crazy4pi314 on [Twitch](https://twitch.tv/crazy4pi314)
+
+## License
+
+MIT © [qsharp-community](https://github.com/qsharp-community/qram/blob/master/LICENSE)
