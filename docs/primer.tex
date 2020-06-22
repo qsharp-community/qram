@@ -1,0 +1,276 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=0.6in]{geometry}
+\usepackage{amsmath, amssymb, dsfont}
+\usepackage[font=footnotesize]{caption}
+\usepackage{braket}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{subfigure}
+\usepackage{graphicx}
+\hypersetup{
+    colorlinks,
+    linkcolor={blue!70!black},
+    citecolor={blue!70!black},
+    urlcolor={blue!70!black}
+}
+
+%opening
+\title{A primer on quantum RAM}
+\author{Olivia Di Matteo}
+
+\begin{document}
+
+\maketitle
+
+\abstract{\textcolor{red}{\textbf{This document is a work in progress} and is being continuously edited.}{ 
+
+\tableofcontents
+
+\section{Introduction and FAQ}
+
+Quantum RAM (qRAM) has gained some notoriety in the past few years, and attitudes toward it depend quite heavily on the circles you run in. The goal of this set of notes is to provide a general overview of the subject, as well as discuss some very specific implementations. It is meant to be a companion to the Q\# qRAM libraries we are writing (cite the repo), but can also serve as a standalone reference.
+
+In my experience, explaining qRAM to someone boils down to answering a handful of key questions. I'll provide some potentially unsatisfactory answers up front, but go into far more detail in the next few sections\footnote{Those details may not be satisfactory either.}.
+
+\begin{enumerate} 
+ \item \textbf{Do I need a qRAM?}
+  \emph{Sometimes}. You'll need a qRAM, or some more general means of \emph{quantum state preparation} in quantum machine learning (QML) algorithms that require you to load in classical data, or query an oracle that returns classical data. I've heard a number of stories of people working on QML being actively discouraged from doing so because ``QML won't work without a qRAM''. That's just not true, because \emph{many QML algorithms do not need a qRAM}. Now, whether or not they yield any quantum advantage is a separate question, and won't be discussed here. The key point I want to make is that \emph{some} QML algorithms need a qRAM, and they will potentially run into trouble as per the next question.
+ \item \textbf{Can we design an efficient qRAM?} \emph{Maybe.} In this primer we'll take a look at proposals that will in principle run in polynomial depth, and others that scale far worse. There are some very interesting qubit-time tradeoffs one can explore, in particular if the data being stored has some sort of underlying structure. Regardless, even if we can design an efficient circuit, we'd also like something that is efficient in a fault-tolerant setting, and this is potentially very expensive.
+ \item \textbf{Can I build one?} \emph{Maybe.} No one has actually done so, but there are a handful of hardware proposals that will be discussed in more detail in \autoref{sec:hardware}. 
+\end{enumerate}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{A brief history of the brief history of quantum machine learning}
+\label{sec:qml}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Encoding classical data on a quantum computer}
+
+\label{sec:encoding}
+
+There is a nice overview of the encodings below in \cite{Schuld2018}.
+
+\subsection{Basis encoding}
+
+Give overview of the basis encoding, i.e.
+\begin{equation}
+ \hbox{data} \enskip 01001 \rightarrow \ket{01001}
+\end{equation}
+
+
+\subsection{Quantum RAM / ROM}
+
+Query as bits in superposition:
+\begin{equation}
+ \sum_i \ket{i} \ket{0} \rightarrow \sum_i \ket{i} \ket{b_i}
+\end{equation}
+
+Query as phase in superposition (applications to Grover)
+\begin{equation}
+ \sum_i \ket{i} \rightarrow \sum_i (-1)^{b_i} \ket{i}
+\end{equation}
+
+
+\subsection{Quantum state preparation (amplitude encoding)}
+
+Given some vector $\mathbf{a} = \left( a_0, \cdots,  a_{n-1} \right)$, create the quantum state
+\begin{equation}
+ \ket{\psi} = \sum_{i=0}^{n-1} a_i \ket{i}
+\end{equation}
+
+Discuss how this relies on having a qROM as an underlying subroutine.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\section{Bucket-brigade quantum RAM}
+\label{sec:bb}
+
+Architectures for qRAM began to emerge roughly a decade ago with the bucket brigade RAM model of \cite{Giovannetti2008, Giovannetti2008b}. The particular storage model of RAM that is used is a binary tree, where $2^n$ bits are located at the leaves of an $n$-level binary tree, as depicted in \autoref{fig:fanout-ram-sequence}. We will first take a graphical look at the bucket brigade algorithm; following this, we will see it modelled as a quantum circuit.
+
+\subsection{Increasing efficiency of RAM with a bucket brigade}
+
+The motiviation for bucket brigade lies in a less efficient type of RAM denoted as `fanout RAM'. In the fanout RAM, the nodes of this tree are transistors that, depending on their state, will route incoming current left or right towards the next level of the tree. Each level of the tree is associated to an address bit; the value of the address bit can set a level-specific switch that tells all transistors in the level to send current left, or send current right. This is shown in the right panel of \autoref{fig:fanout-ram-sequence}, and has the effect creating only one complete path from the root of the tree to a leaf.
+
+
+
+The issue with fanout RAM in this form is its efficiency - for an $n$-bit address, we are turning on $2^n - 1$ transistors, while only $n$ of them are involved in the actual query. A further issue arises if we make a direct translation into qubits. Suppose we replace each node of the tree with a qubit; we can let its $\ket{0}$ state indicate `route left', and its $\ket{1}$ state indicate `route right'. When we go to initialize the qubits to create the path, the $k$'th address qubit will have to couple with $2^k$ node qubits. This is a very precarious superposition, especially in an era where coherence times are low and multi-qubit operations are significantly noisier than single-qubit ones.
+
+\begin{figure}[ht!]
+ \centering
+  \captionsetup{width=.89\linewidth}
+ \begin{subfigure}
+    \centering
+    \includegraphics[height=2in]{images/fanout-ram}
+ \end{subfigure}
+  \hspace{0.5cm}
+  \begin{subfigure}
+    \centering
+    \includegraphics[height=2in]{images/fanout-ram-queried}
+ \end{subfigure} 
+    \caption{(Left) Schematic of a `fan-out RAM', whose inefficiencies were the motivation for the bucket brigade RAM. For an $n$-bit address, an $n$-level binary tree stores the memory contents at its leaves. At each node of the tree is a transistor that can direct current right, or left. Within each level of the tree, all transistors are controlled by a switch that can either direct them all to route current left, or all right. (Right) To query the memory contents, the directions of the switches are set according to the address bits (one bit per level of the tree). This creates a single path from the root node to the desired cell.}
+    \label{fig:fanout-ram-sequence}
+\end{figure}
+
+The bucket-brigade model is an improvement that addresses both of these issues. Rather than using qubits at each node, we use \emph{qutrits}, or three-state systems. In what follows we will discuss the quantum case, but the methodology is the same for the classical case (it uses trits instead of bits).
+
+In the top left of \autoref{fig:bb-sequence} is our familiar binary tree. At each node sits a qutrit whose states are descriptively named $\ket{\hbox{wait}}, \ket{\hbox{left}}, \ket{\hbox{right}}$. All the qutrits begin in $\ket{\hbox{wait}}$. To perform a query, \emph{address qubits} are introduced to the tree one by one; the $k$'th address qubit will effect an operation in the $k$'th level of the tree to carve a path to the desired memory cell.
+
+The key to the bucket brigade model is to define a unitary transformation that allows address qubits to alter the state of the qutrit nodes depending on their own state. Specifically, we need to find some unitary that performs:
+\begin{eqnarray}
+ U(\ket{0}\ket{\hbox{wait}}) &\rightarrow& \ket{s}\ket{\hbox{left}} \\
+ U(\ket{1}\ket{\hbox{wait}}) &\rightarrow& \ket{s}\ket{\hbox{right}}
+\end{eqnarray}
+Here, $\ket{s}$ refers to some arbitrary state; we don't particularly care what it is, as $U$ is reversible and will be undone later on.
+
+When an address qubit reaches a qutrit in the $\ket{\hbox{wait}}$, $U$ is performed. If it instead encounters $\ket{\hbox{left}}$ or $\ket{\hbox{right}}$ it `passes through' the node without altering it, and continues traveling along the path until it reaches its particular level. This is shown in the top right of \autoref{fig:bb-sequence}.
+
+The bottom half of \autoref{fig:bb-sequence} describes how the contents of the memory are retrieved. After all the address qubits are sent, a `quantum bus' qubit traverses the path, couples to the desired memory cell to gather the data, and is reflected back the way it came. This is depicted in the  As it passes upwards through the tree, it re-initializes the qutrits back to $\ket{\hbox{wait}}$ by running $U^\dag$. Note that such an algorithm allows us to query in superposition, as all operations are unitary.
+
+
+\begin{figure}
+ \centering  
+ \captionsetup{width=.89\linewidth}
+ \begin{subfigure}
+    \centering
+    \includegraphics[height=2in]{images/bb-00}
+ \end{subfigure}
+  \hspace{0.5cm}
+  \begin{subfigure}
+    \centering
+    \includegraphics[height=2in]{images/bb-01}
+ \end{subfigure} \\
+    \vspace{0.5cm}
+     \begin{subfigure}
+        \centering
+        \includegraphics[height=2in]{images/bb-02}
+    \end{subfigure}
+    \hspace{0.5cm}
+    \begin{subfigure}
+        \centering
+        \includegraphics[height=2in]{images/bb-03}
+    \end{subfigure}
+    \caption{Schematic of a bucket brigade quantum RAM query. (Top left) Memory contents are stored in the leaves of a binary tree, whose nodes are denoted by qutrits with possible states $\ket{\hbox{wait}}, \ket{\hbox{left}}$, and $\ket{\hbox{right}}$. (Top right) A bucket brigade RAM query is set up by sequentially sending in address qubits to change the qutrit states until a path to the desired cell is created. (Bottom left) To extract the contents of the memory cell, a `bus' photon is used. The photon is directed to the desired cell by the qutrits, where it couples to the memory cell and copies its contents. (Bottom right) The bus photon travels back through the qRAM, resetting the qutrit states to $\ket{\hbox{wait}}$ on its way out.}
+    \label{fig:bb-sequence}
+\end{figure}
+
+
+
+To see how efficiency is improved let's count the number of unitary operations. The first address qubit performs one operation by coupling with the root qutrit. The second qubit performs two, the root qutrit and then the qutrit in the second layer. The third performs three, and so on. This means to set the qutrits takes $n(n+1)/2$ operations, more succinctly represented as $O(n^2)$. The bus qubit performs only $2n + 1$ operations, which does not worsen this complexity. As this is polynomial in the address bit size, the bucket brigade qRAM appears to be efficient. It is also claimed that, since only $n$ of the qutrits are involved in the query (rather than all $2^n-1$), it is potentially possible to get away with a worse error rate $O(1/n^2)$, and leave the idle qutrits uncorrected. \textbf{I have to go check my notes, this paragraph needs to be improved}.
+
+\begin{enumerate} 
+ \item \textbf{What happens when we query in superposition?} 
+  \emph{I don't have a satisfactory answer for this.} The claimed advantage comes partially from the fact that we only need to tinker with $n$ of the qutrits; but if we query in superposition, don't we still have to handle all $2^n - 1$ of them anyways?
+ \item \textbf{Can we actually get away without error correction?} \emph{Potentially}. It has been shown that in cases where there are a superpolynomial amount of queries to the qRAM (for example, in Grover's algorithm), the error rate of the qRAM must be superpolynomially small \cite{Regev2008}, in which case we will in fact need error correction \cite{Arunachalam2015}. That said, in situations where the number of queries is small, it may be possible yet to get away without it, in which case bucket brigade provides a substantial improvement in the number of operations that must be performed.
+\end{enumerate}
+
+
+
+\subsection{Bit query circuit model}
+
+While conceptually simple, the bucket brigade model as described in the previous section does not lend itself very well to implementation on our present day machines. For one, it requires both qutrits and qubits; furthermore, the operations are not specified in the usual parlance of the circuit model - how do we implement this $U$, and the routing?
+
+A circuit model for bucket brigade qRAM was presented in \cite{Arunachalam2015}. \autoref{fig:bb-combined} contains a re-drawn version of these circuits in order to highlight the structure of the algorithm as well as the patterns of gates that are used to perform the query.
+
+\begin{figure}
+ \centering
+  \captionsetup{width=.89\linewidth}
+ \includegraphics[scale=0.8]{images/bb-combined}
+ \caption{\textbf{For pedagogical purposes; not most optimal}. (Top left) A bucket brigade circuit for a 1-qubit address (2 memory cells). (Top right) A bucket brigade circuit for a 2-qubit address. The first 6 gates are a fanout of the address bits to the auxiliary `trigger' register, denoted by $\tau$. A cascade of Toffolis then couples the memory cells to the output. To make the query fully reversible, the fanout component must be repeated. The subscripts on the memory cells are ordered from top to bottom of the address register, i.e. $a_{n-1}, a_{n-2}, \ldots, a_0$. (Bottom) A bucket brigade circuit for a 3-qubit address, highlighting the pattern that emerges in the construction of this circuit. The fanout component is recursive, with the 1- and 2-qubit fanout portions appearing.}
+ \label{fig:bb-combined}
+\end{figure}
+
+
+The bucket brigade circuit model consists of four registers of qubits. To query an $n$-bit address, we require:
+\begin{itemize}
+ \item An address register, $a$, of $n$ qubits
+ \item A memory register $m$ with $2^n$ qubits containing the stored values (i.e. qubits in $\ket{0}$ or $\ket{1}$.
+ \item An auxillary register $\tau$ with $2^n$ qubits to trigger readout of the memory register
+ \item An output register
+\end{itemize}
+
+To perform a query, the address register is first `fanned out' onto the auxillary register $\tau$ in such a way that it produces a `one-hot' encoding of the addresses to be queried. For example, if we want to query at address $\ket{i}$, the fanout will set the $i$'th qubit of $\tau$ to $\ket{1}$. This then couples to the $i$'th qubit of the memory register using a Toffoli, and changes the output bit depending on the contents. Finally, note that for full reversibility, the fanout must be run in reverse to reset the auxillary qubits back to $\ket{0}$. 
+
+This can also be generalized to the case where the memory contents are multi-bit values. A circuit for this case is presented in \autoref{fig:bb-multioutput}. The structure of the address and auxillary registers is the same, but the memory and output registers differ. If the $2^n$ memory cells contain $k$-bit values, the output register changes from 1 qubit to $k$ qubits.  The memory becomes $(k+1)2^n$ qubits wide. Essentially, the memory register is split into $2^n$ subregisters where $k$ qubits contain the memory contents, and the last qubit is used as an indicator to trigger readout. The trigger register $\tau$ works on this set of indicator qubits (shown in red in \autoref{fig:bb-multioutput}). The indicator qubits then couple with the memory contents and copy the values to the output.
+
+\begin{figure}
+ \centering
+ \captionsetup{width=.89\linewidth}
+ \includegraphics[scale=0.8]{images/bb-2qubit-3bitout}
+ \caption{\textbf{For pedagogical purposes; not most optimal.} Extension of the bucket brigade circuit model to the case where each memory cell contains multiple output bits (in this case, 3). The structure of the circuit is largely the same, except the original trigger register acts on a set of `indicator' qubits representative of each memory cell (highlighted in red). These indicator qubits then control coupling of the memory contents to the set of output bits.}
+ \label{fig:bb-multioutput}
+\end{figure}
+
+
+\subsection{Phase query circuit model}
+
+\subsection{Analysis}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Quantum ROM}
+\label{sec:circuits}
+
+\subsection{Quantum ROM}
+
+\subsection{Efficient state preparation with a qROM}
+
+Discuss \cite{Vadym2018}
+
+\subsection{Optimizing quantum ROMs}
+
+\subsection{Problem-specific qROMs}
+
+Talk about the qROM in \cite{Babbush2018}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Hardware proposals for qRAM}
+\label{sec:hardware}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Outlook}
+\label{sec:outlook}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\bibliography{primer}
+\bibliographystyle{unsrt}
+
+\end{document}
