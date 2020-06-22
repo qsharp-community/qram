@@ -6,6 +6,7 @@
     open Microsoft.Quantum.Canon;
     open Microsoft.Quantum.Intrinsic;
     open Microsoft.Quantum.Arithmetic;
+    open Microsoft.Quantum.Measurement;
 
 ///////////////////////////////////////////////////////////////////////////
 // PUBLIC API
@@ -88,11 +89,59 @@
         targetRegister : Qubit[]
     )
     : Unit is Adj + Ctl {
-        (ControlledOnInt(address, ApplyPauliFromBitString(PauliX, true, value, _)))
+        (ControlledOnInt(address, ApplyPauliFromBitString(PauliX, true, value,_)))
             (addressRegister!, targetRegister);
     }
 
 ///////////////////////////////////////////////////////////////////////////
 // UTILITY FUNCTIONS
 ///////////////////////////////////////////////////////////////////////////
+
+
+///////////////////////////////////////////////////////////////////////////
+
+//BB
+    operation Toffoli(controlPair : Qubit[], target : Qubit) : Unit
+    is Adj + Ctl {
+        Controlled X(controlPair, target);
+    }
+    operation Readout(memoryRegister : Qubit[], auxillaryRegister : Qubit[], target : Qubit) : Unit
+    is Adj + Ctl {
+        let controlPairs = TupleArrayAsNestedArray(Zip(auxillaryRegister, memoryRegister));
+        //Mapped(Toffoli(_,target), controlPairs);
+    }
+    //operation ApplyAddressFanout(addressRegister : Qubit[], auxillaryRegister : Qubit[]) : Unit
+    //is Adj + Ctl {
+    //   let n = Length(addressRegister);      
+    //   using (aux = Qubit[2^n]){
+    //       X(aux[2^n - 1]);
+    //        for (i in 0..(n-1)){
+    //            for (j in 0..2^(n-i)..((2^n)-1))
+    //            {
+    //             CCNOT(addressRegister[i], aux[j], aux[j + 2^(n-i-1)]);
+    //             CNOT(aux[j + 2^(n-i-1)], aux[j]); 
+    //            }
+    //          }
+    //   }
+    // }
+        
+    //}
+    operation ApplyAddressFanout(addressRegister : Qubit[]) : Result[]
+    {
+       let n = Length(addressRegister);      
+       using (aux = Qubit[2^n]){
+           X(aux[0]);
+           
+            for (i in 0..(n-1)){
+                for (j in 0..2^(n-i)..((2^n)-1))
+                {
+                 CCNOT(addressRegister[i], aux[j], aux[j + 2^(n-i-1)]);
+                 CNOT(aux[j + 2^(n-i-1)], aux[j]); 
+                }
+              }
+        return ForEach(MResetZ, aux);      
+       }
+     }
+ 
+ 
 }
