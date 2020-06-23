@@ -35,7 +35,7 @@
         mutable result = new Bool[0];
 
         // Create the new ImplicitQRAM oracle
-        let memory = ImplicitQRAMOracle(data);
+        let memory = QROMOracle(data);
 
         using((addressRegister, targetRegister) = 
             (Qubit[memory::AddressSize], Qubit[memory::DataSize])
@@ -45,7 +45,7 @@
             // Prepare the address register 
             ApplyPauliFromBitString (PauliX, true, queryAddressAsBool, addressRegister);
             // Perform the lookup
-            memory::Lookup(LittleEndian(addressRegister), targetRegister);
+            memory::Read(LittleEndian(addressRegister), targetRegister);
             // Get results and make sure its the same format as the data provided i.e. Bool[].
             set result = ResultArrayAsBoolArray(MultiM(targetRegister));
             // Reset all the qubits before returning them
