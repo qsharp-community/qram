@@ -8,7 +8,7 @@ namespace Qram{
     newtype AddressRegister = (Qubit[]);
 
     // Describes a single data point in a memory
-    newtype MemoryDatum = (address: Int, data: Bool[]);
+    newtype MemoryCell = (address: Int, data: Bool[]);
 
     /// # Summary
     /// Type representing a generic QROM type.

@@ -38,7 +38,7 @@
     operation BucketBrigadeWrite(
         addressRegister : AddressRegister, 
         memoryRegister : MemoryRegister, 
-        dataValue : (Int, Bool[])
+        dataValue :  Bool[]
     ) 
     : Unit is Adj + Ctl {
 
