@@ -15,7 +15,7 @@ jobs:
 
     - uses: xu-cheng/latex-action@v2
       with:
-        working-directory: docs
+        working_directory: docs
         root_file: primer.tex
         compiler: pdflatex
 
