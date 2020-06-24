@@ -101,15 +101,9 @@
 ///////////////////////////////////////////////////////////////////////////
 
 //BB
-    operation Toffoli(controlPair : Qubit[], target : Qubit) : Unit
-    is Adj + Ctl {
-        Controlled X(controlPair, target);
-    }
-    operation Readout(memoryRegister : Qubit[], auxillaryRegister : Qubit[], target : Qubit) : Unit
-    is Adj + Ctl {
-        let controlPairs = TupleArrayAsNestedArray(Zip(auxillaryRegister, memoryRegister));
-        //Mapped(Toffoli(_,target), controlPairs);
-    }
+    
+   
+
     //operation ApplyAddressFanout(addressRegister : Qubit[], auxillaryRegister : Qubit[]) : Unit
     //is Adj + Ctl {
     //   let n = Length(addressRegister);      
@@ -126,22 +120,63 @@
     // }
         
     //}
-    operation ApplyAddressFanout(addressRegister : Qubit[]) : Result[]
+
+  function BBQRAMOracle(dataValues : ((Int, Bool)[])) : BBQRAM{   
+    let largestAddress = Microsoft.Quantum.Math.Max(
+    Microsoft.Quantum.Arrays.Mapped(Fst<Int, Bool>, dataValues));
+  
+    //let largestData = Max((Mapped(BoolArrayAsInt,Mapped(Snd<Int, (Bool[])>), dataValues))));
+
+    let bbqrams = BoundCA(Mapped(BBSingleValueWriter, dataValues)); 
+
+        return Default<BBQRAM>()
+            w/ LookupBB <- bbqrams
+            w/ AddressSize <- BitSizeI(largestAddress)
+            w/ DataSize <- 1;
+  }
+
+  internal function BBSingleValueWriter(address : Int, value : Bool)
+    : ((LittleEndian, Qubit) => Unit is Adj + Ctl) {
+        return ApplyBBQRAM(address, value, _, _);
+    }
+internal operation ApplyBBQRAM(address : Int, value : Bool, addressRegister : LittleEndian, target : Qubit) : Unit is Adj + Ctl
+    {   
+        ApplyPauliFromBitString(PauliX, true, IntAsBoolArray(address, 2),addressRegister!);
+        let auxillaryRegister = addressRegister!;
+        ApplyPauliFromBitString(PauliX, true, IntAsBoolArray(address, 2),auxillaryRegister);
+        let memoryRegister = auxillaryRegister;
+        ApplyAddressFanout(addressRegister, auxillaryRegister);
+        Readout(auxillaryRegister, memoryRegister, target);
+    }
+
+ internal operation ApplyAddressFanout(addressRegister : LittleEndian, auxillaryRegister : Qubit[]) : Unit is Adj + Ctl
     {
-       let n = Length(addressRegister);      
-       using (aux = Qubit[2^n]){
-           X(aux[0]);
-           
-            for (i in 0..(n-1)){
-                for (j in 0..2^(n-i)..((2^n)-1))
-                {
-                 CCNOT(addressRegister[i], aux[j], aux[j + 2^(n-i-1)]);
-                 CNOT(aux[j + 2^(n-i-1)], aux[j]); 
+       let n = Length(addressRegister!);      
+       X(auxillaryRegister[0]);
+       for (i in 0..(n-1)){
+            for (j in 0..2^(n-i)..((2^n)-1))
+            {
+               CCNOT(addressRegister![i], auxillaryRegister[j], auxillaryRegister[j + 2^(n-i-1)]);
+               CNOT(auxillaryRegister[j + 2^(n-i-1)], auxillaryRegister[j]); 
                 }
-              }
-        return ForEach(MResetZ, aux);      
-       }
-     }
+            }    
+    }
+    operation Readout(auxillaryRegister : Qubit[], memoryRegister : Qubit[], target : Qubit) : Unit
+    is Adj + Ctl {
+  
+    let n = Length(auxillaryRegister);
+      for (i in 0..(n-1)){
+        CNOT (auxillaryRegister[i],memoryRegister[i]);
+        CNOT (memoryRegister[i], target);
+    }
  
- 
+        //CCNOT(auxillaryRegister[i, memoryRegister[], target);
+        //let controlPairs = TupleArrayAsNestedArray(Zip(auxillaryRegister, memoryRegister));
+        //Mapped(Toffoli(_,target), controlPairs);
+    }
+   newtype BBQRAM = (
+   LookupBB : ((LittleEndian, Qubit) => Unit is Adj + Ctl), 
+   AddressSize : Int, 
+   DataSize : Int
+  );
 }
