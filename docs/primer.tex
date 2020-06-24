@@ -15,6 +15,8 @@
     urlcolor={blue!70!black}
 }
 
+\newcommand\todo[1]{\textcolor{red}{#1}}
+
 %opening
 \title{A primer on quantum RAM}
 \author{Olivia Di Matteo}
@@ -23,13 +25,15 @@
 
 \maketitle
 
-\abstract{\textcolor{red}{\textbf{This document is a work in progress} and is being continuously edited.}{ 
-
+\abstract{\textcolor{red}{\textbf{This document is a work in progress} and is being continuously edited.}}
+\setcounter{tocdepth}{4}
+\setcounter{secnumdepth}{4}
 \tableofcontents
 
 \section{Introduction and FAQ}
 
 Quantum RAM (qRAM) has gained some notoriety in the past few years, and attitudes toward it depend quite heavily on the circles you run in. The goal of this set of notes is to provide a general overview of the subject, as well as discuss some very specific implementations. It is meant to be a companion to the Q\# qRAM libraries we are writing (cite the repo), but can also serve as a standalone reference.
+
 
 In my experience, explaining qRAM to someone boils down to answering a handful of key questions. I'll provide some potentially unsatisfactory answers up front, but go into far more detail in the next few sections\footnote{Those details may not be satisfactory either.}.
 
@@ -202,13 +206,13 @@ The bucket brigade circuit model consists of four registers of qubits. To query 
 \begin{itemize}
  \item An address register, $a$, of $n$ qubits
  \item A memory register $m$ with $2^n$ qubits containing the stored values (i.e. qubits in $\ket{0}$ or $\ket{1}$.
- \item An auxillary register $\tau$ with $2^n$ qubits to trigger readout of the memory register
+ \item An auxiliary register $\tau$ with $2^n$ qubits to trigger readout of the memory register
  \item An output register
 \end{itemize}
 
-To perform a query, the address register is first `fanned out' onto the auxillary register $\tau$ in such a way that it produces a `one-hot' encoding of the addresses to be queried. For example, if we want to query at address $\ket{i}$, the fanout will set the $i$'th qubit of $\tau$ to $\ket{1}$. This then couples to the $i$'th qubit of the memory register using a Toffoli, and changes the output bit depending on the contents. Finally, note that for full reversibility, the fanout must be run in reverse to reset the auxillary qubits back to $\ket{0}$. 
+To perform a query, the address register is first `fanned out' onto the auxiliary register $\tau$ in such a way that it produces a `one-hot' encoding of the addresses to be queried. For example, if we want to query at address $\ket{i}$, the fanout will set the $i$'th qubit of $\tau$ to $\ket{1}$. This then couples to the $i$'th qubit of the memory register using a Toffoli, and changes the output bit depending on the contents. Finally, note that for full reversibility, the fanout must be run in reverse to reset the auxiliary qubits back to $\ket{0}$. 
 
-This can also be generalized to the case where the memory contents are multi-bit values. A circuit for this case is presented in \autoref{fig:bb-multioutput}. The structure of the address and auxillary registers is the same, but the memory and output registers differ. If the $2^n$ memory cells contain $k$-bit values, the output register changes from 1 qubit to $k$ qubits.  The memory becomes $(k+1)2^n$ qubits wide. Essentially, the memory register is split into $2^n$ subregisters where $k$ qubits contain the memory contents, and the last qubit is used as an indicator to trigger readout. The trigger register $\tau$ works on this set of indicator qubits (shown in red in \autoref{fig:bb-multioutput}). The indicator qubits then couple with the memory contents and copy the values to the output.
+This can also be generalized to the case where the memory contents are multi-bit values. A circuit for this case is presented in \autoref{fig:bb-multioutput}. The structure of the address and auxiliary registers is the same, but the memory and output registers differ. If the $2^n$ memory cells contain $k$-bit values, the output register changes from 1 qubit to $k$ qubits.  The memory becomes $(k+1)2^n$ qubits wide. Essentially, the memory register is split into $2^n$ subregisters where $k$ qubits contain the memory contents, and the last qubit is used as an indicator to trigger readout. The trigger register $\tau$ works on this set of indicator qubits (shown in red in \autoref{fig:bb-multioutput}). The indicator qubits then couple with the memory contents and copy the values to the output.
 
 \begin{figure}
  \centering
@@ -219,9 +223,73 @@ This can also be generalized to the case where the memory contents are multi-bit
 \end{figure}
 
 
+\subsubsection{Resource estimation}
+
+One of the primary reasons for designing qRAM libraries in Q\# was to get better resource estimates for qRAM circuits using the functionality afforded to us by both the \texttt{ResourcesEstimator} and the \texttt{ToffoliSimulator}. Note that all the gates in \autoref{fig:bb-combined} and \autoref{fig:bb-multioutput} are Toffolis, and so bucket brigade qRAMs are really just fancy Boolean circuits. Plenty of optimization tools (\textcolor{red}{cite some}) exist for Boolean circuits, and so we anticipate that we'll be able to do reasonably well. But first, let's do some resource estimation `by hand' to get an idea of the worst we can expect.
+
+We will do resource estimation at the \emph{logical level}, i.e. not delve into the fault-tolerant level and estimate things like physical qubits and time required. Instead, we will focus on the following set of parameters:
+\begin{itemize}
+ \item Number of qubits $N_q$ (or, circuit width)
+ \item Circuit depth $D$
+ \item $T$-count $N_T$
+ \item $T$-depth $D_T$
+ \item CNOT-count $N_{CX}$
+ \item non-CNOT Clifford count $N_{HS}$
+\end{itemize}
+The value of $N_{HS}$ is often not included in lower-level resource estimation. For one, on a present-day machine, CNOTs are much noisier and harder to implement, so reducing the number of CNOTs is far more important than reducing the number of other types of gates. Furthermore, of the single-qubit gates, the $T$ gate is the one that will give us the most trouble in a fault-tolerant setting. The $H$ and $S$ operations are generally considered `easy', but we still include it in our analysis for completeness.
+
+\paragraph{Single-bit output}
+
+Before we begin, we need to make some assumptions. All of the gates in a BB circuit are either CNOTs or Toffolis. Assuming we choose the typical universal gate of Clifford+$T$, it is necessary to further decompose the Toffolis into elementary gates. There are a number of ways of doing so, and differ in that one needs to make a choice about whether to use some number of auxiliary qubits. They all require a total of 7 $T$ gates, but the $T$-depth can be decreased with extra qubits. There are three `standard' decompositions, and their respective resource counts are shown in \autoref{tab:toffoli-tdepth}. 
+In what follows, we will take the simplest route and assume that no auxiliary qubits are added, but note that the resource counts for the $T$-depth 1 case are listed in \cite{DiMatteo2020}. 
+
+\begin{table}
+ \centering
+  \captionsetup{width=.89\linewidth}
+ \begin{tabular}{|c|c|c|}
+  \hline
+  Auxiliary qubits & $T$-depth & Reference \\ \hline
+  0 & 3 & MITM \\ \hline
+  1 & 2 & \\ \hline
+  3 & 1 & \cite{Selinger2013} \\ \hline
+ \end{tabular}
+ \caption{A Toffoli gate can be decomposed over Clifford+$T$. While 7 $T$ gates total are required, the $T$-depth is flexible if one chooses to add some additional qubits. }
+ \label{tab:toffoli-tdepth}
+\end{table}
+
+The number of qubits required was explained previously, but let's total them up. Suppose that our memory addresses are $n$ bits. Then:
+\begin{equation}
+ \begin{tabular}{c|c}
+  Register & Number  of qubits \\ \hline
+  $a$ & $n$ \\
+  $\tau$ & $2^n$ \\
+  $m$ & $2^n$ \\
+  Output & 1 \\ \hline
+  Total $N_q$ & $2^{n+1} + n + 1$
+ \end{tabular}
+\end{equation} 
+
+Next, let's take a closer look at the gate counts. Let's return to our implementation of the Toffoli. Looking at the circuit in 
+
+We'll consider the fanout and the query portions separately. In the fanout portion, we see there are $2^n - 2$ Toffolis, and $2^n$ CNOTs. 
+
+The final (unoptimized) resource counts for a one-bit bucket brigade qRAM are:
+\begin{eqnarray}
+ N_q &=& \\ \nonumber
+ D   &=& \\ \nonumber
+ N_T &=& \\ \nonumber
+ D_T &=& \\ \nonumber
+ N_{CX} &=& \\ \nonumber
+ N_{HS} &=&
+\end{eqnarray}
+
+
+\paragraph{Multi-bit output}
+
+
 \subsection{Phase query circuit model}
 
-\subsection{Analysis}
+\subsubsection{Resource estimation}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
