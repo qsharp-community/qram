@@ -231,8 +231,8 @@ We will do resource estimation at the \emph{logical level}, i.e. not delve into 
 \begin{itemize}
  \item Number of qubits $N_q$ (or, circuit width)
  \item Circuit depth $D$
- \item $T$-count $N_T$
  \item $T$-depth $D_T$
+ \item $T$-count $N_T$
  \item CNOT-count $N_{CX}$
  \item non-CNOT Clifford count $N_{HS}$
 \end{itemize}
@@ -320,8 +320,8 @@ The final (unoptimized) resource counts for a one-bit bucket brigade qRAM are:
 \begin{eqnarray}
  N_q &=& 2^{n+1} + n + 1 \\ \nonumber
  D   &=& 27 \cdot 2^n + 2n -34 \\ \nonumber
- N_T &=& 21 \cdot 2^n - 28 \\ \nonumber
  D_T &=& 9 \cdot 2^n - 12 \\ \nonumber
+ N_T &=& 21 \cdot 2^n - 28 \\ \nonumber
  N_{CX} &=& 23 \cdot 2^n - 28 \\ \nonumber
  N_{HS} &=& 6 \cdot 2^n - 8
 \end{eqnarray}
@@ -331,6 +331,29 @@ The final (unoptimized) resource counts for a one-bit bucket brigade qRAM are:
  
 \paragraph{Multi-bit output}
 
+Let us now perform the same analysis for the situation where the memory cells may store multiple bits. We'll suppose that addresses are still $n$ bits, but store $k$ bits each. Consider the differences between the top right panel of \autoref{fig:bb-combined}, and \autoref{fig:bb-multioutput} (i.e. a 2-bit address, so 4 memory cells). The address fanout portion is \emph{exactly the same}; what differs is the query itself, as now we need to couple with each of the memory cells to copy the information to the output. The number of qubits also increases:
+\begin{equation}
+ \begin{tabular}{c|c}
+  Register & Number  of qubits \\ \hline
+  $a$ & $n$ \\
+  $\tau$ & $2^n$ \\
+  $m$ & $(k + 1) 2^n$ \\
+  Output & $k$ \\ \hline
+  Total $N_q$ & $(k + 2) 2^n + n + k$
+ \end{tabular}
+\end{equation} 
+
+For the remainder of the query circuit, the $2^n$ Toffolis of the query have become $2^n$ CNOTs (from the trigger qubits to the indicator qubits of the cells), followed by $k 2^n$ sequential Toffolis. Note, however, that many of these Toffolis can in fact be done in parallel. We will not consider that when estimating resources here by hand, but note that once we implement the circuits in Q\# and use the Toffoli simulator, the circuit depth will likely decrease significantly. Calculating by hand, the resources for the multi-output bit case are as follows:
+\begin{eqnarray}
+ N_q &=& (k + 2) 2^n + n + k \\ \nonumber
+ D   &=& (18 + 9k)2^n + 2n - 33 \\ \nonumber
+ D_T &=& (6+3k)2^n - 12 \\ \nonumber
+ N_T &=& (14 + 7k)2^n - 28 \\ \nonumber
+ N_{CX} &=& (17+7k)2^n - 28  \\ \nonumber
+ N_{HS} &=& (4+2k)2^n - 8
+\end{eqnarray}
+
+\todo{Verify and cross-check with \texttt{ResourcesEstimator}}
 
 \subsection{Phase query circuit model}
 
