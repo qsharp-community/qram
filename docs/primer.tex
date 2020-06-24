@@ -240,8 +240,9 @@ The value of $N_{HS}$ is often not included in lower-level resource estimation. 
 
 \paragraph{Single-bit output}
 
-Before we begin, we need to make some assumptions. All of the gates in a BB circuit are either CNOTs or Toffolis. Assuming we choose the typical universal gate of Clifford+$T$, it is necessary to further decompose the Toffolis into elementary gates. There are a number of ways of doing so, and differ in that one needs to make a choice about whether to use some number of auxiliary qubits. They all require a total of 7 $T$ gates, but the $T$-depth can be decreased with extra qubits. There are three `standard' decompositions, and their respective resource counts are shown in \autoref{tab:toffoli-tdepth}. 
-In what follows, we will take the simplest route and assume that no auxiliary qubits are added, but note that the resource counts for the $T$-depth 1 case are listed in \cite{DiMatteo2020}. 
+Before we begin, we need to make some assumptions. All of the gates in a BB circuit are either CNOTs or Toffolis. Assuming we choose the typical universal gate of Clifford+$T$, it is necessary to further decompose the Toffolis into elementary gates. There are a number of ways of doing so, and they differ in that one needs to make a choice about whether to use auxiliary qubits. They all require a total of 7 $T$ gates, but the $T$-depth can be decreased with extra qubits. There are three `standard' decompositions, and their respective resource counts are shown in \autoref{tab:toffoli-tdepth}. 
+
+In what follows, we will take the simplest route and assume that no auxiliary qubits are added, but note that the resource counts for the $T$-depth 1 case are listed in \cite{DiMatteo2020}. We will use the decomposition of Figure 13 in \cite{MITM}, which is reproduced here in \autoref{fig:toffoli-tdepth-3}.
 
 \begin{table}
  \centering
@@ -250,12 +251,21 @@ In what follows, we will take the simplest route and assume that no auxiliary qu
   \hline
   Auxiliary qubits & $T$-depth & Reference \\ \hline
   0 & 3 & MITM \\ \hline
-  1 & 2 & \\ \hline
+  1 & 2 & \todo{Cite} \\ \hline
   3 & 1 & \cite{Selinger2013} \\ \hline
  \end{tabular}
- \caption{A Toffoli gate can be decomposed over Clifford+$T$. While 7 $T$ gates total are required, the $T$-depth is flexible if one chooses to add some additional qubits. }
+ \caption{A Toffoli gate can be decomposed over Clifford+$T$. While 7 $T$ gates total are required, the $T$-depth is flexible if one chooses to add some additional qubits. \todo{Verify citations} }
  \label{tab:toffoli-tdepth}
 \end{table}
+
+\begin{figure}[h]
+ \centering
+ \captionsetup{width=.89\linewidth}
+ \includegraphics[scale=0.4]{images/matt-toffoli-decomp}
+ \caption{A $T$-depth 3 version of the Toffoli gate over Clifford+$T$. This circuit has full depth 9. Figure reproduced from Figure 13 of \cite{MITM}. \todo{remake as vector graphic}}
+ \label{fig:toffoli-tdepth-3}
+\end{figure}
+
 
 The number of qubits required was explained previously, but let's total them up. Suppose that our memory addresses are $n$ bits. Then:
 \begin{equation}
@@ -269,21 +279,56 @@ The number of qubits required was explained previously, but let's total them up.
  \end{tabular}
 \end{equation} 
 
-Next, let's take a closer look at the gate counts. Let's return to our implementation of the Toffoli. Looking at the circuit in 
+Next, let's take a closer look at the gate counts. In the fanout portion, we see there are $2^n - 2$ Toffolis, and $2^n$ CNOTs. In the case where the auxiliary register is being re-used, the fanout portion must be run twice \todo{(depending on how the library handles aux registers, we may not actually need this)}, yielding $2^{n+1} - 4$ Toffolis and $2^{n+1}$ CNOTs. As for the query portion, we see there are $2^n$ sequential Toffolis.
 
-We'll consider the fanout and the query portions separately. In the fanout portion, we see there are $2^n - 2$ Toffolis, and $2^n$ CNOTs. 
+Let us begin by computing the $T$-count $N_T$. Each Toffoli has 7 $T$-gates, so we have
+\begin{eqnarray}
+ \nonumber N_T &=& 2 \cdot N_T(\hbox{fanout}) + N_T(\hbox{query}) \\
+ \nonumber    &=& 2 \cdot 7 \cdot (2^n - 2) + 7 \cdot 2^n \\
+     &=& 21 \cdot 2^n - 28
+\end{eqnarray}
+
+Next, the $T$-depth of all the Toffolis. Since none of the Toffolis are parallelized, it is just the sum of the $T$-depth of the individual gates:
+\begin{eqnarray}
+ \nonumber D_T &=& 2 \cdot D_T(\hbox{fanout}) + D_T(\hbox{query}) \\
+ \nonumber    &=& 2 \cdot 3 \cdot (2^n - 2) + 3 \cdot 2^n \\
+     &=& 9 \cdot 2^n - 12
+\end{eqnarray}
+
+The number of non-$CNOT$ Cliffords is also straightforward; only the Toffolis have any such gates: 2 Hadamards per Toffoli. Thus,
+\begin{eqnarray}
+ \nonumber N_{HS} &=& 2 \cdot N_{HS}(\hbox{fanout}) + N_{HS}(\hbox{query}) \\
+ \nonumber    &=& 2 \cdot 2 \cdot (2^n - 2) + 2 \cdot 2^n \\
+     &=& 6 \cdot 2^n - 8
+\end{eqnarray}
+
+For $N_{CX}$, we have
+\begin{eqnarray}
+ \nonumber N_{CX} &=& 2 \cdot N_{CX}(\hbox{fanout}) + N_{CX}(\hbox{query}) \\
+ \nonumber    &=& 2 \cdot \left(7 \cdot (2^n - 2) + 2^n \right)  + 7 \cdot 2^n \\
+     &=& 23 \cdot 2^n - 28
+\end{eqnarray}
+
+Finally, let's compute the depth. Note that in the fanout portion, the CNOTs can be run in only $n + 1$ layers of depth because many of the cascades can be parallelized. The depth of the Toffolis, however, is fixed at 9. So,
+\begin{eqnarray}
+ \nonumber D &=& 2 \cdot D (\hbox{fanout}) + D (\hbox{query}) \\
+ \nonumber    &=& 2 \cdot \left(9 \cdot (2^n - 2) +n + 1 \right) + 9 \cdot 2^n \\
+     &=& 27 \cdot 2^n + 2n -34
+\end{eqnarray}
 
 The final (unoptimized) resource counts for a one-bit bucket brigade qRAM are:
 \begin{eqnarray}
- N_q &=& \\ \nonumber
- D   &=& \\ \nonumber
- N_T &=& \\ \nonumber
- D_T &=& \\ \nonumber
- N_{CX} &=& \\ \nonumber
- N_{HS} &=&
+ N_q &=& 2^{n+1} + n + 1 \\ \nonumber
+ D   &=& 27 \cdot 2^n + 2n -34 \\ \nonumber
+ N_T &=& 21 \cdot 2^n - 28 \\ \nonumber
+ D_T &=& 9 \cdot 2^n - 12 \\ \nonumber
+ N_{CX} &=& 23 \cdot 2^n - 28 \\ \nonumber
+ N_{HS} &=& 6 \cdot 2^n - 8
 \end{eqnarray}
-
-
+ 
+ 
+ \todo{VERIFY and cross-checked with \texttt{ResourcesEstimator} and our library code.}
+ 
 \paragraph{Multi-bit output}
 
 
