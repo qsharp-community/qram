@@ -14,25 +14,18 @@
     let data = ExplicitMemoryData();
     let memory = BBQRAMOracle(data);
     
-    //using ((addressRegister, targetRegister) = (Qubit[Length(queryAddress)], Qubit[memory::DataSize])) 
-    //let aux = ApplyAddressFanout(
-    //let n = Length(queryAddress); 
-   // mutable resulti = new Result[n];
      return QueryAndMeasureBBQRAM(memory, queryAddress);
-    //ApplyPauliFromBitString(PauliX, true, queryAddress, qe); 
-    
-    //set resulti = ApplyAddressFanout(qe);
-    //ResetAll(qe);
+   
     }
    
    
  operation QueryAndMeasureBBQRAM(memory : BBQRAM, queryAddress : Int) : Int {
     mutable value = 0;
-        using ((addressRegister, target) = (Qubit[memory::AddressSize], Qubit())) {
+        using ((addressRegister, auxillaryRegister, memoryRegister, target) = (Qubit[memory::AddressSize], Qubit[2^(memory::AddressSize)], Qubit(), Qubit())) {
             ApplyPauliFromBitString (PauliX, true, IntAsBoolArray(queryAddress, memory::AddressSize), addressRegister);
-            memory::LookupBB(LittleEndian(addressRegister), target);
+            memory::LookupBB(LittleEndian(addressRegister), auxillaryRegister, memoryRegister,  target);
             ResetAll(addressRegister);
-            if (M(target)==One){
+            if (MResetZ(target)==One){
                 set value = 1;
             }
          return value;

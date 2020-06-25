@@ -7,7 +7,7 @@
     open Microsoft.Quantum.Intrinsic;
     open Microsoft.Quantum.Arithmetic;
     open Microsoft.Quantum.Measurement;
-
+    open Microsoft.Quantum.Diagnostics;
 ///////////////////////////////////////////////////////////////////////////
 // PUBLIC API
 ///////////////////////////////////////////////////////////////////////////
@@ -98,60 +98,93 @@
 ///////////////////////////////////////////////////////////////////////////
 
 
+
+//BUCKET-BRIGADE
 ///////////////////////////////////////////////////////////////////////////
-
-//BB
+// PUBLIC API
+///////////////////////////////////////////////////////////////////////////
     
-   
+     
+   /// # Summary
+   /// Type representing a generic BBQRAM type.
+   /// # Input
+   /// ## Lookup
+   /// The named operation that will look up data from the BBQRAM. 
+   /// ## AddressSize
+   /// The size (number of bits) needed to represent an address for the QRAM.
+   /// ## DataSize
+   /// The size (number of bits) needed to represent a data value for the QRAM.
+  newtype BBQRAM = (
+   LookupBB : ((LittleEndian, Qubit[], Qubit, Qubit) => Unit is Adj + Ctl), 
+   AddressSize : Int, 
+   DataSize : Int
+   );
 
-    //operation ApplyAddressFanout(addressRegister : Qubit[], auxillaryRegister : Qubit[]) : Unit
-    //is Adj + Ctl {
-    //   let n = Length(addressRegister);      
-    //   using (aux = Qubit[2^n]){
-    //       X(aux[2^n - 1]);
-    //        for (i in 0..(n-1)){
-    //            for (j in 0..2^(n-i)..((2^n)-1))
-    //            {
-    //             CCNOT(addressRegister[i], aux[j], aux[j + 2^(n-i-1)]);
-    //             CNOT(aux[j + 2^(n-i-1)], aux[j]); 
-    //            }
-    //          }
-    //   }
-    // }
-        
-    //}
-
+  /// # Summary
+  /// Creates an instance of an bucket-brigade QRAM given the data it needs to store.
+  /// # Input
+  /// ## dataValues
+  /// An array of tuples of the form (auxaddress, value) where the auxaddress is the address 
+  /// of the auxillary register to which the memory register is connected via CNOT gate and 
+  /// value is the data stored (either 0 or 1) in the memory register. 
+  /// # Output
+  /// BBRQRAM type
   function BBQRAMOracle(dataValues : ((Int, Bool)[])) : BBQRAM{   
     let largestAddress = Microsoft.Quantum.Math.Max(
     Microsoft.Quantum.Arrays.Mapped(Fst<Int, Bool>, dataValues));
-  
-    //let largestData = Max((Mapped(BoolArrayAsInt,Mapped(Snd<Int, (Bool[])>), dataValues))));
-
     let bbqrams = BoundCA(Mapped(BBSingleValueWriter, dataValues)); 
 
         return Default<BBQRAM>()
             w/ LookupBB <- bbqrams
-            w/ AddressSize <- BitSizeI(largestAddress)
+            w/ AddressSize <- 2
             w/ DataSize <- 1;
   }
 
-  internal function BBSingleValueWriter(address : Int, value : Bool)
-    : ((LittleEndian, Qubit) => Unit is Adj + Ctl) {
-        return ApplyBBQRAM(address, value, _, _);
+  /// # Summary
+  /// Returns an operation that represents a BBQRAM with one data value.
+  /// # Input
+  /// ## auxaddress
+  /// The address of auxillary register where the data is non-zero.
+  /// ## value
+  /// The value (as a Bool) representing the data at `address`
+  /// # Output
+  ///  An operation that can be used to look up data `value` at `address`
+  internal function BBSingleValueWriter(auxaddress : Int, value : Bool)
+    : ((LittleEndian, Qubit[], Qubit, Qubit) => Unit is Adj + Ctl) {
+        return ApplyBBQRAM(auxaddress, value, _, _, _,_);
     }
-internal operation ApplyBBQRAM(address : Int, value : Bool, addressRegister : LittleEndian, target : Qubit) : Unit is Adj + Ctl
+    
+  /// # Summary
+  /// 
+  /// # Input
+  /// ## auxaddress
+  /// 
+  /// ## value
+  /// 
+  /// ## addressRegister
+  /// State of the address qubits stored in little endian format.
+  /// ## auxillaryRegister
+  /// State of the auxilary qubits.
+  /// ## memoryRegister
+  /// State of a particular memory register qubit.
+  /// ## target
+  /// State of the target qubit.
+  internal operation ApplyBBQRAM(auxaddress : Int, value : Bool, addressRegister : LittleEndian, auxillaryRegister:Qubit[], memoryRegister:Qubit, target : Qubit) : Unit is Adj + Ctl
     {   
-        ApplyPauliFromBitString(PauliX, true, IntAsBoolArray(address, 2),addressRegister!);
-        let auxillaryRegister = addressRegister!;
-        ApplyPauliFromBitString(PauliX, true, IntAsBoolArray(address, 2),auxillaryRegister);
-        let memoryRegister = auxillaryRegister;
-        ApplyAddressFanout(addressRegister, auxillaryRegister);
-        Readout(auxillaryRegister, memoryRegister, target);
+        ApplyAddressFanout(addressRegister, auxillaryRegister);  
+        Readout(auxaddress, auxillaryRegister, memoryRegister, target);
     }
 
+ /// # Summary
+ /// Performs the FANOUT part of the bucket-brigade.
+ /// # Input
+ /// ## addressRegister
+ /// 
+ /// ## auxillaryRegister
+ /// 
  internal operation ApplyAddressFanout(addressRegister : LittleEndian, auxillaryRegister : Qubit[]) : Unit is Adj + Ctl
     {
-       let n = Length(addressRegister!);      
+       let n = Length(addressRegister!);
        X(auxillaryRegister[0]);
        for (i in 0..(n-1)){
             for (j in 0..2^(n-i)..((2^n)-1))
@@ -161,22 +194,22 @@ internal operation ApplyBBQRAM(address : Int, value : Bool, addressRegister : Li
                 }
             }    
     }
-    operation Readout(auxillaryRegister : Qubit[], memoryRegister : Qubit[], target : Qubit) : Unit
+    
+    /// # Summary
+    /// Performs the QUERY part of the bucket-brigade
+    /// # Input
+    /// ## auxaddress
+    /// 
+    /// ## auxillaryRegister
+    /// 
+    /// ## memoryRegister
+    /// 
+    /// ## target
+    /// 
+    internal operation Readout(auxaddress:Int, auxillaryRegister : Qubit[], memoryRegister : Qubit, target : Qubit) : Unit
     is Adj + Ctl {
-  
-    let n = Length(auxillaryRegister);
-      for (i in 0..(n-1)){
-        CNOT (auxillaryRegister[i],memoryRegister[i]);
-        CNOT (memoryRegister[i], target);
+    CNOT(auxillaryRegister[auxaddress], memoryRegister);
+    CNOT(memoryRegister, target);
     }
  
-        //CCNOT(auxillaryRegister[i, memoryRegister[], target);
-        //let controlPairs = TupleArrayAsNestedArray(Zip(auxillaryRegister, memoryRegister));
-        //Mapped(Toffoli(_,target), controlPairs);
-    }
-   newtype BBQRAM = (
-   LookupBB : ((LittleEndian, Qubit) => Unit is Adj + Ctl), 
-   AddressSize : Int, 
-   DataSize : Int
-  );
 }
