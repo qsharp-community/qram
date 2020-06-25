@@ -25,7 +25,6 @@ namespace Qram{
         DataSize : Int
     );
 
-
     /// # Summary
     /// Type representing a generic QRAM type.
     /// # Input
@@ -39,7 +38,7 @@ namespace Qram{
     /// 
     newtype QRAM = (
         Read : ((AddressRegister, MemoryRegister, Qubit) => Unit is Adj + Ctl), 
-        Write : ((AddressRegister, MemoryRegister, (Int, Bool[])) => Unit is Adj + Ctl), 
+        Write : ((MemoryRegister, (Int, Bool[])) => Unit), 
         AddressSize : Int,
         DataSize : Int
     );

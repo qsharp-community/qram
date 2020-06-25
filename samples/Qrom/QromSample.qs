@@ -1,4 +1,4 @@
-﻿namespace implicitQRAM {
+﻿namespace QromSample {
 
     open Microsoft.Quantum.Diagnostics;
     open Microsoft.Quantum.Arithmetic;
@@ -23,11 +23,12 @@
     /// dotnet run -- --query-address false false
     /// ```
 
-    operation TestImplicitQRAM(queryAddress : Int) : Int {
+    @EntryPoint()
+    operation QromSample(queryAddress : Int) : Int {
         // Generate a (Int, Bool[]) array of data.
         let data = GenerateMemoryData();
         // Create the QRAM.
-        let memory = ImplicitQRAMOracle(data);
+        let memory = QromOracle(data);
         // Write out some debugging info about our qRAM.
         Message($"qRAM address size: {memory::AddressSize} bits");
         Message($"qRAM data size:    {memory::DataSize} bits");
@@ -35,12 +36,11 @@
         return QueryAndMeasureQRAM(memory, queryAddress);
     }
     
-    @EntryPoint()
     operation TestImplicitQRAMSuperPosition() : Int {
         // Generate a (Int, Bool[]) array of data.
         let data = GenerateMemoryData();
         // Create the QRAM.
-        let memory = ImplicitQRAMOracle(data);
+        let memory = QromOracle(data);
         // Measure and return the data value stored at `queryAddress`.
         return QuerySuperpositionAndMeasureQRAM(memory);
     }
@@ -54,22 +54,22 @@
     /// The address you want to look up.
     /// # Output
     /// The data stored at `queryAddress` expressed as a human readable integer.
-    operation QueryAndMeasureQRAM(memory : QRAM, queryAddress : Int) : Int {
+    operation QueryAndMeasureQRAM(memory : QROM, queryAddress : Int) : Int {
         using ((addressRegister, targetRegister) = (Qubit[memory::AddressSize], Qubit[memory::DataSize])) {
             ApplyPauliFromBitString (PauliX, true, IntAsBoolArray(queryAddress, memory::AddressSize), addressRegister);
-            memory::Lookup(LittleEndian(addressRegister), targetRegister);
+            memory::Read(LittleEndian(addressRegister), targetRegister);
             ResetAll(addressRegister);
             return MeasureInteger(LittleEndian(targetRegister));
         }
     }
 
-    operation QuerySuperpositionAndMeasureQRAM(memory : QRAM) : Int {
+    operation QuerySuperpositionAndMeasureQRAM(memory : QROM) : Int {
         using ((addressRegister, targetRegister) = (Qubit[memory::AddressSize], Qubit[memory::DataSize])) {
             // Prepares the address register in superposition.
             ApplyToEach(H, addressRegister);
             DumpRegister((),addressRegister);
             // Performs the lookup on the qRAM
-            memory::Lookup(LittleEndian(addressRegister), targetRegister);
+            memory::Read(LittleEndian(addressRegister), targetRegister);
             DumpMachine();
             // Be kind rewind
             ResetAll(addressRegister);

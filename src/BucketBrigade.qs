@@ -6,6 +6,10 @@
     open Microsoft.Quantum.Canon;
     open Microsoft.Quantum.Intrinsic;
     open Microsoft.Quantum.Arithmetic;
+    open Microsoft.Quantum.Measurement;
+    open Microsoft.Quantum.Diagnostics;
+
+//
 
 ///////////////////////////////////////////////////////////////////////////
 // PUBLIC API
@@ -25,8 +29,8 @@
         }
 
         return Default<QRAM>()
-            w/ Read <-  BucketBrigadeRead(_,_,_)
-            w/ Write <- BucketBrigadeWrite(_,_,_)
+            w/ Read <-  BucketBrigadeRead(_, _, _)
+            w/ Write <- BucketBrigadeWrite(_, _)
             w/ AddressSize <- BitSizeI(largestAddress)
             w/ DataSize <- 1;
     }
@@ -36,12 +40,19 @@
 ///////////////////////////////////////////////////////////////////////////
     
     operation BucketBrigadeWrite(
-        addressRegister : AddressRegister, 
         memoryRegister : MemoryRegister, 
-        dataValue :  Bool[]
+        dataValue :  (Int, Bool[])
     ) 
-    : Unit is Adj + Ctl {
-
+    : Unit {
+        let address = Fst(dataValue);
+        let data = Head(Snd(dataValue));
+        if (data == false) {
+            Reset(memoryRegister![address]);
+        }
+        else {
+            Reset(memoryRegister![address]);
+            X(memoryRegister![address]);
+        }
     }
 
     operation BucketBrigadeRead(

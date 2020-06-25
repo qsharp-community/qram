@@ -19,7 +19,7 @@
     /// data are boolean arrays representing the integer values.
     /// # Output
     /// A `QROM` type.
-    function QROMOracle(dataValues : (Int, Bool[])[]) : QROM {
+    function QromOracle(dataValues : (Int, Bool[])[]) : QROM {
         let largestAddress = Microsoft.Quantum.Math.Max(
             Microsoft.Quantum.Arrays.Mapped(Fst<Int, Bool[]>, dataValues)
         );
