@@ -11,9 +11,9 @@
 
  @EntryPoint()
  operation TestBBQRAM(queryAddress : Int) : Int{
-    let data = ExplicitMemoryData();
+    let data = GenerateBBMemoryData();
     let memory = BBQRAMOracle(data);
-    
+
      return QueryAndMeasureBBQRAM(memory, queryAddress);
    
     }
@@ -21,10 +21,12 @@
    
  operation QueryAndMeasureBBQRAM(memory : BBQRAM, queryAddress : Int) : Int {
     mutable value = 0;
-        using ((addressRegister, auxillaryRegister, memoryRegister, target) = (Qubit[memory::AddressSize], Qubit[2^(memory::AddressSize)], Qubit(), Qubit())) {
+        using ((addressRegister, auxillaryRegister, memoryRegister, target) = (Qubit[memory::AddressSize], Qubit[2^(memory::AddressSize)], Qubit[2^(memory::AddressSize)], Qubit())) {
             ApplyPauliFromBitString (PauliX, true, IntAsBoolArray(queryAddress, memory::AddressSize), addressRegister);
             memory::LookupBB(LittleEndian(addressRegister), auxillaryRegister, memoryRegister,  target);
             ResetAll(addressRegister);
+            ResetAll(auxillaryRegister);
+            ResetAll(memoryRegister);
             if (MResetZ(target)==One){
                 set value = 1;
             }
@@ -32,11 +34,11 @@
         }
     }
   
- function ExplicitMemoryData() : (Int,Bool)[] {
+ function GenerateBBMemoryData() : (Int,Bool)[] {
         let m0 = (3, true);
         let m1 = (1, false);
         let m2 = (2, true);
-        let m3 = (0, false);
+        let m3 = (0, true);
         
         return [m0, m1, m2, m3];
     }

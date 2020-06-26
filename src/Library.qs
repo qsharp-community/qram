@@ -115,7 +115,7 @@
    /// ## DataSize
    /// The size (number of bits) needed to represent a data value for the QRAM.
   newtype BBQRAM = (
-   LookupBB : ((LittleEndian, Qubit[], Qubit, Qubit) => Unit is Adj + Ctl), 
+   LookupBB : ((LittleEndian, Qubit[], Qubit[], Qubit) => Unit is Adj + Ctl), 
    AddressSize : Int, 
    DataSize : Int
    );
@@ -124,7 +124,7 @@
   /// Creates an instance of an bucket-brigade QRAM given the data it needs to store.
   /// # Input
   /// ## dataValues
-  /// An array of tuples of the form (auxaddress, value) where the auxaddress is the address 
+  /// An array of tuples of the form (address, value) where the address is the address 
   /// of the auxillary register to which the memory register is connected via CNOT gate and 
   /// value is the data stored (either 0 or 1) in the memory register. 
   /// # Output
@@ -136,28 +136,28 @@
 
         return Default<BBQRAM>()
             w/ LookupBB <- bbqrams
-            w/ AddressSize <- 2
+            w/ AddressSize <- BitSizeI(largestAddress)
             w/ DataSize <- 1;
   }
 
   /// # Summary
   /// Returns an operation that represents a BBQRAM with one data value.
   /// # Input
-  /// ## auxaddress
+  /// ## address
   /// The address of auxillary register where the data is non-zero.
   /// ## value
   /// The value (as a Bool) representing the data at `address`
   /// # Output
   ///  An operation that can be used to look up data `value` at `address`
-  internal function BBSingleValueWriter(auxaddress : Int, value : Bool)
-    : ((LittleEndian, Qubit[], Qubit, Qubit) => Unit is Adj + Ctl) {
-        return ApplyBBQRAM(auxaddress, value, _, _, _,_);
+  internal function BBSingleValueWriter(address : Int, value : Bool)
+    : ((LittleEndian, Qubit[], Qubit[], Qubit) => Unit is Adj + Ctl) {
+        return ApplyBBQRAM(address, value, _, _, _,_);
     }
     
   /// # Summary
   /// 
   /// # Input
-  /// ## auxaddress
+  /// ## address
   /// 
   /// ## value
   /// 
@@ -169,10 +169,15 @@
   /// State of a particular memory register qubit.
   /// ## target
   /// State of the target qubit.
-  internal operation ApplyBBQRAM(auxaddress : Int, value : Bool, addressRegister : LittleEndian, auxillaryRegister:Qubit[], memoryRegister:Qubit, target : Qubit) : Unit is Adj + Ctl
+  internal operation ApplyBBQRAM(address : Int, value : Bool, addressRegister : LittleEndian, auxillaryRegister:Qubit[], memoryRegister:Qubit[], target : Qubit) : Unit is Adj + Ctl
     {   
+        if () {
         ApplyAddressFanout(addressRegister, auxillaryRegister);  
-        Readout(auxaddress, auxillaryRegister, memoryRegister, target);
+        if(value==true){
+            X(memoryRegister[address]);
+        }
+        Readout(address, auxillaryRegister, memoryRegister, target);
+        }
     }
 
  /// # Summary
@@ -183,7 +188,8 @@
  /// ## auxillaryRegister
  /// 
  internal operation ApplyAddressFanout(addressRegister : LittleEndian, auxillaryRegister : Qubit[]) : Unit is Adj + Ctl
-    {
+    { 
+
        let n = Length(addressRegister!);
        X(auxillaryRegister[0]);
        for (i in 0..(n-1)){
@@ -198,7 +204,7 @@
     /// # Summary
     /// Performs the QUERY part of the bucket-brigade
     /// # Input
-    /// ## auxaddress
+    /// ## address
     /// 
     /// ## auxillaryRegister
     /// 
@@ -206,10 +212,9 @@
     /// 
     /// ## target
     /// 
-    internal operation Readout(auxaddress:Int, auxillaryRegister : Qubit[], memoryRegister : Qubit, target : Qubit) : Unit
+    internal operation Readout(address:Int, auxillaryRegister : Qubit[], memoryRegister : Qubit[], target : Qubit) : Unit
     is Adj + Ctl {
-    CNOT(auxillaryRegister[auxaddress], memoryRegister);
-    CNOT(memoryRegister, target);
+        CNOT(auxillaryRegister[address], target);
     }
  
 }
