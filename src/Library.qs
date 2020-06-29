@@ -115,7 +115,6 @@
    /// ## DataSize
    /// The size (number of bits) needed to represent a data value for the QRAM.
   newtype BBQRAM = (
-   LookupBB : ((LittleEndian, Qubit[], Qubit[], Qubit) => Unit is Adj + Ctl), 
    AddressSize : Int, 
    DataSize : Int
    );
@@ -132,10 +131,12 @@
   function BBQRAMOracle(dataValues : ((Int, Bool)[])) : BBQRAM{   
     let largestAddress = Microsoft.Quantum.Math.Max(
     Microsoft.Quantum.Arrays.Mapped(Fst<Int, Bool>, dataValues));
-    let bbqrams = BoundCA(Mapped(BBSingleValueWriter, dataValues)); 
+        let addressx = Mapped(Fst<Int, Bool>, dataValues);
+        
+        //let bbqrams =Mapped(BB, addressx);
 
         return Default<BBQRAM>()
-            w/ LookupBB <- bbqrams
+           // w/ LookupBB <- bbqrams
             w/ AddressSize <- BitSizeI(largestAddress)
             w/ DataSize <- 1;
   }
@@ -149,10 +150,11 @@
   /// The value (as a Bool) representing the data at `address`
   /// # Output
   ///  An operation that can be used to look up data `value` at `address`
-  internal function BBSingleValueWriter(address : Int, value : Bool)
-    : ((LittleEndian, Qubit[], Qubit[], Qubit) => Unit is Adj + Ctl) {
-        return ApplyBBQRAM(address, value, _, _, _,_);
-    }
+
+  // function BB(address: Int)
+  //  : ((LittleEndian, Qubit[], Qubit[], Qubit) => Unit is Adj + Ctl) {
+  //      return ApplyBBQRAM( _, _, _,_);
+  //  }
     
   /// # Summary
   /// 
@@ -169,15 +171,13 @@
   /// State of a particular memory register qubit.
   /// ## target
   /// State of the target qubit.
-  internal operation ApplyBBQRAM(address : Int, value : Bool, addressRegister : LittleEndian, auxillaryRegister:Qubit[], memoryRegister:Qubit[], target : Qubit) : Unit is Adj + Ctl
+ operation ApplyBBQRAM(addressRegister : Qubit[], auxillaryRegister:Qubit[], memoryRegister:Qubit[], target : Qubit) : Unit is Adj + Ctl
     {   
-        if () {
-        ApplyAddressFanout(addressRegister, auxillaryRegister);  
-        if(value==true){
-            X(memoryRegister[address]);
-        }
-        Readout(address, auxillaryRegister, memoryRegister, target);
-        }
+      
+        ApplyAddressFanout(addressRegister, auxillaryRegister, target);  
+        Readout((auxillaryRegister), memoryRegister, target);
+            
+        
     }
 
  /// # Summary
@@ -187,18 +187,19 @@
  /// 
  /// ## auxillaryRegister
  /// 
- internal operation ApplyAddressFanout(addressRegister : LittleEndian, auxillaryRegister : Qubit[]) : Unit is Adj + Ctl
+ internal operation ApplyAddressFanout(addressRegister : Qubit[], auxillaryRegister : Qubit[], target:Qubit) : Unit is Adj + Ctl
     { 
 
-       let n = Length(addressRegister!);
+       let n = Length(addressRegister);
        X(auxillaryRegister[0]);
        for (i in 0..(n-1)){
             for (j in 0..2^(n-i)..((2^n)-1))
             {
-               CCNOT(addressRegister![i], auxillaryRegister[j], auxillaryRegister[j + 2^(n-i-1)]);
+               CCNOT(addressRegister[i], auxillaryRegister[j], auxillaryRegister[j + 2^(n-i-1)]);
                CNOT(auxillaryRegister[j + 2^(n-i-1)], auxillaryRegister[j]); 
                 }
-            }    
+            }   
+       
     }
     
     /// # Summary
@@ -212,9 +213,13 @@
     /// 
     /// ## target
     /// 
-    internal operation Readout(address:Int, auxillaryRegister : Qubit[], memoryRegister : Qubit[], target : Qubit) : Unit
+    internal operation Readout(auxillaryRegister : Qubit[], memoryRegister : Qubit[], target : Qubit) : Unit
     is Adj + Ctl {
-        CNOT(auxillaryRegister[address], target);
+        for (i in 0..(Length(auxillaryRegister)-1)){
+                CCNOT(auxillaryRegister[i], memoryRegister[i], target);
+       }
+    
+        
     }
  
 }
