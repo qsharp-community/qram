@@ -19,9 +19,9 @@
  operation QueryAndMeasureBBQRAM(data:(Int, Bool)[], memory : BBQRAM, queryAddress : Int) : Int {
    mutable value = 0;
    using ((addressRegister, auxillaryRegister, memoryRegister, target) = (Qubit[memory::AddressSize], Qubit[2^(memory::AddressSize)], Qubit[2^(memory::AddressSize)], Qubit())) {
-      ApplyPauliFromBitString (PauliX, true, Reversed(IntAsBoolArray(queryAddress, memory::AddressSize)), addressRegister);
+      ApplyPauliFromBitString (PauliX, true, IntAsBoolArray(queryAddress, memory::AddressSize), addressRegister);
       ApplyPauliFromBitString(PauliX, true, Mapped(Snd<Int,Bool>, data), memoryRegister);
-      ApplyBBQRAM(addressRegister, auxillaryRegister, memoryRegister, target);
+      ApplyBBQRAM(LittleEndian(addressRegister), auxillaryRegister, memoryRegister, target);
       ResetAll(addressRegister);
       ResetAll(auxillaryRegister);
       ResetAll(memoryRegister);
@@ -65,11 +65,11 @@
     }
 
  function ExplicitMemoryData8() : (Int,Bool)[] {
-        let m0 = (4, false);
-        let m1 = (5, true);
-        let m2 = (1, true);
-        let m3 = (3, false); 
-        let m4 = (6, false);
+    let m0= (4, false);
+    let m1 = (5, true);
+    let m2 = (1, true);
+    let m3 = (3, false); 
+    let m4 = (6, false);
         let m5 = (2, false);
         let m6 = (7, true);
         let m7 = (0, false);  
