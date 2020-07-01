@@ -29,13 +29,13 @@ namespace Qram{
     /// Type representing a generic QRAM type.
     /// # Input
     /// ## Read
-    /// 
+    /// Takes an address, memory, and target qubit to perform the lookup.
     /// ## Write
-    /// 
+    /// Writes a data value at address Int, with the value Bool[] to a MemoryRegister.
     /// ## AddressSize
-    /// 
+    /// The size (number of bits) needed to represent an address for the QRAM.
     /// ## DataSize
-    /// 
+    /// The size (number of bits) needed to represent a data value for the QRAM.
     newtype QRAM = (
         Read : ((AddressRegister, MemoryRegister, Qubit) => Unit is Adj + Ctl), 
         Write : ((MemoryRegister, (Int, Bool[])) => Unit), 

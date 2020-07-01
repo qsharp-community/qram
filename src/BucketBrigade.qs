@@ -9,12 +9,19 @@
     open Microsoft.Quantum.Measurement;
     open Microsoft.Quantum.Diagnostics;
 
-//
-
 ///////////////////////////////////////////////////////////////////////////
 // PUBLIC API
 ///////////////////////////////////////////////////////////////////////////
 
+    /// # Summary
+    /// Creates a QRAM type corresponding to a bit encoded Bucket Brigade scheme.
+    /// # Input
+    /// ## dataValues
+    /// The data to be stored in the memory.
+    /// ## memoryRegister
+    /// The register that you want to be initialized with the provided data.
+    /// # Output
+    /// An instance of the QRAM type that will allow you to use the memory.
     operation BucketBrigadeQRAMOracle(dataValues : (Int, Bool[])[], memoryRegister : MemoryRegister) : QRAM {
         // NB:User can't extend address space after its created
         let largestAddress = Microsoft.Quantum.Math.Max(
@@ -44,6 +51,13 @@
 // INTERNAL IMPLEMENTATION
 ///////////////////////////////////////////////////////////////////////////
     
+    /// # Summary
+    /// Writes a single bit of data to the memory.
+    /// # Input
+    /// ## memoryRegister
+    /// Register that represents the memory you are writing to.
+    /// ## dataValue
+    /// The tuple of (address, data) that you want written to the memory.
     operation BucketBrigadeWrite(
         memoryRegister : MemoryRegister, 
         dataValue :  (Int, Bool[])
@@ -60,6 +74,15 @@
         }
     }
 
+    /// # Summary
+    /// Reads out a value from a MemoryRegister to a target qubit given an address.
+    /// # Input
+    /// ## addressRegister
+    /// The qubit register that represents the address to be queried.
+    /// ## memoryRegister
+    /// The qubit register that represents the memory you are reading from.
+    /// ## target
+    /// The qubit that will have the memory value transferred to.
     operation BucketBrigadeRead(
         addressRegister : AddressRegister, 
         memoryRegister : MemoryRegister, 
@@ -87,6 +110,15 @@
         ApplyToEachCA(CCNOT(_, _, target), controlPairs);
     }
 
+    /// # Summary
+    /// Takes a register with a binary representation of an address and 
+    /// converts it to a one-hot encoding in the aux register.
+    /// # Input
+    /// ## addressRegister
+    /// Qubit register that uses binary encoding.
+    /// ## auxRegister
+    /// Qubit register that will have the same address as addressRegister, but
+    /// as a one-hot encoding.
     operation ApplyAddressFanout(
         addressRegister : AddressRegister, 
         auxRegister : Qubit[]

@@ -59,16 +59,17 @@
     }
 
     /// # Summary
-    /// 
+    /// Constructs an operation that will when given a specific address,
+    /// apply a value to a target register.
     /// # Input
     /// ## address
-    /// 
+    /// The address where the data is non-zero.
     /// ## value
-    /// 
+    /// The value (as a Bool[]) representing the data at `address
     /// ## addressRegister
-    /// 
+    /// The qubit register that represents the address you are querying. 
     /// ## targetRegister
-    /// 
+    /// The qubit register that will have the QROM value written to.
     internal operation WriteSingleValue(
         address : Int, 
         value : Bool[],
