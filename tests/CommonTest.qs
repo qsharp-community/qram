@@ -49,7 +49,15 @@ namespace Tests {
     }
 
     // Hardcoded data set
-    internal function GenerateData() : (Int, Bool[])[] {
+    internal function GenerateSingleBitData() : (Int, Bool[])[] {
+        let fiveHasOne = (5, [true]);
+        let fourHasOne = (4, [true]);
+        let oneHasZero = (0, [false]);
+        let twoHasZero = (2, [false]);
+        return [fiveHasOne, fourHasOne, oneHasZero, twoHasZero];
+    }
+
+    internal function GenerateMultiBitData() : (Int, Bool[])[] {
         let numDataBits = 3;
         let fiveHasThree = (5, IntAsBoolArray(3, numDataBits));
         let fourHasTwo = (4, IntAsBoolArray(2, numDataBits));

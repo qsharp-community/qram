@@ -18,7 +18,7 @@
     // Basic lookup with all addresses checked
     @Test("QuantumSimulator")
     operation ImplicitQRAMOracleSingleLookupMatchResults() : Unit {
-        let data = GenerateData();
+        let data = GenerateMultiBitData();
         for (i in 0..7) {
             CreateQueryMeasureOneAddressQROM(data, i);
         }
@@ -35,7 +35,7 @@
         mutable result = new Bool[0];
 
         // Create the new ImplicitQRAM oracle
-        let memory = QROMOracle(data);
+        let memory = QromOracle(data);
 
         using((addressRegister, targetRegister) = 
             (Qubit[memory::AddressSize], Qubit[memory::DataSize])

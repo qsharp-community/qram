@@ -15,7 +15,8 @@
 // PUBLIC API
 ///////////////////////////////////////////////////////////////////////////
 
-    function BucketBrigadeQRAMOracle(dataValues : (Int, Bool[])[]) : QRAM {
+    operation BucketBrigadeQRAMOracle(dataValues : (Int, Bool[])[], memoryRegister : MemoryRegister) : QRAM {
+        // NB:User can't extend address space after its created
         let largestAddress = Microsoft.Quantum.Math.Max(
             Microsoft.Quantum.Arrays.Mapped(Fst<Int, Bool[]>, dataValues)
         );
@@ -26,6 +27,10 @@
             if(Length(value) > valueSize){
                 set valueSize = Length(value);
             }
+        }
+
+        for (value in dataValues) {
+            BucketBrigadeWrite(memoryRegister, value);
         }
 
         return Default<QRAM>()
