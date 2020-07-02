@@ -72,10 +72,16 @@ namespace Tests {
         return [(0, [true])];
     }
 
+    // QRAM where only the second memory cell contains a 1
+    internal function GenerateSecondCellFullQRAM() : (Int, Bool[])[] {
+        return [(1, [true])];
+    }
+
     // QRAM where only the last memory cell contains a 1
     internal function GenerateLastCellFullQRAM(addressSize : Int) : (Int, Bool[])[] {
         return [(2^addressSize - 1, [true])];
     }
+    
 
     // Hardcoded data set for a multi-bit output situation
     internal function GenerateMultiBitData() : (Int, Bool[])[] {
