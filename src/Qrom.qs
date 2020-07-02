@@ -15,29 +15,18 @@
     /// Creates an instance of an implicit QROM given the data it needs to store.
     /// # Input
     /// ## dataValues
-    /// An array of tuples of the form (address, data) where the address and 
-    /// data are boolean arrays representing the integer values.
+    /// An array of memory cells where the address is an Int and the 
+    /// data is a boolean array representing the user data.
     /// # Output
     /// A `QROM` type.
-    function QromOracle(dataValues : (Int, Bool[])[]) : QROM {
-        let largestAddress = Microsoft.Quantum.Math.Max(
-            Microsoft.Quantum.Arrays.Mapped(Fst<Int, Bool[]>, dataValues)
-        );
-        mutable valueSize = 0;
-        
-        // Determine largest size of stored value to set output qubit register size
-        for ((address, value) in dataValues){
-            if(Length(value) > valueSize){
-                set valueSize = Length(value);
-            }
-        }
-
+    function QromOracle(dataValues : MemoryCell[]) : QROM {
+        let bank = GeneratedMemoryBank(dataValues);
         let qroms = BoundCA(Mapped(SingleValueWriter, dataValues)); 
         
         return Default<QROM>()
             w/ Read <- qroms
-            w/ AddressSize <- BitSizeI(largestAddress)
-            w/ DataSize <- valueSize;
+            w/ AddressSize <- bank::AddressSize
+            w/ DataSize <- bank::DataSize;
     }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -53,9 +42,9 @@
     /// The value (as a Bool[]) representing the data at `address`
     /// # Output
     /// An operation that can be used to look up data `value` at `address`.
-    internal function SingleValueWriter(address : Int, value : Bool[])
+    internal function SingleValueWriter(cell : MemoryCell)
     : ((LittleEndian, Qubit[]) => Unit is Adj + Ctl) {
-        return WriteSingleValue(address, value, _, _);
+        return WriteSingleValue(cell::Address, cell::Value, _, _);
     }
 
     /// # Summary

@@ -22,29 +22,18 @@
     /// The register that you want to be initialized with the provided data.
     /// # Output
     /// An instance of the QRAM type that will allow you to use the memory.
-    operation BucketBrigadeQRAMOracle(dataValues : (Int, Bool[])[], memoryRegister : MemoryRegister) : QRAM {
-        // NB:User can't extend address space after its created
-        let largestAddress = Microsoft.Quantum.Math.Max(
-            Microsoft.Quantum.Arrays.Mapped(Fst<Int, Bool[]>, dataValues)
-        );
-        mutable valueSize = 0;
-        
-        // Determine largest size of stored value to set output qubit register size
-        for ((address, value) in dataValues){
-            if(Length(value) > valueSize){
-                set valueSize = Length(value);
-            }
-        }
+    operation BucketBrigadeQRAMOracle(dataValues : MemoryCell[], memoryRegister : MemoryRegister) : QRAM {
+        let bank = GeneratedMemoryBank(dataValues);
 
-        for (value in dataValues) {
-            BucketBrigadeWrite(memoryRegister, value);
+        for (cell in dataValues) {
+            BucketBrigadeWrite(memoryRegister, cell);
         }
 
         return Default<QRAM>()
             w/ Read <-  BucketBrigadeRead(_, _, _)
             w/ Write <- BucketBrigadeWrite(_, _)
-            w/ AddressSize <- BitSizeI(largestAddress)
-            w/ DataSize <- 1;
+            w/ AddressSize <- bank::AddressSize
+            w/ DataSize <- bank::DataSize;
     }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -60,10 +49,10 @@
     /// The tuple of (address, data) that you want written to the memory.
     operation BucketBrigadeWrite(
         memoryRegister : MemoryRegister, 
-        dataValue :  (Int, Bool[])
+        dataCell :  MemoryCell
     ) 
     : Unit {
-        let (address, data) = (Fst(dataValue), Snd(dataValue));
+        let (address, data) = (dataCell::Address, dataCell::Value);
         let range = SequenceI (address * Length(data), (address + 1) * Length(data));
         ResetAll(Subarray(range, memoryRegister!));
         ApplyPauliFromBitString(PauliX, true, data, Subarray(range, memoryRegister!));
