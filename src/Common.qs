@@ -32,7 +32,7 @@ namespace Qram{
         return Mapped(ValueLookup, bank::DataSet);
     }
 
-    internal function DataAtAddress(
+    function DataAtAddress(
         bank : MemoryBank,
         queryAddress : Int 
     ) 

@@ -9,23 +9,19 @@
     open Microsoft.Quantum.Diagnostics;
     open Microsoft.Quantum.Measurement;
     open Microsoft.Quantum.Logical;
-    open Qram;
-
-    // TODO: Possible syntax for test naming
-    // <Function><Situation><Act><Result><Expect>
-    
+    open Qram;    
 
     // Basic lookup with all addresses checked
     @Test("QuantumSimulator")
     operation ImplicitQRAMOracleSingleLookupMatchResults() : Unit {
-        let data = GenerateMultiBitData();
+        let data = MultiBitData();
         for (i in 0..7) {
             CreateQueryMeasureOneAddressQROM(data, i);
         }
     }
 
     internal operation CreateQueryMeasureOneAddressQROM(
-        data : (Int, Bool[])[], 
+        data : MemoryBank, 
         queryAddress : Int
     ) 
     : Unit {
@@ -35,7 +31,7 @@
         mutable result = new Bool[0];
 
         // Create the new ImplicitQRAM oracle
-        let memory = QromOracle(data);
+        let memory = QromOracle(data::DataSet);
 
         using((addressRegister, targetRegister) = 
             (Qubit[memory::AddressSize], Qubit[memory::DataSize])

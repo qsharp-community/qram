@@ -12,48 +12,53 @@ namespace Tests {
     open Qram;
 
     // Hardcoded data set
-    internal function GenerateSingleBitData() : (Int, Bool[])[] {
-        return [(5, [true]), (4, [true]), (1, [false]), (2, [false])];
+    internal function SingleBitData() : MemoryBank {
+        let data = [(5, [true]), (4, [true]), (1, [false]), (2, [false])];
+        return GeneratedMemoryBank(Mapped(MemoryCell, data));
     }
 
-    // QRAM where every memory cell contains a 0
-    internal function GenerateEmptyQRAM(addressSize : Int) : (Int, Bool[])[] {
+    // Hardcoded data set for a multi-bit output situation
+    internal function MultiBitData() : MemoryBank {
+        let numDataBits = 3;
+        let data =  [(5, IntAsBoolArray(3, numDataBits)), 
+            (4, IntAsBoolArray(2, numDataBits)), 
+            (0, IntAsBoolArray(0, numDataBits)), 
+            (2, IntAsBoolArray(5, numDataBits))];
+        return GeneratedMemoryBank(Mapped(MemoryCell, data));
+    }
+
+    internal function EmptyQRAM(addressSize : Int) : MemoryBank {
         let addresses = SequenceI(0, 2^addressSize - 1);
         let data = ConstantArray(2^addressSize, [false]);
-        return Zip(addresses, data);
+        return GeneratedMemoryBank(Mapped(MemoryCell,Zip(addresses, data)));
     }
 
     // QRAM where every memory cell contains a 1
-    internal function GenerateFullQRAM(addressSize : Int) : (Int, Bool[])[] {
+    internal function FullQRAM(addressSize : Int) : MemoryBank {
         let addresses = SequenceI(0, 2^addressSize - 1);
         let data = ConstantArray(2^addressSize, [true]);
-        return Zip(addresses, data);
+        return GeneratedMemoryBank(Mapped(MemoryCell,Zip(addresses, data)));
     }
 
     // QRAM where only the first memory cell contains a 1
-    internal function GenerateFirstCellFullQRAM() : (Int, Bool[])[] {
-        return [(0, [true])];
+    internal function FirstCellFullQRAM() : MemoryBank {
+        return GeneratedMemoryBank([MemoryCell(0, [true])]);
     }
 
     // QRAM where only the second memory cell contains a 1
-    internal function GenerateSecondCellFullQRAM() : (Int, Bool[])[] {
-        return [(1, [true])];
+    internal function SecondCellFullQRAM() : MemoryBank {
+        return GeneratedMemoryBank([MemoryCell(1, [true])]);
     }
 
     // QRAM where only the last memory cell contains a 1
-    internal function GenerateLastCellFullQRAM(addressSize : Int) : (Int, Bool[])[] {
-        return [(2^addressSize - 1, [true])];
+    internal function LastCellFullQRAM(addressSize : Int) : MemoryBank {
+        return GeneratedMemoryBank([MemoryCell(2^addressSize - 1, [true])]);
     }
     
-
-    // Hardcoded data set for a multi-bit output situation
-    internal function GenerateMultiBitData() : (Int, Bool[])[] {
-        let numDataBits = 3;
-        let fiveHasThree = (5, IntAsBoolArray(3, numDataBits));
-        let fourHasTwo = (4, IntAsBoolArray(2, numDataBits));
-        let oneHasZero = (0, IntAsBoolArray(0, numDataBits));
-        let twoHasFive = (2, IntAsBoolArray(5, numDataBits));
-        return [fiveHasThree, fourHasTwo, oneHasZero, twoHasFive];
+    internal operation PrepareIntAddressRegister(address : Int, register : Qubit[]) 
+    : Unit is Adj + Ctl {
+        let queryAddressAsBoolArray = IntAsBoolArray(address, Length(register));
+        ApplyPauliFromBitString(PauliX, true, queryAddressAsBoolArray, register);
     }
 
 
