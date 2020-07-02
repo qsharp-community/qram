@@ -63,15 +63,10 @@
         dataValue :  (Int, Bool[])
     ) 
     : Unit {
-        let address = Fst(dataValue);
-        let data = Head(Snd(dataValue));
-        if (data == false) {
-            Reset(memoryRegister![address]);
-        }
-        else {
-            Reset(memoryRegister![address]);
-            X(memoryRegister![address]);
-        }
+        let (address, data) = (Fst(dataValue), Snd(dataValue));
+        let range = SequenceI (address * Length(data), (address + 1) * Length(data));
+        ResetAll(Subarray(range, memoryRegister!));
+        ApplyPauliFromBitString(PauliX, true, data, Subarray(range, memoryRegister!));
     }
 
     /// # Summary
@@ -86,7 +81,7 @@
     operation BucketBrigadeRead(
         addressRegister : AddressRegister, 
         memoryRegister : MemoryRegister, 
-        target : Qubit
+        targetRegister : Qubit[]
     ) 
     : Unit is Adj + Ctl {
         using (auxRegister = Qubit[2^Length(addressRegister!)]) {
@@ -95,7 +90,7 @@
                 ApplyAddressFanout(addressRegister, auxRegister);
             }
             apply {
-                ReadoutMemory(memoryRegister, auxRegister, target);
+                ReadoutMemory(memoryRegister, auxRegister, targetRegister);
             }
         } 
     }
@@ -103,11 +98,14 @@
     operation ReadoutMemory(
         memoryRegister : MemoryRegister, 
         auxRegister : Qubit[], 
-        target : Qubit
+        targetRegister : Qubit[]
     ) 
     : Unit is Adj + Ctl {
-        let controlPairs = Zip(auxRegister, memoryRegister!);
-        ApplyToEachCA(CCNOT(_, _, target), controlPairs);
+        for ((index, auxEnable) in Enumerated(auxRegister)) {
+            let range = SequenceI (index * Length(targetRegister), (index + 1) * Length(targetRegister));
+            let memoryPairs = Zip(Subarray(range, memoryRegister!), targetRegister);
+            ApplyToEachCA(CCNOT(auxEnable, _, _), memoryPairs);
+        }
     }
 
     /// # Summary
