@@ -70,7 +70,7 @@
     operation BucketBrigadeRead(
         addressRegister : AddressRegister, 
         memoryRegister : MemoryRegister, 
-        targetRegister : Qubit[]
+        target : Qubit
     ) 
     : Unit is Adj + Ctl {
         using (auxRegister = Qubit[2^Length(addressRegister!)]) {
@@ -79,7 +79,7 @@
                 ApplyAddressFanout(addressRegister, auxRegister);
             }
             apply {
-                ReadoutMemory(memoryRegister, auxRegister, targetRegister);
+                ReadoutMemory(memoryRegister, auxRegister, target);
             }
         } 
     }
@@ -87,14 +87,11 @@
     operation ReadoutMemory(
         memoryRegister : MemoryRegister, 
         auxRegister : Qubit[], 
-        targetRegister : Qubit[]
+        target : Qubit
     ) 
     : Unit is Adj + Ctl {
-        for ((index, auxEnable) in Enumerated(auxRegister)) {
-            let range = SequenceI (index * Length(targetRegister), (index + 1) * Length(targetRegister));
-            let memoryPairs = Zip(Subarray(range, memoryRegister!), targetRegister);
-            ApplyToEachCA(CCNOT(auxEnable, _, _), memoryPairs);
-        }
+        let controlPairs = Zip(auxRegister, memoryRegister!);
+        ApplyToEachCA(CCNOT(_, _, target), controlPairs);
     }
 
     /// # Summary
