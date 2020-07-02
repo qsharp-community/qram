@@ -11,43 +11,6 @@ namespace Tests {
     open Microsoft.Quantum.Logical;
     open Qram;
 
-    internal function DataAtAddress(
-        data : (Int, Bool[])[],
-        queryAddress : Int 
-    ) 
-    : Bool[] {
-        // Find the index in the original dataset with a particular address
-        let addressIndex = Where(MatchedAddress(_, queryAddress), data);
-        // The address you are looking for may not have been explicitly given
-        if (IsEmpty(addressIndex)){
-            // Need to pad out the bool array for 0 to the right length
-            let dataLength = Length(Snd(data[0]));
-            return ConstantArray(dataLength, false);
-        }
-        else {
-            // Look up the actual data value at the correct address index
-            return Snd(data[Head(addressIndex)]);
-        }
-    }
-
-    /// # Summary
-    /// Work around for lambda functions, checks if first element in a tuple
-    /// is a particular integer.
-    /// # Input
-    /// ## dataTuple
-    /// Represents a single address and data value pair in the memory.
-    /// ## queryAddress
-    /// The address you are looking to find.
-    /// # Output
-    /// Bool representing if that tuple has the address you are looking for.
-    internal function MatchedAddress(
-        dataTuple : (Int, Bool[]), 
-        queryAddress : Int
-    ) 
-    : Bool {
-        return EqualI(Fst(dataTuple), queryAddress);
-    }
-
     // Hardcoded data set
     internal function GenerateSingleBitData() : (Int, Bool[])[] {
         return [(5, [true]), (4, [true]), (1, [false]), (2, [false])];

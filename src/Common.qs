@@ -1,4 +1,5 @@
 namespace Qram{
+    open Microsoft.Quantum.Logical;
     open Microsoft.Quantum.Arrays;
     open Microsoft.Quantum.Math;
     open Microsoft.Quantum.Arithmetic;
@@ -15,12 +16,42 @@ namespace Qram{
     // Describes a dataset as well as 
     newtype MemoryBank = (DataSet : MemoryCell[], AddressSize : Int, DataSize : Int);
 
-    function AddressList(cell : MemoryCell) : Int {
+    function AddressLookup(cell : MemoryCell) : Int {
         return cell::Address;
     }
 
+    function ValueLookup(cell : MemoryCell) : Bool[] {
+        return cell::Value;
+    }
+
+    function AddressList(bank : MemoryBank) : Int[] {
+        return Mapped(AddressLookup, bank::DataSet);
+    }
+
+    function DataList(bank : MemoryBank) : Bool[][] {
+        return Mapped(ValueLookup, bank::DataSet);
+    }
+
+    internal function DataAtAddress(
+        bank : MemoryBank,
+        queryAddress : Int 
+    ) 
+    : Bool[] {
+        let addressFound = IndexOf(EqualI(_, queryAddress), AddressList(bank));
+
+        if (not EqualI(addressFound, -1)){
+            // Look up the actual data value at the correct address index
+            return ValueLookup((LookupFunction(bank::DataSet))(addressFound));
+        }
+        // The address you are looking for may not have been explicitly given,
+        // we assume that the data value there is 0.
+        else {
+            return ConstantArray(bank::DataSize, false);     
+        }
+    }
+
     function GeneratedMemoryBank(dataSet : MemoryCell[]) : MemoryBank {
-        let largestAddress = Max(Mapped(AddressList, dataSet));
+        let largestAddress = Max(Mapped(AddressLookup, dataSet));
         mutable valueSize = 0;
         
         // Determine largest size of stored value to set output qubit register size
