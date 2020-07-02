@@ -2,7 +2,7 @@
 
 This library implements a variety of different proposals for memory for quantum computers, also commonly called qRAM.
 Want to learn more about what qRAM is?
-Check out the [primer on memory for quantum computers]() in our docs!
+Check out the [primer on memory for quantum computers](https://github.com/qsharp-community/qram/suites/870816048/artifacts/10122400) in our docs!
 
 ## Motivation
 
@@ -26,7 +26,7 @@ This library will help achieve these goals by giving us a concrete way to measur
 
 **Example of a Bucket Brigade qRAM circuit:**
 
-![Bucket Brigade qRAM](docs\images\bucketBrigade.gif)
+![Bucket Brigade qRAM](docs/images/bb.gif)
 TODO: Include logo/demo screenshot etc.
 
 ## Tech/framework used
