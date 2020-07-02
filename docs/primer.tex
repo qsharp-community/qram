@@ -287,11 +287,10 @@ The indicator qubits then couple with the memory contents and copy the values to
 \begin{figure}
  \centering
  \captionsetup{width=.89\linewidth}
- \includegraphics[scale=0.8]{images/bb-2qubit-3bitout}
+ \includegraphics[scale=0.7]{images/bb-2qubit-3bitout}
  \caption{\textbf{For pedagogical purposes; not most optimal.} 
  Extension of the bucket brigade circuit model to the case where each memory cell contains multiple output bits (in this case, 3). 
- The structure of the circuit is largely the same, except the original trigger register acts on a set of `indicator' qubits representative of each memory cell (highlighted in red).
- These indicator qubits then control coupling of the memory contents to the set of output bits.}
+ The structure of the circuit is largely the same, except now each trigger qubit must perform a Toffoli for every bit in the cell.}
  \label{fig:bb-multioutput}
 \end{figure}
 
@@ -440,22 +439,21 @@ The number of qubits of course increases:
   Register & Number  of qubits \\ \hline
   $a$ & $n$ \\
   $\tau$ & $2^n$ \\
-  $m$ & $(k + 1) 2^n$ \\
+  $m$ & $k \cdot 2^n$ \\
   Output & $k$ \\ \hline
-  Total $N_q$ & $(k + 2) 2^n + n + k$
+  Total $N_q$ & $(k + 1) 2^n + n + k$
  \end{tabular}
 \end{equation} 
-
-For the remainder of the query circuit, the $2^n$ Toffolis of the query have become $2^n$ CNOTs (from the trigger qubits to the indicator qubits of the cells), followed by $k 2^n$ sequential Toffolis. 
+Then each of the $2^n$ Toffolis of the query portion is replaced with $k$ Toffolis, one per output bit.
 Note, however, that many of these Toffolis can in fact be done in parallel. 
 We will not consider that when estimating resources here by hand, but note that once we implement the circuits in Q\# and use the Toffoli simulator, the circuit depth will likely decrease significantly.
 Calculating by hand, the resources for the multi-output bit case are as follows:
 \begin{eqnarray}
- N_q &=& (k + 2) 2^n + n + k \\ \nonumber
- D   &=& (18 + 9k)2^n + 2n - 33 \\ \nonumber
+ N_q &=& (k + 1) 2^n + n + k \\ \nonumber
+ D   &=& (18 + 9k)2^n + 2n - 34 \\ \nonumber
  D_T &=& (6+3k)2^n - 12 \\ \nonumber
  N_T &=& (14 + 7k)2^n - 28 \\ \nonumber
- N_{CX} &=& (17+7k)2^n - 28  \\ \nonumber
+ N_{CX} &=& (16+7k)2^n - 28  \\ \nonumber
  N_{HS} &=& (4+2k)2^n - 8
 \end{eqnarray}
 
