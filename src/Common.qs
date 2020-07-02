@@ -37,7 +37,7 @@ namespace Qram{
     /// ## DataSize
     /// The size (number of bits) needed to represent a data value for the QRAM.
     newtype QRAM = (
-        Read : ((AddressRegister, MemoryRegister, Qubit[]) => Unit is Adj + Ctl), 
+        Read : ((AddressRegister, MemoryRegister, Qubit) => Unit is Adj + Ctl), 
         Write : ((MemoryRegister, (Int, Bool[])) => Unit), 
         AddressSize : Int,
         DataSize : Int
