@@ -56,7 +56,7 @@
         }
     }
 
-    // Verify things work when only the first cell is full
+    // Verify things work when only the second cell is full
     @Test("QuantumSimulator") 
     operation BucketBrigadeOracleSecondCellFullMatchResults() : Unit {
         for (addressSize in 1..3) {
@@ -227,7 +227,7 @@
         addressSize : Int
     ) 
     : Unit {
-        // First memory cell is a true, rest are all false
+        // Second memory cell is a true, rest are all false
         let expectedValue = [false, true] + ConstantArray(2^addressSize-2, false);
         
         mutable result = new Bool[2^addressSize];
