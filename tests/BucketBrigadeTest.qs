@@ -91,7 +91,10 @@
 
     // Operation that creates a single output-bit qRAM, and returns the contents for
     // each address queried individually
-    internal operation CreateQueryMeasureQRAM(data : (Int, Bool[])[], addressSize : Int) : Bool[] {
+    internal operation CreateQueryMeasureQRAM(
+        data : (Int, Bool[])[], 
+        addressSize : Int) 
+    : Bool[] {
         mutable result = new Bool[2^addressSize];
 
         using ((addressRegister, memoryRegister, target) =
@@ -111,6 +114,7 @@
         }
         return result;
     }
+
 
     internal operation CreateQueryMeasureOneAddressQRAM(
         data : (Int, Bool[])[], 
@@ -139,7 +143,8 @@
             // Reset all the qubits before returning them
             ResetAll(addressRegister + memoryRegister);
         }
-        AllEqualityFactB(result, expectedValue, $"Expecting value {expectedValue} at address {queryAddress}, got {result}."); 
+        AllEqualityFactB(result, expectedValue, 
+        $"Expecting value {expectedValue} at address {queryAddress}, got {result}."); 
     }
 
     internal operation CreateWriteQueryMeasureOneAddressQRAM(
