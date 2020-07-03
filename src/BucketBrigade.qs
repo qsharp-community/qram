@@ -53,7 +53,7 @@
     ) 
     : Unit {
         let (address, data) = (dataCell::Address, dataCell::Value);
-        let range = SequenceI (address * Length(data), (address + 1) * Length(data));
+        let range = SequenceI (address * Length(data), (address + 1) * Length(data) - 1);
         ResetAll(Subarray(range, memoryRegister!));
         ApplyPauliFromBitString(PauliX, true, data, Subarray(range, memoryRegister!));
     }
@@ -91,7 +91,7 @@
     ) 
     : Unit is Adj + Ctl {
         for ((index, auxEnable) in Enumerated(auxRegister)) {
-            let range = SequenceI (index * Length(targetRegister), (index + 1) * Length(targetRegister));
+            let range = SequenceI (index * Length(targetRegister), (index + 1) * Length(targetRegister) - 1);
             let memoryPairs = Zip(Subarray(range, memoryRegister!), targetRegister);
             ApplyToEachCA(CCNOT(auxEnable, _, _), memoryPairs);
         }

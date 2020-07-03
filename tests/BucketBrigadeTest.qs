@@ -118,18 +118,18 @@
     // Operation that creates a qRAM, and returns the contents for
     // each address queried individually
     internal operation CreateQueryMeasureAllQRAM(bank : MemoryBank) : Bool[][] {
-        mutable result = new Bool[][0];
+        mutable result = new Bool[][2^bank::AddressSize];
 
         using ((addressRegister, memoryRegister, targetRegister) =
             (Qubit[bank::AddressSize], 
-            Qubit[bank::AddressSize * bank::DataSize], 
+            Qubit[(2^bank::AddressSize) * bank::DataSize], 
             Qubit[bank::DataSize])
         ) 
         {
             let memory = BucketBrigadeQRAMOracle(bank::DataSet, MemoryRegister(memoryRegister));
 
             // Query each address sequentially and store in results array
-            for (queryAddress in 0..bank::AddressSize-1) {
+            for (queryAddress in 0..2^bank::AddressSize-1) {
                 // Prepare the address register for the lookup
                 PrepareIntAddressRegister(queryAddress, addressRegister);
                 // Read out the memory at that address
@@ -151,7 +151,7 @@
     : Bool[] {
         using ((addressRegister, memoryRegister, targetRegister) =
             (Qubit[bank::AddressSize], 
-            Qubit[bank::AddressSize * bank::DataSize], 
+            Qubit[(2^bank::AddressSize) * bank::DataSize], 
             Qubit[bank::DataSize])
         ) 
         {
@@ -175,7 +175,7 @@
     : Bool[] {
         using ((addressRegister, memoryRegister, targetRegister) =
             (Qubit[bank::AddressSize], 
-            Qubit[bank::AddressSize * bank::DataSize], 
+            Qubit[(2^bank::AddressSize) * bank::DataSize], 
             Qubit[bank::DataSize])
         ) 
         {
