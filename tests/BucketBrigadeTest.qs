@@ -44,11 +44,14 @@
     @Test("QuantumSimulator") 
     operation BucketBrigadeOracleEmptyMatchResults() : Unit {
         for (addressSize in 1..3) {
-            let expectedValue = ConstantArray(2^addressSize, false);
+            let expectedValue = ConstantArray(2^addressSize, [false]);
             let data = EmptyQRAM(addressSize);
             let result = CreateQueryMeasureAllQRAM(data);
-            AllEqualityFactB(result, expectedValue, 
-            $"Expecting memory contents {expectedValue}, got {result}."); 
+            let pairs = Zip(result, expectedValue);
+            Ignore(Mapped(
+                AllEqualityFactB(_, _, $"Expecting memory contents {expectedValue}, got {result}."), 
+                pairs
+            ));
         }
     }
 
@@ -56,11 +59,14 @@
     @Test("QuantumSimulator") 
     operation BucketBrigadeOracleFullMatchResults() : Unit {
         for (addressSize in 1..3) {
-            let expectedValue = ConstantArray(2^addressSize, true);
+            let expectedValue = ConstantArray(2^addressSize, [true]);
             let data = FullQRAM(addressSize);
             let result = CreateQueryMeasureAllQRAM(data);
-            AllEqualityFactB(result, expectedValue, 
-            $"Expecting memory contents {expectedValue}, got {result}."); 
+            let pairs = Zip(result, expectedValue);
+            Ignore(Mapped(
+                AllEqualityFactB(_, _, $"Expecting memory contents {expectedValue}, got {result}."), 
+                pairs
+            ));
         }
     }
 
@@ -68,11 +74,14 @@
     @Test("QuantumSimulator") 
     operation BucketBrigadeOracleFirstCellFullMatchResults() : Unit {
         for (addressSize in 1..3) {
-            let expectedValue = [true] + ConstantArray(2^addressSize-1, false);
+            let expectedValue = [[true]] + ConstantArray(2^addressSize-1, [false]);
             let data = FirstCellFullQRAM();
             let result = CreateQueryMeasureAllQRAM(data);
-            AllEqualityFactB(result, expectedValue, 
-            $"Expecting memory contents {expectedValue}, got {result}."); 
+            let pairs = Zip(result, expectedValue);
+            Ignore(Mapped(
+                AllEqualityFactB(_, _, $"Expecting memory contents {expectedValue}, got {result}."), 
+                pairs
+            ));
         }
     }
 
@@ -80,11 +89,14 @@
     @Test("QuantumSimulator") 
     operation BucketBrigadeOracleSecondCellFullMatchResults() : Unit {
         for (addressSize in 1..3) {
-            let expectedValue = [false, true] + ConstantArray(2^addressSize-2, false);
+            let expectedValue = [[false], [true]] + ConstantArray(2^addressSize-2, [false]);
             let data = SecondCellFullQRAM();
             let result = CreateQueryMeasureAllQRAM(data);
-            AllEqualityFactB(result, expectedValue, 
-            $"Expecting memory contents {expectedValue}, got {result}."); 
+            let pairs = Zip(result, expectedValue);
+            Ignore(Mapped(
+                AllEqualityFactB(_, _, $"Expecting memory contents {expectedValue}, got {result}."), 
+                pairs
+            ));
         }
     }
 

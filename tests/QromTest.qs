@@ -13,7 +13,7 @@
 
     // Basic lookup with all addresses checked
     @Test("QuantumSimulator")
-    operation ImplicitQRAMOracleSingleLookupMatchResults() : Unit {
+    operation QROMOracleSingleLookupMatchResults() : Unit {
         let data = MultiBitData();
         for (i in 0..7) {
             CreateQueryMeasureOneAddressQROM(data, i);

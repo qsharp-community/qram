@@ -25,7 +25,7 @@
     operation BucketBrigadeQRAMOracle(dataValues : MemoryCell[], memoryRegister : MemoryRegister) : QRAM {
         let bank = GeneratedMemoryBank(dataValues);
 
-        for (cell in dataValues) {
+        for (cell in bank::DataSet) {
             BucketBrigadeWrite(memoryRegister, cell);
         }
 
