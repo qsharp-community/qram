@@ -65,8 +65,8 @@
     /// The qubit register that represents the address to be queried.
     /// ## memoryRegister
     /// The qubit register that represents the memory you are reading from.
-    /// ## target
-    /// The qubit that will have the memory value transferred to.
+    /// ## targetRegister
+    /// The register that will have the memory value transferred to.
     operation BucketBrigadeRead(
         addressRegister : AddressRegister, 
         memoryRegister : MemoryRegister, 
@@ -84,7 +84,17 @@
         } 
     }
 
-    operation ReadoutMemory(
+    /// # Summary
+    /// Transfers the memory register values onto the target register.
+    /// # Input
+    /// ## memoryRegister
+    /// The qubit register that represents the memory you are reading from.
+    /// ## auxRegister
+    /// Qubit register that will have the same address as addressRegister, but
+    /// as a one-hot encoding.
+    /// ## targetRegister
+    /// The register that will have the memory value transferred to.
+    internal operation ReadoutMemory(
         memoryRegister : MemoryRegister, 
         auxRegister : Qubit[], 
         targetRegister : Qubit[]
