@@ -1,0 +1,25 @@
+name: Build Docs
+
+on:
+  push:
+    branches: [ master, glassnotes/primer ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+    - uses: actions/checkout@v2
+
+    - uses: xu-cheng/latex-action@v2
+      with:
+        working_directory: docs
+        root_file: primer.tex
+        compiler: pdflatex
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: primer-notes
+        path: docs/primer.pdf
