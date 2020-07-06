@@ -30,7 +30,7 @@
         // Setup the var to hold the result of the measurement
         mutable result = new Bool[0];
 
-        // Create the new ImplicitQRAM oracle
+        // Create the new Qrom oracle
         let memory = QromOracle(data::DataSet);
 
         using((addressRegister, targetRegister) = 
