@@ -1,0 +1,12 @@
+{
+    "image": "mcr.microsoft.com/quantum/samples:latest",
+    "extensions": [
+        "quantum.quantum-devkit-vscode",
+        "ms-vscode.csharp",
+        "editorconfig.editorconfig",
+        "ms-python.python"
+    ],
+    "remoteEnv": {
+        "IQSHARP_HOSTING_ENV": "QRAM_DEVCONTAINER"
+    }
+}
