@@ -9,7 +9,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "tests", "tests\tests.csproj
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{BC9A489D-88AF-4DE2-A3EE-F31A1FE47D7A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "implicitQRAM", "samples\implicitQRAM\implicitQRAM.csproj", "{7DAD2361-E333-4076-B840-FACA90D354F7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Qrom", "samples\Qrom\QromSample.csproj", "{7DAD2361-E333-4076-B840-FACA90D354F7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BucketBrigade", "samples\BucketBrigade\BucketBrigadeSample.csproj", "{7DAD2361-E333-4076-B840-FACA90D354F7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

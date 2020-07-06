@@ -7,7 +7,7 @@ Check out the [primer on memory for quantum computers](https://github.com/qsharp
 ## Motivation
 
 There are many different proposals for qRAM in quantum computing that each have different tradeoffs, and currently come up a lot in quantum machine learning applications.
-We want to better understanding the costs and benefits of different qRAM implementations in quantum machine learning as well as quantum computing more generally.
+We want to better understand the costs and benefits of different qRAM implementations in quantum machine learning as well as quantum computing more generally.
 This library will help achieve these goals by giving us a concrete way to measure the resources each approach takes; choosing to do this in Q# allows us to leverage the built-in resource estimator to quickly iterate profiling the qRAM implementations and optimizing the circuits.
 
 ## Build status
@@ -27,6 +27,7 @@ This library will help achieve these goals by giving us a concrete way to measur
 **Example of a Bucket Brigade qRAM circuit:**
 
 ![Bucket Brigade qRAM](docs/images/bb.gif)
+
 TODO: Include logo/demo screenshot etc.
 
 ## Tech/framework used
