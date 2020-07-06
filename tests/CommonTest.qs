@@ -27,6 +27,7 @@ namespace Tests {
         return GeneratedMemoryBank(Mapped(MemoryCell, data));
     }
 
+    // QRAM where every memory cell contains a 0
     internal function EmptyQRAM(addressSize : Int) : MemoryBank {
         let addresses = SequenceI(0, 2^addressSize - 1);
         let data = ConstantArray(2^addressSize, [false]);
