@@ -1,5 +1,7 @@
 # qRAM Library for Q\#
 
+[![Unitary Fund](https://img.shields.io/badge/Supported%20By-UNITARY%20FUND-brightgreen.svg?style=flat)](http://unitary.fund)
+
 This library implements a variety of different proposals for memory for quantum computers, also commonly called qRAM.
 Want to learn more about what qRAM is?
 Check out the [primer on memory for quantum computers](https://github.com/qsharp-community/qram/suites/870816048/artifacts/10122400) in our docs!
