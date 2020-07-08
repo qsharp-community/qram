@@ -461,6 +461,43 @@ Calculating by hand, the resources for the multi-output bit case are as follows:
 
 \subsection{Phase query circuit model}
 
+In some situations, most notably in Grover's algorithm, one is concerned with retrieving the memory contents not in bit form, but as a phase. 
+Explicitly, 
+\begin{equation}
+ \ket{i} \rightarrow (-1)^{m_i} \ket{i}
+\end{equation}
+While we can use This situation actually results in significant resource savings over the bit query model represented in the previous section. 
+
+\begin{figure}
+ \centering
+ \includegraphics[scale=2]{images/ccz}
+ \caption{A Toffoli can be re-written as a controlled-controlled-$Z$ gate with its target qubit conjugated by Hadamards.}
+ \label{fig:ccz}
+\end{figure}
+
+\begin{figure}
+ \centering
+ \includegraphics[scale=0.8]{images/ccz-clifford-t}
+ \caption{Decomposition of CCZ over Clifford+$T$ gate set. It requires 7 $T$ gates, has $T$ depth 4, and total depth 10.}
+ \label{fig:ccz-clifford-t}
+\end{figure}
+
+\begin{figure}
+ \centering
+ \includegraphics[scale=2]{images/constant-bb-useful-identities}
+ \caption{(Left) When simplifying the circuit for two CCZs sharing a control bit, we make use of the fact that a $T$ gate commutes with a CNOT when applied to the control qubit (note that this is not true for a $T$ gate applied to the target). (Right) Notation for a fanout of CNOTs. This notation indicates that the same qubit is the control for multiple target qubits.}
+ \label{fig:bb-constant-identities}
+\end{figure}
+
+
+\begin{figure}
+ \centering
+ \includegraphics[scale=1.5]{images/ccz-simplification}
+ \caption{If we apply the decomposition of \autoref{fig:ccz-clifford-t} to portions of the address fanout, we can significantly reduce the $T$ depth and circuit depth. We can even reduce the $T$ count by 2, since the $T$ gates on the shared control qubit will cancel out. Rather than having 14 $T$ gates, $T$ depth 8, and total depth 20 as one naively would expect for two CCZs in sequence, it has $T$ count 12, $T$-depth 4, and total depth $13$.}
+ \label{fig:ccz}
+\end{figure}
+
+
 \subsubsection{Resource estimation}
 
 
