@@ -4,6 +4,8 @@
 \usepackage{amsmath, amssymb, dsfont}
 \usepackage[font=footnotesize]{caption}
 \usepackage{braket}
+\usepackage{lscape}
+\usepackage{rotating}
 \usepackage{hyperref}
 \usepackage{xcolor}
 \usepackage{subfigure}
@@ -496,6 +498,19 @@ While we can use This situation actually results in significant resource savings
  \caption{If we apply the decomposition of \autoref{fig:ccz-clifford-t} to portions of the address fanout, we can significantly reduce the $T$ depth and circuit depth. We can even reduce the $T$ count by 2, since the $T$ gates on the shared control qubit will cancel out. Rather than having 14 $T$ gates, $T$ depth 8, and total depth 20 as one naively would expect for two CCZs in sequence, it has $T$ count 12, $T$-depth 4, and total depth $13$.}
  \label{fig:ccz}
 \end{figure}
+
+\begin{sidewaysfigure}[ht]
+ \includegraphics[scale=0.8]{images/bb_2address_ccz_full}
+ \caption{2-address bucket brigade circuit with Toffoli cascades replaced by parallelized CCZs. Note that the $T$-depth is now linear in the number of address bits ($4n$) rather than exponential as was assumed in the previous section without any optimization.}
+ \label{fig:bb_2address_ccz_full}
+\end{sidewaysfigure}
+
+\begin{sidewaysfigure}[ht]
+ \includegraphics[scale=0.5]{images/bb_3address_ccz_full}
+ \caption{3-address bucket brigade circuit with Toffoli cascades as CCZs. This figure should eventually be removed because it's enormous, but leaving here for now as a reference.}
+ \label{fig:bb_3address_ccz_full}
+\end{sidewaysfigure}
+
 
 
 \subsubsection{Resource estimation}
