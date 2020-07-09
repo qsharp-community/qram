@@ -63,11 +63,12 @@ operation QueryAndMeasureQRAM(memory : QRAM, queryAddress : Int) : Int {
 ## Installation
 
 TODO:
-- Docker
-- Binder
-- Codespaces
-- Remote dev env
-- local install
+- [ ] Docker
+- [ ] Binder
+- [ ] Codespaces
+- [x] Remote development environment with VS Code
+  - Dev container is in `.devcontainer`, see instructions for VSCode on how to launch.
+- [ ] local install
 
 ## API Reference
 
