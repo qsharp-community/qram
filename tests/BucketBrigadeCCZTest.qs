@@ -115,6 +115,22 @@
         }
     }
 
+    // Make sure the fanout operation with parallelized CCZ is the same as the one using only Toffolis.
+    @Test("QuantumSimulator")
+    operation CompareBBAddressFanouts() : Unit {
+        for (addressSize in 1..3) {
+            using (addressRegister = Qubit[addressSize]) {
+                // TODO: make sure this line-splitting is style-guide compliant 
+                AssertOperationsEqualReferenced(
+                    2^addressSize, 
+                    ApplyAddressFanout(AddressRegister(addressRegister), _), 
+                    ApplyAddressFanoutCCZ(AddressRegister(addressRegister), _
+                ));
+                ResetAll(addressRegister);
+            } 
+        }
+    }
+
     // Operation that creates a qRAM, and returns the contents for
     // each address queried individually
     internal operation CreateQueryMeasureAllCCZQRAM(bank : MemoryBank) : Bool[][] {
