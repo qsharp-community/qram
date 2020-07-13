@@ -40,6 +40,8 @@ namespace Qram{
     /// # Summary
     /// Wrapper for registers that represent a quantum memory.
     newtype MemoryRegister = (Qubit[]);
+
+    
     
     /// # Summary
     /// Wrapper for registers that represent addresses.
