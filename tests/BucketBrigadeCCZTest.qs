@@ -160,29 +160,17 @@
         ) 
         {
             let memory = BucketBrigadeCCZQRAMOracle(bank::DataSet, MemoryRegister(memoryRegister));
-            Message($"Address reg size is {bank::AddressSize}");
-            Message($"Target reg size is {bank::DataSize}");
-            Message($"Memory reg size is {(2^bank::AddressSize) * bank::DataSize}");
-            Message($"Memory register before:");
-            DumpRegister((), memoryRegister);
             // Query each address sequentially and store in results array
             
             for (queryAddress in 0..2^bank::AddressSize-1) {
-                Message($"Target register b4:");
-                DumpRegister((), targetRegister);
                 // Prepare the address register for the lookup
                 PrepareIntAddressRegister(queryAddress, addressRegister);
                 // Read out the memory at that address
                 memory::Read(AddressRegister(addressRegister), MemoryRegister(memoryRegister), targetRegister);
                 // Measure the target register and log the results
                 set result w/= queryAddress <- ResultArrayAsBoolArray(MultiM(targetRegister));
-                Message($"Target register after:");
-                DumpRegister((), targetRegister);
-                Message($"The result array is: {result}");
                 ResetAll(addressRegister + targetRegister);
             }
-            Message($"Memory register after:");
-            DumpRegister((), memoryRegister);
             // Done with the memory register now
             ResetAll(memoryRegister);
         }

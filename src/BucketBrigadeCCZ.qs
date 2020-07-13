@@ -112,6 +112,7 @@
                 H(targetRegister[idxTarget]);
             }
             apply {
+                RepeatCA(T, Length(auxRegister), targetRegister[idxTarget]);
                 // CNOT cascade from aux qubits down to memory cells at correct index
                 ApplyToEachCA(CNOT, Zip(auxRegister, memoryRegister![idxTarget..Length(targetRegister)...]));
                 // Adjoint T to all the memory cells
@@ -165,8 +166,11 @@
                 Controlled X([auxRegister[1]],auxRegister[0]);
             }
             else {
+                // For address bit idx, we do 2^idx sequential Toffolis; this means we pick up that
+                // many copies of the T gate on the shared control 
+                RepeatCA(T, 2^idx, addressRegister![idx]);
                 // For address bit idx, we are acting on qubits 0 to 2^{idx+1}-1 of the aux register
-                // First apply H to the second half
+                // First apply H to rewrite Toffolis to CCZ conjugated by H
                 ApplyToEachCA(H, auxRegister[2^idx..2^(idx+1)-1]);
                 // Then apply T to the whole chunk
                 ApplyToEachCA(T, auxRegister[0..2^(idx+1)-1]);
