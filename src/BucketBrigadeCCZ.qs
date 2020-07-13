@@ -135,16 +135,6 @@
         }
     }
 
-    operation ReadoutMemoryCCZ2(
-        memoryRegister : MemoryRegister, 
-        auxRegister : Qubit[], 
-        targetRegister : Qubit[]
-    ) 
-    : Unit is Adj + Ctl {
-        
-
-    }
-
     /// # Summary
     /// Takes a register with a binary representation of an address and 
     /// converts it to a one-hot encoding in the aux register using T gate parallelization
