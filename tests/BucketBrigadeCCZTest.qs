@@ -131,6 +131,23 @@
         }
     }
 
+    // Make sure that the query portion of the qRAM gives the same output when expressed as a
+    // sequence of Toffolis or sequence of CCZ with target conjugated by H.
+    @Test("ResourcesEstimator")
+    operation CompareBBReadouts() : Unit {
+        for ((addressSize, targetSize) in Zip(RangeAsIntArray(1..2), RangeAsIntArray(1..2))) {
+            using ((memoryRegister, targetRegister) = (Qubit[2^addressSize*targetSize], Qubit[targetSize])) {
+                AssertOperationsEqualInPlace(
+                    2^addressSize, 
+                    ReadoutMemory(MemoryRegister(memoryRegister), _, targetRegister),  
+                    ReadoutMemoryCCZ(MemoryRegister(memoryRegister), _, targetRegister)
+                );
+                ResetAll(memoryRegister + targetRegister);
+            }
+        }
+    }
+
+
     // Operation that creates a qRAM, and returns the contents for
     // each address queried individually
     internal operation CreateQueryMeasureAllCCZQRAM(bank : MemoryBank) : Bool[][] {
@@ -146,21 +163,26 @@
             Message($"Address reg size is {bank::AddressSize}");
             Message($"Target reg size is {bank::DataSize}");
             Message($"Memory reg size is {(2^bank::AddressSize) * bank::DataSize}");
-            Message($"Memory data size is {bank::DataSize}");
-            Message($"Memory register");
+            Message($"Memory register before:");
             DumpRegister((), memoryRegister);
             // Query each address sequentially and store in results array
+            
             for (queryAddress in 0..2^bank::AddressSize-1) {
+                Message($"Target register b4:");
+                DumpRegister((), targetRegister);
                 // Prepare the address register for the lookup
                 PrepareIntAddressRegister(queryAddress, addressRegister);
-                DumpRegister((), addressRegister);
                 // Read out the memory at that address
                 memory::Read(AddressRegister(addressRegister), MemoryRegister(memoryRegister), targetRegister);
                 // Measure the target register and log the results
                 set result w/= queryAddress <- ResultArrayAsBoolArray(MultiM(targetRegister));
+                Message($"Target register after:");
+                DumpRegister((), targetRegister);
                 Message($"The result array is: {result}");
                 ResetAll(addressRegister + targetRegister);
             }
+            Message($"Memory register after:");
+            DumpRegister((), memoryRegister);
             // Done with the memory register now
             ResetAll(memoryRegister);
         }

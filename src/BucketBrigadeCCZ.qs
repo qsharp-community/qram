@@ -95,7 +95,7 @@
     /// as a one-hot encoding.
     /// ## targetRegister
     /// The register that will have the memory value transferred to.
-    internal operation ReadoutMemoryCCZ(
+    operation ReadoutMemoryCCZ(
         memoryRegister : MemoryRegister, 
         auxRegister : Qubit[], 
         targetRegister : Qubit[]
@@ -108,28 +108,40 @@
             // Apply T to everything, and Hadamard to target to turn Toffolis to CCZ
             ApplyToEachCA(T, auxRegister);
             ApplyToEachCA(T, memoryRegister![idxTarget..Length(targetRegister)..Length(memoryRegister!)-1]);
-            H(targetRegister[idxTarget]);
-            // CNOT cascade from aux qubits down to memory cells at correct index
-            ApplyToEachCA(CNOT, Zip(auxRegister, memoryRegister![idxTarget..Length(targetRegister)..Length(memoryRegister!)-1]));
-            // Adjoint T to all the memory cells
-            ApplyToEachCA(Adjoint T, memoryRegister![idxTarget..Length(targetRegister)..Length(memoryRegister!)-1]);
-            // Fanout from the target bit to all memory and aux 
-            ApplyToEachCA(Controlled X([targetRegister[idxTarget]], _), auxRegister);
-            ApplyToEachCA(Controlled X([targetRegister[idxTarget]], _), memoryRegister![idxTarget..Length(targetRegister)..Length(memoryRegister!)-1]);
-            // T on all memory cells, T dag on all aux
-            ApplyToEachCA(T, memoryRegister![idxTarget..Length(targetRegister)..Length(memoryRegister!)-1]);
-            ApplyToEachCA(Adjoint T, auxRegister);
-            // Fanout to all aux
-            ApplyToEachCA(Controlled X([targetRegister[idxTarget]],_), auxRegister);
-            // CNOT cascade from aux qubits down to memory cells at correct index
-            ApplyToEachCA(CNOT, Zip(auxRegister, memoryRegister![idxTarget..Length(targetRegister)..Length(memoryRegister!)-1]));
-            // T dag on all memory cells now
-            ApplyToEachCA(Adjoint T, memoryRegister![idxTarget..Length(targetRegister)..Length(memoryRegister!)-1]);
-            // Fanout CNOTs from target to memory
-            ApplyToEachCA(Controlled X([targetRegister[idxTarget]], _), memoryRegister![idxTarget..Length(targetRegister)..Length(memoryRegister!)-1]);
-            // Final Hadamard on the target
-            H(targetRegister[idxTarget]);
+            within {
+                H(targetRegister[idxTarget]);
+            }
+            apply {
+                // CNOT cascade from aux qubits down to memory cells at correct index
+                ApplyToEachCA(CNOT, Zip(auxRegister, memoryRegister![idxTarget..Length(targetRegister)...]));
+                // Adjoint T to all the memory cells
+                ApplyToEachCA(Adjoint T, memoryRegister![idxTarget..Length(targetRegister)...]);
+                // Fanout from the target bit to all memory and aux 
+                ApplyToEachCA(Controlled X([targetRegister[idxTarget]], _), auxRegister);
+                ApplyToEachCA(Controlled X([targetRegister[idxTarget]], _), memoryRegister![idxTarget..Length(targetRegister)...]);
+                // T on all memory cells, T dag on all aux
+                ApplyToEachCA(T, memoryRegister![idxTarget..Length(targetRegister)...]);
+                ApplyToEachCA(Adjoint T, auxRegister);
+                // Fanout to all aux
+                ApplyToEachCA(Controlled X([targetRegister[idxTarget]],_), auxRegister);
+                // CNOT cascade from aux qubits down to memory cells at correct index
+                ApplyToEachCA(CNOT, Zip(auxRegister, memoryRegister![idxTarget..Length(targetRegister)...]));
+                // T dag on all memory cells now
+                ApplyToEachCA(Adjoint T, memoryRegister![idxTarget..Length(targetRegister)...]);
+                // Fanout CNOTs from target to memory
+                ApplyToEachCA(Controlled X([targetRegister[idxTarget]], _), memoryRegister![idxTarget..Length(targetRegister)...]);
+            }
         }
+    }
+
+    operation ReadoutMemoryCCZ2(
+        memoryRegister : MemoryRegister, 
+        auxRegister : Qubit[], 
+        targetRegister : Qubit[]
+    ) 
+    : Unit is Adj + Ctl {
+        
+
     }
 
     /// # Summary
@@ -173,7 +185,7 @@
                 ApplyToEachCA(CNOT, Zip(auxRegister[2^idx..2^(idx+1)-1], auxRegister[0..2^idx-1]));
                 // T dagger to first half                
                 ApplyToEachCA(Adjoint T, auxRegister[0..2^idx-1]);
-                // Fnout address bit only to first half
+                // Fanout address bit only to first half
                 ApplyToEachCA(Controlled X([addressRegister![idx]], _), auxRegister[0..2^idx-1]);
                 // Apply H to the second half to undo the first set we did
                 ApplyToEachCA(H, auxRegister[2^idx..2^(idx+1)-1]);

@@ -27,6 +27,7 @@ namespace Tests {
         return GeneratedMemoryBank(Mapped(MemoryCell, data));
     }
 
+    // TODO: parameterize data values as w
     // QRAM where every memory cell contains a 0
     internal function EmptyQRAM(addressSize : Int) : MemoryBank {
         let addresses = SequenceI(0, 2^addressSize - 1);
@@ -52,8 +53,8 @@ namespace Tests {
     }
 
     // QRAM where only the last memory cell contains a 1
-    internal function LastCellFullQRAM(addressSize : Int) : MemoryBank {
-        return GeneratedMemoryBank([MemoryCell(2^addressSize - 1, [true])]);
+    internal function LastCellFullQRAM(addressBits : Int) : MemoryBank {
+        return GeneratedMemoryBank([MemoryCell(2^addressBits - 1, [true])]);
     }
     
     internal operation PrepareIntAddressRegister(address : Int, register : Qubit[]) 
