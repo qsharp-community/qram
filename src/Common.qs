@@ -1,4 +1,6 @@
 namespace Qram{
+    open Microsoft.Quantum.Intrinsic;
+    open Microsoft.Quantum.Canon;
     open Microsoft.Quantum.Logical;
     open Microsoft.Quantum.Arrays;
     open Microsoft.Quantum.Math;
@@ -40,7 +42,7 @@ namespace Qram{
     /// # Summary
     /// Wrapper for registers that represent a quantum memory.
     newtype MemoryRegister = (Qubit[]);
-    
+
     /// # Summary
     /// Wrapper for registers that represent addresses.
     newtype AddressRegister = (Qubit[]);
@@ -165,4 +167,27 @@ namespace Qram{
             w/ AddressSize <- BitSizeI(largestAddress)
             w/ DataSize <- valueSize;
     }
+
+    /// # Summary
+    /// Transfers the memory register values onto the target register.
+    /// # Input
+    /// ## memoryRegister
+    /// The qubit register that represents the memory you are reading from.
+    /// ## auxRegister
+    /// Qubit register that will have the same address as addressRegister, but
+    /// as a one-hot encoding.
+    /// ## targetRegister
+    /// The register that will have the memory value transferred to.
+    operation ReadoutMemory(
+        memoryRegister : MemoryRegister, 
+        auxRegister : Qubit[], 
+        targetRegister : Qubit[]
+    ) 
+    : Unit is Adj + Ctl {
+        for ((index, auxEnable) in Enumerated(auxRegister)) {
+            let range = SequenceI (index * Length(targetRegister), (index + 1) * Length(targetRegister) - 1);
+            let memoryPairs = Zip(Subarray(range, memoryRegister!), targetRegister);
+            ApplyToEachCA(CCNOT(auxEnable, _, _), memoryPairs);
+        }
+    }    
 }

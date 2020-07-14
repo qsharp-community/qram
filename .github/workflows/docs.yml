@@ -2,7 +2,7 @@ name: Build Docs
 
 on:
   push:
-    branches: [ master, glassnotes/primer ]
+    branches: [ master ]
   pull_request:
     branches: [ master ]
 
@@ -23,3 +23,23 @@ jobs:
       with:
         name: primer-notes
         path: docs/primer.pdf
+      
+    - name: Add & Commit
+      uses: EndBug/add-and-commit@v4.2.1
+      with:
+        # Arguments for the git add command
+        add: docs/primer.pdf
+        # The name of the user that will be displayed as the author of the commit
+        author_name: GitHubActionsBot
+        # The directory where your repository is located. You should use actions/checkout first to set it up
+        #cwd: # optional, default is .
+        # Whether to use the force option on git add, in order to bypass eventual gitignores
+        #force: # optional, default is false
+        # The message for the commit
+        message: "Updating primer.pdf"
+        # Name of the branch to use, if different from the one that triggered the workflow
+        ref: docs
+        # Arguments for the git rm command
+        #remove: # optional, default is 
+        # The name of the tag to add to the new commit
+        #tag: # optional, default is 
