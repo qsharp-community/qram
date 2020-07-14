@@ -2,7 +2,7 @@ name: Build Docs
 
 on:
   push:
-    branches: [ master, glassnotes/primer ]
+    branches: [ master ]
   pull_request:
     branches: [ master ]
 
