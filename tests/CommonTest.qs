@@ -53,8 +53,8 @@ namespace Tests {
     }
 
     // QRAM where only the last memory cell contains a 1
-    internal function LastCellFullQRAM(addressBits : Int) : MemoryBank {
-        return GeneratedMemoryBank([MemoryCell(2^addressBits - 1, [true])]);
+    internal function LastCellFullQRAM(addressSize : Int) : MemoryBank {
+        return GeneratedMemoryBank([MemoryCell(2^addressSize - 1, [true])]);
     }
     
     internal operation PrepareIntAddressRegister(address : Int, register : Qubit[]) 
