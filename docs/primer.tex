@@ -4,6 +4,8 @@
 \usepackage{amsmath, amssymb, dsfont}
 \usepackage[font=footnotesize]{caption}
 \usepackage{braket}
+\usepackage{lscape}
+\usepackage{rotating}
 \usepackage{hyperref}
 \usepackage{xcolor}
 \usepackage{subfigure}
@@ -299,7 +301,7 @@ The indicator qubits then couple with the memory contents and copy the values to
 
 One of the primary reasons for designing qRAM libraries in Q\# was to get better resource estimates for qRAM circuits using the functionality afforded to us by both the \texttt{ResourcesEstimator} and the \texttt{ToffoliSimulator}.
 Note that all the gates in \autoref{fig:bb-combined} and \autoref{fig:bb-multioutput} are Toffolis, and so bucket brigade qRAMs are really just fancy Boolean circuits. 
-Plenty of optimization tools (\textcolor{red}{cite some}) exist for Boolean circuits, and so we anticipate that we'll be able to do reasonably well. 
+Plenty of optimization tools (\todo{cite some}) exist for Boolean circuits, and so we anticipate that we'll be able to do reasonably well. 
 But first, let's do some resource estimation `by hand' to get an idea of the worst we can expect.
 
 We will do resource estimation at the \emph{logical level}, i.e. not delve into the fault-tolerant level and estimate things like physical qubits and time required. 
@@ -459,7 +461,129 @@ Calculating by hand, the resources for the multi-output bit case are as follows:
 
 \todo{Verify and cross-check with \texttt{ResourcesEstimator}}
 
+\subsection{Improving $T$ depth with the CCZ gate}
+
+Looking at the circuits of \autoref{fig:bb-combined}, one notes that there are many instances of sequential Toffolis. 
+In \cite{DiMatteo2020}, a parallelized version of the circuit was proposed. 
+In the fanout, multiple copies of the address bits were made so the Toffolis could be performed in parallel. 
+The query portion was parallelized by giving each Toffoli a different target qubit, and then taking the parity of those bits using CNOT gates. 
+This works fine, and has the effect of reducing the $T$-depth from $O(2^n)$ to $O(n)$. 
+However, it comes at a significant cost: the number of auxiliary qubits that must be added is $O(2^n)$.
+
+\todo{These sections are rough, and will be re-written as I make my way through \cite{Alexandru2020}.}
+The authors of \cite{Alexandru2020} found a more efficient way to parallelize this by taking advantage of some circuit identities that can be applied when two neighbouring Toffolis share a control bit. 
+In fact, this gives a significant advantage - the $T$-depth will go from $O(2^n)$ to $O(n)$ \emph{without} adding any auxiliary qubits!
+
+\begin{figure}
+ \centering 
+ \captionsetup{width=.89\linewidth}
+ \includegraphics[scale=2]{images/ccz}
+ \caption{A Toffoli can be re-written as a controlled-controlled-$Z$ gate with its target qubit conjugated by Hadamards.}
+ \label{fig:ccz}
+\end{figure}
+
+\begin{figure}
+ \centering
+  \captionsetup{width=.89\linewidth}
+ \includegraphics[scale=0.8]{images/ccz-clifford-t}
+ \caption{Decomposition of CCZ over Clifford+$T$ gate set. It requires 7 $T$ gates, has $T$ depth 4, and total depth 10.}
+ \label{fig:ccz-clifford-t}
+\end{figure}
+
+The trick involves replacing the Toffoli gates with controlled-controlled-$Z$ (CCZ) gates, as per the identity shown in \autoref{fig:ccz}. The CCZ gate perform the operation
+\begin{equation}
+ CCZ \ket{b_0 b_1 b_2} = (-1)^{b_0 b_1 b_2} \ket{b_0 b_1 b_2}
+\end{equation}
+In other words, the phase of the state is flipped only if all three qubits are in $\ket{1}$. Note that due to this symmetry, qubits in a CCZ lose the distinction of target/control. 
+The CCZ can be done with the qubits in `any order', as the only time the state is affected is when all qubits are in the same state anyways.
+Thus, every Toffoli in the bucket brigade cricuits can be turned into a CCZ by simply conjugating the target by Hadamard gates. 
+
+
+To see how the $T$-depth is reduced when working in terms of CCZ, we refer to the Clifford+$T$ decomposition shown in \autoref{fig:ccz-clifford-t}. 
+The $T$-count of this circuit is 7 (as is the Toffoli), and its $T$ depth is 4. 
+The magic happens when two adjacent CCZs share a control bit. 
+An example is shown in \autoref{fig:bb-ccz-simplification}. 
+Using the decomposition of \autoref{fig:ccz-clifford-t}, we can rewrite the cascades of Toffolis that occur from the address bits to the auxiliary register. 
+Note that this \emph{still} has only $T$ depth 4.
+Also, it has $T$-count 12 rather than 14 - the $T$ on the shared control qubit combine to form an $S$ gate, which is a Clifford. 
+(Identities and notation for this circuit are shown in \autoref{fig:bb-constant-identities}.)
+
+\begin{figure}[ht]
+ \centering
+  \captionsetup{width=.89\linewidth}
+ \includegraphics[scale=2]{images/constant-bb-useful-identities}
+ \caption{(Left) When simplifying the circuit for two CCZs sharing a control bit, we make use of the fact that a $T$ gate commutes with a CNOT when applied to the control qubit (note that this is not true for a $T$ gate applied to the target). 
+ (Right) Notation for a fanout of CNOTs. This notation indicates that the same qubit is the control for multiple target qubits.}
+ \label{fig:bb-constant-identities}
+\end{figure}
+
+\begin{figure}
+ \centering
+  \captionsetup{width=.89\linewidth}
+ \includegraphics[scale=1.5]{images/ccz-simplification}
+ \caption{If we apply the decomposition of \autoref{fig:ccz-clifford-t} to portions of the address fanout, we can significantly reduce the $T$ depth and circuit depth. 
+ We can even reduce the $T$ count by 2, since the $T$ gates on the shared control qubit combine to form an $S$.
+ Rather than having 14 $T$ gates, $T$ depth 8, and total depth 20 as one naively would expect for two CCZs in sequence, it has $T$ count 12, $T$-depth 4, and total depth $13$.}
+ \label{fig:bb-ccz-simplification}
+\end{figure}
+
+The identity in \autoref{fig:bb-ccz-simplification} can be applied throughout the entire bucket brigade circuit. 
+Full examples for the case of 2 and 3 address bits are shown in \autoref{fig:bb_2address_ccz_full} and \autoref{fig:bb_3address_ccz_full} respectively. 
+In the query portion, recall that the initial set of Toffolis share a common target, rather than a control bit.
+However once we conjugate these by Hadamards (all but the outer two cancel), we are left again with a sequence of CCZs sharing a `control' (the former target), and can make use of the same identity.
+
+\begin{sidewaysfigure}[ht]
+ \captionsetup{width=.89\linewidth}
+ \includegraphics[scale=0.8]{images/bb_2address_ccz_full}
+ \caption{2-address bucket brigade circuit with Toffoli cascades replaced by parallelized CCZs. 
+ Note that the $T$-depth is now linear in the number of address bits ($4n$) rather than exponential as was assumed in the previous section without any optimization.
+ When the query register is parallelized, there are 4 adjacent CCZs; each pair picks up an $S$ on the control bit.}
+ \label{fig:bb_2address_ccz_full}
+\end{sidewaysfigure}
+
+\begin{sidewaysfigure}[ht]
+ \captionsetup{width=.89\linewidth}
+ \includegraphics[scale=0.5]{images/bb_3address_ccz_full}
+ \caption{3-address bucket brigade circuit with Toffoli cascades as CCZs. 
+ This figure should eventually be removed because it's enormous, but leaving here for now as a reference.
+ Note that the $S^4$ on the target register is actually $\mathds{1}$; it's been left here for clarity.}
+ \label{fig:bb_3address_ccz_full}
+\end{sidewaysfigure}
+
+In these figures, the savings in depth becomes apparent.
+While the $T$-count is reduced only slightly, the $T$s have been nicely parallelized.
+The query portion in particular has now only $T$ depth 4.
+The fanout portion has $T$-depth $4(n-1)$: $n - 1$ of the address bits contain adjacent Toffolis, and each has depth $4$.
+Taking into account the reverse of the fanout, the total $T$-depth is $8n - 4$, a significant reduction over the $9 \cdot 2^n - 12$ that was naively computed in the previous section.
+In the case where the memory cells store multiple data bits, the query portion is repeatedly identically for each target bit with the same auxiliary register, but coupling to the associated memory cell. 
+For $k$-bit output, the $T$-depth is thus $8n - 8 + 4k$.
+
+\todo{Add discussion of circuit depth and complexity of `quantum fanout'.}
+
 \subsection{Phase query circuit model}
+
+In some situations, most notably in Grover's algorithm, one is concerned with retrieving the memory contents not in bit form, but as a phase. 
+Explicitly, 
+\begin{equation}
+ \ket{i} \rightarrow (-1)^{m_i} \ket{i}
+\end{equation}
+
+Such a query can be done using slight modifications from the bucket brigade model.
+In particular, all that must be done is to start with the target in the state $\ket{1}$, and replace the Toffolis in the query with CCZs.
+An example is shown in \autoref{fig:bb-phase-query} for a 2-bit address. 
+This circuit can be parallelized using the same techniques as shown in \autoref{fig:bb_2address_ccz_full}.
+In fact, the only difference is that the target qubit starts in $\ket{1}$, and the Hadamards are removed.
+
+\begin{figure}[ht!]
+ \centering
+  \captionsetup{width=.89\linewidth}
+ \includegraphics[scale=0.7]{images/bb_phase_query}
+ \caption{Bucket-brigade style circuit that performs the query $\ket{i} \rightarrow (-1)^{m_i}\ket{i}$, where $m_i$ is  the contents of the memory at address $\ket{i}$.
+ Note that the target qubit starts in $\ket{1}$ allow for phase kickback with the CCZ; the CCZ triggers only if all of the auxiliary, memory, and targets are in $\ket{1}$.}
+ \label{fig:bb-phase-query}
+\end{figure}
+
+\todo{What should this look like for multioutput bit? Should it be the product of the memory contents?}
 
 \subsubsection{Resource estimation}
 

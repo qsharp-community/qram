@@ -94,7 +94,7 @@
     /// as a one-hot encoding.
     /// ## targetRegister
     /// The register that will have the memory value transferred to.
-    internal operation ReadoutMemory(
+    operation ReadoutMemory(
         memoryRegister : MemoryRegister, 
         auxRegister : Qubit[], 
         targetRegister : Qubit[]
