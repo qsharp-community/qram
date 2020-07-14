@@ -85,29 +85,6 @@
     }
 
     /// # Summary
-    /// Transfers the memory register values onto the target register.
-    /// # Input
-    /// ## memoryRegister
-    /// The qubit register that represents the memory you are reading from.
-    /// ## auxRegister
-    /// Qubit register that will have the same address as addressRegister, but
-    /// as a one-hot encoding.
-    /// ## targetRegister
-    /// The register that will have the memory value transferred to.
-    internal operation ReadoutMemory(
-        memoryRegister : MemoryRegister, 
-        auxRegister : Qubit[], 
-        targetRegister : Qubit[]
-    ) 
-    : Unit is Adj + Ctl {
-        for ((index, auxEnable) in Enumerated(auxRegister)) {
-            let range = SequenceI (index * Length(targetRegister), (index + 1) * Length(targetRegister) - 1);
-            let memoryPairs = Zip(Subarray(range, memoryRegister!), targetRegister);
-            ApplyToEachCA(CCNOT(auxEnable, _, _), memoryPairs);
-        }
-    }
-
-    /// # Summary
     /// Takes a register with a binary representation of an address and 
     /// converts it to a one-hot encoding in the aux register.
     /// # Input
