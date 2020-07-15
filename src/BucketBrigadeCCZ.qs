@@ -55,8 +55,8 @@
     : Unit {
         let (address, data) = (dataCell::Address, dataCell::Value);
         let range = SequenceI (address * Length(data), (address + 1) * Length(data) - 1);
-        ResetAll(Subarray(range, memoryRegister!));
-        ApplyPauliFromBitString(PauliX, true, data, Subarray(range, memoryRegister!));
+        ResetAll((memoryRegister!)[address]);
+        ApplyPauliFromBitString(PauliX, true, data, (memoryRegister!)[address]);
     }
 
     /// # Summary
@@ -133,6 +133,57 @@
                 ApplyToEachCA(Controlled X([targetRegister[idxTarget]], _), memoryRegister![idxTarget..Length(targetRegister)...]);
             }
         }
+    }
+
+    operation ReadoutMemoryCCZ2(
+        memoryRegister : MemoryRegister, 
+        auxRegister : Qubit[], 
+        targetRegister : Qubit[]
+    ) 
+    : Unit is Adj + Ctl {
+        within {
+            ApplyToEachCA(H, targetRegister);
+        }
+        apply {
+            ApplyToEachCA(RepeatCA(S, Length(auxRegister)/2, _), targetRegister);
+            within{
+                ApplyToEachCA(T, auxRegister);
+            }
+            apply {
+                within {
+                    ApplyToEachCA(ApplyToEachCA(T, _), memoryRegister!);
+                }
+                apply {
+                    ApplyToEachCA(ApplyCNOTCascade(auxRegister,_), memoryRegister!);
+                }
+                ApplyToEachCA(ApplyMultiTargetCNOT(_, auxRegister + ), memoryRegister!);
+            }
+            within {
+                ApplyToEachCA(ApplyToEachCA(T, _), memoryRegister!);
+            }
+            apply {
+                for (target in targetRegister) {
+                    ApplyToEachCA(CNOT(target, _), auxRegister);
+                }
+            }
+        }
+    }
+
+    operation ApplyCNOTCascade(controls : Qubit[], targets : Qubit[]) :  Unit is Adj + Ctl
+    {
+        for (control in controls) {
+            ApplyToEachCA(CNOT(control, _), targets);
+        }
+    }
+
+    operation ApplyMultiTargetCNOT(control : Qubit, targets : Qubit[]) : Unit is Adj + Ctl
+    {
+        ApplyToEachCA(CNOT(control, _), targets);
+    }
+   
+    operation ApplyTSandwich ( ) : 
+    {
+
     }
 
     /// # Summary

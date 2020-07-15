@@ -54,8 +54,8 @@
     : Unit {
         let (address, data) = (dataCell::Address, dataCell::Value);
         let range = SequenceI (address * Length(data), (address + 1) * Length(data) - 1);
-        ResetAll(Subarray(range, memoryRegister!));
-        ApplyPauliFromBitString(PauliX, true, data, Subarray(range, memoryRegister!));
+        ResetAll((memoryRegister!)[address]);
+        ApplyPauliFromBitString(PauliX, true, data, (memoryRegister!)[address]);
     }
 
     /// # Summary

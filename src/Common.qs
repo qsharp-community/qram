@@ -41,8 +41,8 @@ namespace Qram{
 
     /// # Summary
     /// Wrapper for registers that represent a quantum memory.
-    newtype MemoryRegister = (Qubit[]);
-
+    newtype MemoryRegister = (Qubit[][]);
+    
     /// # Summary
     /// Wrapper for registers that represent addresses.
     newtype AddressRegister = (Qubit[]);
@@ -184,10 +184,10 @@ namespace Qram{
         targetRegister : Qubit[]
     ) 
     : Unit is Adj + Ctl {
-        for ((index, auxEnable) in Enumerated(auxRegister)) {
-            let range = SequenceI (index * Length(targetRegister), (index + 1) * Length(targetRegister) - 1);
-            let memoryPairs = Zip(Subarray(range, memoryRegister!), targetRegister);
-            ApplyToEachCA(CCNOT(auxEnable, _, _), memoryPairs);
+        for ((idx, aux) in Enumerated(auxRegister)) {
+            let valuePairs = Zip((memoryRegister!)[idx], targetRegister);
+            ApplyToEachCA(CCNOT(aux, _, _), valuePairs);
         }
+        
     }    
 }
