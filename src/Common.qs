@@ -42,7 +42,33 @@ namespace Qram{
     /// # Summary
     /// Wrapper for registers that represent a quantum memory.
     newtype MemoryRegister = (Qubit[][]);
-    
+
+        /// # Summary
+    /// Takes a tuple of nested arrays and returns the $idx^{th}$ item from 
+    /// each array.
+    ///
+    /// # Input
+    /// ## dataArrayArray
+    /// Array of arrays that you want to take the $idx^{th}$ item from.
+    ///
+    /// # Output
+    /// An array of the $idx^{th}$ item from each nested array in dataArrayArray.
+    function ElementsAt<'T>(dataArrayArray : 'T[][], idx : Int) : 'T[] {
+        return Mapped(ElementAt<'T>(_, idx), dataArrayArray);
+    }
+
+    /// # Summary
+    /// Returns the $n^{th}$ item of an array. Basically a workaround for not 
+    /// having lambdas yet in Q#.
+    /// # Input
+    /// ## array
+    /// An array of type `'T`
+    /// # Output
+    /// The $idx^{th}$ item from `array`.
+    function ElementAt<'T>(array : 'T[], idx : Int) : 'T {
+        return array[idx];
+    }
+
     /// # Summary
     /// Wrapper for registers that represent addresses.
     newtype AddressRegister = (Qubit[]);

@@ -95,47 +95,8 @@
     /// as a one-hot encoding.
     /// ## targetRegister
     /// The register that will have the memory value transferred to.
-    operation ReadoutMemoryCCZ(
-        memoryRegister : MemoryRegister, 
-        auxRegister : Qubit[], 
-        targetRegister : Qubit[]
-    ) 
-    : Unit is Adj + Ctl {
-        // For now, to handle the multi-bit memory cells, we are going to apply the parallelized CCZ stuff to each 
-        // memory/target pair separately.
-        // I suspect there is in fact a way to optimize this further though.
-        for (idxTarget in 0..Length(targetRegister)-1) {
-            // Apply T to everything, and Hadamard to target to turn Toffolis to CCZ
-            ApplyToEachCA(T, auxRegister);
-            ApplyToEachCA(T, memoryRegister![idxTarget..Length(targetRegister)..Length(memoryRegister!)-1]);
-            within {
-                H(targetRegister[idxTarget]);
-            }
-            apply {
-                RepeatCA(T, Length(auxRegister), targetRegister[idxTarget]);
-                // CNOT cascade from aux qubits down to memory cells at correct index
-                ApplyToEachCA(CNOT, Zip(auxRegister, memoryRegister![idxTarget..Length(targetRegister)...]));
-                // Adjoint T to all the memory cells
-                ApplyToEachCA(Adjoint T, memoryRegister![idxTarget..Length(targetRegister)...]);
-                // Fanout from the target bit to all memory and aux 
-                ApplyToEachCA(Controlled X([targetRegister[idxTarget]], _), auxRegister);
-                ApplyToEachCA(Controlled X([targetRegister[idxTarget]], _), memoryRegister![idxTarget..Length(targetRegister)...]);
-                // T on all memory cells, T dag on all aux
-                ApplyToEachCA(T, memoryRegister![idxTarget..Length(targetRegister)...]);
-                ApplyToEachCA(Adjoint T, auxRegister);
-                // Fanout to all aux
-                ApplyToEachCA(Controlled X([targetRegister[idxTarget]],_), auxRegister);
-                // CNOT cascade from aux qubits down to memory cells at correct index
-                ApplyToEachCA(CNOT, Zip(auxRegister, memoryRegister![idxTarget..Length(targetRegister)...]));
-                // T dag on all memory cells now
-                ApplyToEachCA(Adjoint T, memoryRegister![idxTarget..Length(targetRegister)...]);
-                // Fanout CNOTs from target to memory
-                ApplyToEachCA(Controlled X([targetRegister[idxTarget]], _), memoryRegister![idxTarget..Length(targetRegister)...]);
-            }
-        }
-    }
 
-    operation ReadoutMemoryCCZ2(
+    operation ReadoutMemoryCCZ(
         memoryRegister : MemoryRegister, 
         auxRegister : Qubit[], 
         targetRegister : Qubit[]
@@ -150,21 +111,17 @@
                 ApplyToEachCA(T, auxRegister);
             }
             apply {
-                within {
-                    ApplyToEachCA(ApplyToEachCA(T, _), memoryRegister!);
+                ApplyTSandwich(memoryRegister, auxRegister);
+                //ApplyToEachCA(ApplyMultiTargetCNOT(_, Joined(_, auxRegister)), Zip(targetRegister, ForEach((memoryRegister!)[][],));
+                for ((idx, target) in Enumerated(targetRegister)) {
+                    ApplyMultiTargetCNOT(target, ElementsAt(memoryRegister!, idx) + auxRegister);
                 }
-                apply {
-                    ApplyToEachCA(ApplyCNOTCascade(auxRegister,_), memoryRegister!);
-                }
-                ApplyToEachCA(ApplyMultiTargetCNOT(_, auxRegister + ), memoryRegister!);
             }
-            within {
-                ApplyToEachCA(ApplyToEachCA(T, _), memoryRegister!);
-            }
-            apply {
-                for (target in targetRegister) {
-                    ApplyToEachCA(CNOT(target, _), auxRegister);
-                }
+            ApplyToEachCA(ApplyMultiTargetCNOT(_, auxRegister), targetRegister);
+            ApplyTSandwich(memoryRegister, auxRegister);
+            //ApplyToEachCA(ApplyMultiTargetCNOT(_, _), Zip(targetRegister, memoryRegister!));
+            for ((idx, target) in Enumerated(targetRegister)) {
+                ApplyMultiTargetCNOT(target, ElementsAt(memoryRegister!, idx));
             }
         }
     }
@@ -181,9 +138,23 @@
         ApplyToEachCA(CNOT(control, _), targets);
     }
    
-    operation ApplyTSandwich ( ) : 
+    operation ApplyTSandwich (
+        memoryRegister : MemoryRegister, 
+        auxRegister : Qubit[]
+    ) : Unit is Adj + Ctl
     {
+        within {
+            ApplyToEachCA(ApplyToEachCA(T, _), memoryRegister!);
+        }
+        apply {
+            ApplyToEachCA(ApplyCNOTCascade(auxRegister, _), memoryRegister!);
+        }
 
+    }
+
+    function Joined (register1 : Qubit[], register2 : Qubit[]) : Qubit[]
+    {
+        return register1 + register2;
     }
 
     /// # Summary
