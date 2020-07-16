@@ -32,7 +32,7 @@
 
         return Default<QRAM>()
             w/ Read <-  BucketBrigadeCCZRead(_, _, _)
-            w/ Write <- BucketBrigadeCCZWrite(_, _)
+            w/ Write <- BucketBrigadeWrite(_, _)
             w/ AddressSize <- bank::AddressSize
             w/ DataSize <- bank::DataSize;
     }
@@ -40,24 +40,6 @@
 ///////////////////////////////////////////////////////////////////////////
 // INTERNAL IMPLEMENTATION
 ///////////////////////////////////////////////////////////////////////////
-    
-    /// # Summary
-    /// Writes a single bit of data to the memory.
-    /// # Input
-    /// ## memoryRegister
-    /// Register that represents the memory you are writing to.
-    /// ## dataValue
-    /// The tuple of (address, data) that you want written to the memory.
-    operation BucketBrigadeCCZWrite(
-        memoryRegister : MemoryRegister, 
-        dataCell :  MemoryCell
-    ) 
-    : Unit {
-        let (address, data) = (dataCell::Address, dataCell::Value);
-        let range = SequenceI (address * Length(data), (address + 1) * Length(data) - 1);
-        ResetAll((memoryRegister!)[address]);
-        ApplyPauliFromBitString(PauliX, true, data, (memoryRegister!)[address]);
-    }
 
     /// # Summary
     /// Reads out a value from a MemoryRegister to a target qubit given an address.
@@ -112,30 +94,19 @@
             }
             apply {
                 ApplyTSandwich(memoryRegister, auxRegister);
-                //ApplyToEachCA(ApplyMultiTargetCNOT(_, Joined(_, auxRegister)), Zip(targetRegister, ForEach((memoryRegister!)[][],));
+                
                 for ((idx, target) in Enumerated(targetRegister)) {
                     ApplyMultiTargetCNOT(target, ElementsAt(memoryRegister!, idx) + auxRegister);
                 }
             }
             ApplyToEachCA(ApplyMultiTargetCNOT(_, auxRegister), targetRegister);
+            
             ApplyTSandwich(memoryRegister, auxRegister);
-            //ApplyToEachCA(ApplyMultiTargetCNOT(_, _), Zip(targetRegister, memoryRegister!));
+            
             for ((idx, target) in Enumerated(targetRegister)) {
                 ApplyMultiTargetCNOT(target, ElementsAt(memoryRegister!, idx));
             }
         }
-    }
-
-    operation ApplyCNOTCascade(controls : Qubit[], targets : Qubit[]) :  Unit is Adj + Ctl
-    {
-        for (control in controls) {
-            ApplyToEachCA(CNOT(control, _), targets);
-        }
-    }
-
-    operation ApplyMultiTargetCNOT(control : Qubit, targets : Qubit[]) : Unit is Adj + Ctl
-    {
-        ApplyToEachCA(CNOT(control, _), targets);
     }
    
     operation ApplyTSandwich (
@@ -150,11 +121,6 @@
             ApplyToEachCA(ApplyCNOTCascade(auxRegister, _), memoryRegister!);
         }
 
-    }
-
-    function Joined (register1 : Qubit[], register2 : Qubit[]) : Qubit[]
-    {
-        return register1 + register2;
     }
 
     /// # Summary

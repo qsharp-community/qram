@@ -33,7 +33,8 @@ namespace Qram{
     /// ## DataSize
     /// The size (number of bits) needed to represent a data value for the QRAM.
     newtype QRAM = (
-        Read : ((AddressRegister, MemoryRegister, Qubit[]) => Unit is Adj + Ctl), 
+        QueryPhase : ((AddressRegister, MemoryRegister, Qubit) => Unit is Adj + Ctl),
+        QueryBit : ((AddressRegister, MemoryRegister, Qubit[]) => Unit is Adj + Ctl), 
         Write : ((MemoryRegister, MemoryCell) => Unit), 
         AddressSize : Int,
         DataSize : Int
@@ -43,7 +44,7 @@ namespace Qram{
     /// Wrapper for registers that represent a quantum memory.
     newtype MemoryRegister = (Qubit[][]);
 
-        /// # Summary
+    /// # Summary
     /// Takes a tuple of nested arrays and returns the $idx^{th}$ item from 
     /// each array.
     ///
@@ -194,26 +195,16 @@ namespace Qram{
             w/ DataSize <- valueSize;
     }
 
-    /// # Summary
-    /// Transfers the memory register values onto the target register.
-    /// # Input
-    /// ## memoryRegister
-    /// The qubit register that represents the memory you are reading from.
-    /// ## auxRegister
-    /// Qubit register that will have the same address as addressRegister, but
-    /// as a one-hot encoding.
-    /// ## targetRegister
-    /// The register that will have the memory value transferred to.
-    operation ReadoutMemory(
-        memoryRegister : MemoryRegister, 
-        auxRegister : Qubit[], 
-        targetRegister : Qubit[]
-    ) 
-    : Unit is Adj + Ctl {
-        for ((idx, aux) in Enumerated(auxRegister)) {
-            let valuePairs = Zip((memoryRegister!)[idx], targetRegister);
-            ApplyToEachCA(CCNOT(aux, _, _), valuePairs);
+
+    operation ApplyCNOTCascade(controls : Qubit[], targets : Qubit[]) :  Unit is Adj + Ctl
+    {
+        for (control in controls) {
+            ApplyToEachCA(CNOT(control, _), targets);
         }
-        
+    }
+
+    operation ApplyMultiTargetCNOT(control : Qubit, targets : Qubit[]) : Unit is Adj + Ctl
+    {
+        ApplyToEachCA(CNOT(control, _), targets);
     }    
 }

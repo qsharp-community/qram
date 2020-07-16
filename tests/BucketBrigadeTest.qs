@@ -120,12 +120,13 @@
     internal operation CreateQueryMeasureAllQRAM(bank : MemoryBank) : Bool[][] {
         mutable result = new Bool[][2^bank::AddressSize];
 
-        using ((addressRegister, memoryRegister, targetRegister) =
+        using ((addressRegister, flatMemoryRegister, targetRegister) =
             (Qubit[bank::AddressSize], 
-            Qubit[(2^bank::AddressSize) * bank::DataSize], 
+            Qubit[bank::DataSize*(2^bank::AddressSize)], 
             Qubit[bank::DataSize])
         ) 
         {
+            let memoryRegister = Most(Partitioned(ConstantArray(2^bank::AddressSize, bank::DataSize), flatMemoryRegister));
             let memory = BucketBrigadeQRAMOracle(bank::DataSet, MemoryRegister(memoryRegister));
 
             // Query each address sequentially and store in results array
@@ -139,7 +140,7 @@
                 ResetAll(addressRegister + targetRegister);
             }
             // Done with the memory register now
-            ResetAll(memoryRegister);
+            ResetAll(flatMemoryRegister);
         }
         return result;
     }
@@ -149,12 +150,13 @@
         queryAddress : Int
     ) 
     : Bool[] {
-        using ((addressRegister, memoryRegister, targetRegister) =
+        using ((addressRegister, flatMemoryRegister, targetRegister) =
             (Qubit[bank::AddressSize], 
             Qubit[(2^bank::AddressSize) * bank::DataSize], 
             Qubit[bank::DataSize])
         ) 
         {
+            let memoryRegister = Most(Partitioned(ConstantArray(2^bank::AddressSize, bank::DataSize), flatMemoryRegister));
             let memory = BucketBrigadeQRAMOracle(bank::DataSet, MemoryRegister(memoryRegister));
             // Prepare the address register for the lookup
             PrepareIntAddressRegister(queryAddress, addressRegister);
@@ -162,7 +164,7 @@
             memory::Read(AddressRegister(addressRegister), MemoryRegister(memoryRegister), targetRegister);
             // Measure the target register and log the results
             let result = ResultArrayAsBoolArray(MultiM(targetRegister));
-            ResetAll(addressRegister + memoryRegister + targetRegister);
+            ResetAll(addressRegister + flatMemoryRegister + targetRegister);
 
             return result;
         }
@@ -173,22 +175,23 @@
         newData : MemoryCell
     ) 
     : Bool[] {
-        using ((addressRegister, memoryRegister, targetRegister) =
+        using ((addressRegister, flatMemoryRegister, targetRegister) =
             (Qubit[bank::AddressSize], 
             Qubit[(2^bank::AddressSize) * bank::DataSize], 
             Qubit[bank::DataSize])
         ) 
         {
-            let memory = BucketBrigadeQRAMOracle(bank::DataSet, MemoryRegister(memoryRegister));
-            memory::Write(MemoryRegister(memoryRegister), newData);
+            let memoryRegister = MemoryRegister(Most(Partitioned(ConstantArray(2^bank::AddressSize, bank::DataSize), flatMemoryRegister)));
+            let memory = BucketBrigadeQRAMOracle(bank::DataSet, memoryRegister);
+            memory::Write(memoryRegister, newData);
             
             // Prepare the address register for the lookup
             PrepareIntAddressRegister(newData::Address, addressRegister);
             // Read out the memory at that address
-            memory::Read(AddressRegister(addressRegister), MemoryRegister(memoryRegister), targetRegister);
+            memory::Read(AddressRegister(addressRegister), memoryRegister, targetRegister);
             // Measure the target register and log the results
             let result = ResultArrayAsBoolArray(MultiM(targetRegister));
-            ResetAll(addressRegister + memoryRegister + targetRegister);
+            ResetAll(addressRegister + flatMemoryRegister + targetRegister);
 
             return result;
         }
