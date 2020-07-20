@@ -33,7 +33,7 @@ namespace Qram{
     /// ## DataSize
     /// The size (number of bits) needed to represent a data value for the QRAM.
     newtype QRAM = (
-        QueryPhase : ((AddressRegister, MemoryRegister, Qubit) => Unit is Adj + Ctl),
+        QueryPhase : ((AddressRegister, MemoryRegister, Qubit[]) => Unit is Adj + Ctl),
         QueryBit : ((AddressRegister, MemoryRegister, Qubit[]) => Unit is Adj + Ctl), 
         Write : ((MemoryRegister, MemoryCell) => Unit), 
         AddressSize : Int,
@@ -206,5 +206,5 @@ namespace Qram{
     operation ApplyMultiTargetCNOT(control : Qubit, targets : Qubit[]) : Unit is Adj + Ctl
     {
         ApplyToEachCA(CNOT(control, _), targets);
-    }    
+    }
 }

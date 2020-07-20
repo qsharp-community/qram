@@ -82,7 +82,7 @@
                 ApplyAddressFanout(addressRegister, auxRegister);
             }
             apply {
-                ReadoutMemory(memoryRegister, auxRegister, targetRegister);
+                ReadoutMemoryBit(memoryRegister, auxRegister, targetRegister);
             }
         } 
     }
@@ -109,33 +109,9 @@
                 ApplyAddressFanout(addressRegister, auxRegister);
             }
             apply {
-                ReadoutMemory(memoryRegister, auxRegister, targetRegister);
+                ReadoutMemoryPhase(memoryRegister, auxRegister, targetRegister);
             }
         } 
-    }
-
-    /// # Summary
-    /// Transfers the memory register values onto the target register.
-    /// # Input
-    /// ## memoryRegister
-    /// The qubit register that represents the memory you are reading from.
-    /// ## auxRegister
-    /// Qubit register that will have the same address as addressRegister, but
-    /// as a one-hot encoding.
-    /// ## targetRegister
-    /// The register that will have the memory value transferred to.
-    operation ReadoutMemory(
-        memoryRegister : MemoryRegister, 
-        auxRegister : Qubit[], 
-        targetRegister : Qubit[],
-        controledOp : 
-    ) 
-    : Unit is Adj + Ctl {
-        for ((idx, aux) in Enumerated(auxRegister)) {
-            let valuePairs = Zip((memoryRegister!)[idx], targetRegister);
-            ApplyToEachCA(CCNOT(aux, _, _), valuePairs);
-        }
-        
     }
 
     /// # Summary
@@ -166,4 +142,52 @@
         }
     }
 
+    /// # Summary
+    /// Transfers the memory register values onto the target register.
+    /// # Input
+    /// ## memoryRegister
+    /// The qubit register that represents the memory you are reading from.
+    /// ## auxRegister
+    /// Qubit register that will have the same address as addressRegister, but
+    /// as a one-hot encoding.
+    /// ## targetRegister
+    /// The register that will have the memory value transferred to.
+    operation ReadoutMemoryBit(
+        memoryRegister : MemoryRegister, 
+        auxRegister : Qubit[], 
+        targetRegister : Qubit[]
+    ) 
+    : Unit is Adj + Ctl {
+        for ((idx, aux) in Enumerated(auxRegister)) {
+            let valuePairs = Zip((memoryRegister!)[idx], targetRegister);
+            ApplyToEachCA(CCNOT(aux, _, _), valuePairs);
+        }
+        
+    }
+
+    /// # Summary
+    /// Transfers the memory register values onto the target register.
+    /// # Input
+    /// ## memoryRegister
+    /// The qubit register that represents the memory you are reading from.
+    /// ## auxRegister
+    /// Qubit register that will have the same address as addressRegister, but
+    /// as a one-hot encoding.
+    /// ## targetRegister
+    /// The register that will have the memory value transferred to.
+    operation ReadoutMemoryPhase(
+        memoryRegister : MemoryRegister, 
+        auxRegister : Qubit[], 
+        targetRegister : Qubit[]
+    ) 
+    : Unit is Adj + Ctl {
+        within {
+            ApplyToEachCA(X, targetRegister);
+            ApplyToEachCA(H, targetRegister);
+        }
+        apply {
+            ReadoutMemoryBit(memoryRegister, auxRegister, targetRegister);
+        }
+        
+    }
 }

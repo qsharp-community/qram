@@ -14,31 +14,21 @@
     // NB: Much better extensible approach
     // AssertOperationEqualsReferenced(Memory that prepares bell state, BellState)
 
-    // Basic lookup with all addresses checked
-    @Test("QuantumSimulator")
-    operation BucketBrigadeOracleSingleLookupMatchResults() : Unit {
-        let bank = SingleBitData();
-        for (address in 0..bank::AddressSize-1) {
-            // Get the data value you expect to find at queryAddress
-            let expectedValue = DataAtAddress(bank, address);
-            let result = CreateQueryMeasureOneAddressQRAM(bank, address);
-            AllEqualityFactB(result, expectedValue, 
-            $"Expecting value {expectedValue} at address {address}, got {result}."); 
-        }
-    }
-
-    // Basic lookup where a new value is written right before with all addresses checked
-    @Test("QuantumSimulator")
-    operation BucketBrigadeOracleSingleWriteLookupMatchResults() : Unit {
-        let bank = SingleBitData();
-        for (address in 0..bank::AddressSize-1) {
-            // Get the data value you expect to find at queryAddress
-            let expectedValue = DataAtAddress(bank, address);
-            let result = CreateWriteQueryMeasureOneAddressQRAM(bank, MemoryCell(address, [true]));
-            AllEqualityFactB(result, [true], 
-            $"Expecting value {expectedValue} at address {address}, got {result}."); 
-        }
-    }
+    // Make sure that the query portion of the qRAM gives the same output when expressed as a
+    // sequence of Toffolis or sequence of CCZ with target conjugated by H.
+    // @Test("ResourcesEstimator")
+    // operation CompareBBReadouts() : Unit {
+    //     for ((addressSize, targetSize) in Zip(RangeAsIntArray(1..2), RangeAsIntArray(1..2))) {
+    //         using ((memoryRegister, targetRegister) = (Qubit[2^addressSize*targetSize], Qubit[targetSize])) {
+    //             AssertOperationsEqualInPlace(
+    //                 2^addressSize, 
+    //                 ReadoutMemory(MemoryRegister(memoryRegister), _, targetRegister),  
+    //                 ReadoutMemoryCCZ(MemoryRegister(memoryRegister), _, targetRegister)
+    //             );
+    //             ResetAll(memoryRegister + targetRegister);
+    //         }
+    //     }
+    // }
 
     // Verify empty qRAMs are empty
     @Test("QuantumSimulator") 
@@ -134,7 +124,7 @@
                 // Prepare the address register for the lookup
                 PrepareIntAddressRegister(queryAddress, addressRegister);
                 // Read out the memory at that address
-                memory::Read(AddressRegister(addressRegister), MemoryRegister(memoryRegister), targetRegister);
+                memory::QueryBit(AddressRegister(addressRegister), MemoryRegister(memoryRegister), targetRegister);
                 // Measure the target register and log the results
                 set result w/= queryAddress <- ResultArrayAsBoolArray(MultiM(targetRegister));
                 ResetAll(addressRegister + targetRegister);
@@ -143,58 +133,6 @@
             ResetAll(flatMemoryRegister);
         }
         return result;
-    }
-
-    internal operation CreateQueryMeasureOneAddressQRAM(
-        bank : MemoryBank, 
-        queryAddress : Int
-    ) 
-    : Bool[] {
-        using ((addressRegister, flatMemoryRegister, targetRegister) =
-            (Qubit[bank::AddressSize], 
-            Qubit[(2^bank::AddressSize) * bank::DataSize], 
-            Qubit[bank::DataSize])
-        ) 
-        {
-            let memoryRegister = Most(Partitioned(ConstantArray(2^bank::AddressSize, bank::DataSize), flatMemoryRegister));
-            let memory = BucketBrigadeQRAMOracle(bank::DataSet, MemoryRegister(memoryRegister));
-            // Prepare the address register for the lookup
-            PrepareIntAddressRegister(queryAddress, addressRegister);
-            // Read out the memory at that address
-            memory::Read(AddressRegister(addressRegister), MemoryRegister(memoryRegister), targetRegister);
-            // Measure the target register and log the results
-            let result = ResultArrayAsBoolArray(MultiM(targetRegister));
-            ResetAll(addressRegister + flatMemoryRegister + targetRegister);
-
-            return result;
-        }
-    }
-
-    internal operation CreateWriteQueryMeasureOneAddressQRAM(
-        bank : MemoryBank, 
-        newData : MemoryCell
-    ) 
-    : Bool[] {
-        using ((addressRegister, flatMemoryRegister, targetRegister) =
-            (Qubit[bank::AddressSize], 
-            Qubit[(2^bank::AddressSize) * bank::DataSize], 
-            Qubit[bank::DataSize])
-        ) 
-        {
-            let memoryRegister = MemoryRegister(Most(Partitioned(ConstantArray(2^bank::AddressSize, bank::DataSize), flatMemoryRegister)));
-            let memory = BucketBrigadeQRAMOracle(bank::DataSet, memoryRegister);
-            memory::Write(memoryRegister, newData);
-            
-            // Prepare the address register for the lookup
-            PrepareIntAddressRegister(newData::Address, addressRegister);
-            // Read out the memory at that address
-            memory::Read(AddressRegister(addressRegister), memoryRegister, targetRegister);
-            // Measure the target register and log the results
-            let result = ResultArrayAsBoolArray(MultiM(targetRegister));
-            ResetAll(addressRegister + flatMemoryRegister + targetRegister);
-
-            return result;
-        }
     }
 
 }

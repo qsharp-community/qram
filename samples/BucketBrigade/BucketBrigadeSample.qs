@@ -29,14 +29,21 @@
         // Generate a (Int, Bool[]) array of data.
         let data = GenerateMemoryData();
         // Create the QRAM.
-        using (memoryRegister = Qubit[(2^data::AddressSize) * data::DataSize]){
+        using (flatMemoryRegister = Qubit[(2^data::AddressSize) * data::DataSize]){
+            let memoryRegister = Most(
+                Partitioned(
+                    ConstantArray(2^data::AddressSize, data::DataSize), 
+                    flatMemoryRegister
+                )
+            );
+
             let memory = BucketBrigadeQRAMOracle(
                 data::DataSet, 
                 MemoryRegister(memoryRegister)
             );
             // Measure and return the data value stored at `queryAddress`.
             let value = QueryAndMeasureQRAM(memory, MemoryRegister(memoryRegister), queryAddress); 
-            ResetAll(memoryRegister);
+            ResetAll(flatMemoryRegister);
             return value;
         }
 
@@ -67,7 +74,7 @@
                 IntAsBoolArray(queryAddress, memory::AddressSize), 
                 addressRegister
             );
-            memory::Read(AddressRegister(addressRegister), 
+            memory::QueryBit(AddressRegister(addressRegister), 
                 memoryRegister, targetRegister
             );
             ResetAll(addressRegister);
