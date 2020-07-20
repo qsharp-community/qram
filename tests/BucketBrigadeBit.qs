@@ -32,11 +32,11 @@
 
     // Verify empty qRAMs are empty
     @Test("QuantumSimulator") 
-    operation BucketBrigadeOracleEmptyMatchResults() : Unit {
+    operation BucketBrigadeOracleBitEmptyMatchResults() : Unit {
         for (addressSize in 1..3) {
             let expectedValue = ConstantArray(2^addressSize, [false]);
             let data = EmptyQRAM(addressSize);
-            let result = CreateQueryMeasureAllQRAM(data);
+            let result = CreateBitQueryMeasureAllQRAM(data);
             let pairs = Zip(result, expectedValue);
             Ignore(Mapped(
                 AllEqualityFactB(_, _, $"Expecting memory contents {expectedValue}, got {result}."), 
@@ -47,11 +47,11 @@
 
     // Verify full qRAMs are full
     @Test("QuantumSimulator") 
-    operation BucketBrigadeOracleFullMatchResults() : Unit {
+    operation BucketBrigadeOracleBitFullMatchResults() : Unit {
         for (addressSize in 1..3) {
             let expectedValue = ConstantArray(2^addressSize, [true]);
             let data = FullQRAM(addressSize);
-            let result = CreateQueryMeasureAllQRAM(data);
+            let result = CreateBitQueryMeasureAllQRAM(data);
             let pairs = Zip(result, expectedValue);
             Ignore(Mapped(
                 AllEqualityFactB(_, _, $"Expecting memory contents {expectedValue}, got {result}."), 
@@ -62,11 +62,11 @@
 
     // Verify things work when only the first cell is full
     @Test("QuantumSimulator") 
-    operation BucketBrigadeOracleFirstCellFullMatchResults() : Unit {
+    operation BucketBrigadeOracleBitFirstCellFullMatchResults() : Unit {
         for (addressSize in 1..3) {
             let expectedValue = [[true]] + ConstantArray(2^addressSize-1, [false]);
             let data = FirstCellFullQRAM();
-            let result = CreateQueryMeasureAllQRAM(data);
+            let result = CreateBitQueryMeasureAllQRAM(data);
             let pairs = Zip(result, expectedValue);
             Ignore(Mapped(
                 AllEqualityFactB(_, _, $"Expecting memory contents {expectedValue}, got {result}."), 
@@ -77,11 +77,11 @@
 
     // Verify things work when only the second cell is full
     @Test("QuantumSimulator") 
-    operation BucketBrigadeOracleSecondCellFullMatchResults() : Unit {
+    operation BucketBrigadeOracleBitSecondCellFullMatchResults() : Unit {
         for (addressSize in 1..3) {
             let expectedValue = [[false], [true]] + ConstantArray(2^addressSize-2, [false]);
             let data = SecondCellFullQRAM();
-            let result = CreateQueryMeasureAllQRAM(data);
+            let result = CreateBitQueryMeasureAllQRAM(data);
             let pairs = Zip(result, expectedValue);
             Ignore(Mapped(
                 AllEqualityFactB(_, _, $"Expecting memory contents {expectedValue}, got {result}."), 
@@ -92,11 +92,11 @@
 
     // Verify things work when only the last cell is full
     @Test("QuantumSimulator") 
-    operation BucketBrigadeOracleLastCellFullMatchResults() : Unit {
+    operation BucketBrigadeOracleBitLastCellFullMatchResults() : Unit {
         for (addressSize in 1..3) {
             let expectedValue = ConstantArray(2^addressSize-1, [false]) + [[true]];
             let data = LastCellFullQRAM(addressSize);
-            let result = CreateQueryMeasureAllQRAM(data);
+            let result = CreateBitQueryMeasureAllQRAM(data);
             let pairs = Zip(result, expectedValue);
             Ignore(Mapped(
                 AllEqualityFactB(_, _, $"Expecting memory contents {expectedValue}, got {result}."), 
@@ -107,7 +107,7 @@
 
     // Operation that creates a qRAM, and returns the contents for
     // each address queried individually
-    internal operation CreateQueryMeasureAllQRAM(bank : MemoryBank) : Bool[][] {
+    internal operation CreateBitQueryMeasureAllQRAM(bank : MemoryBank) : Bool[][] {
         mutable result = new Bool[][2^bank::AddressSize];
 
         using ((addressRegister, flatMemoryRegister, targetRegister) =
