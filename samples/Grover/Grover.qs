@@ -13,12 +13,13 @@
     /// about marked states.
     @EntryPoint()
     operation GroverSearch(addressSize : Int, markedElement : Int) : Result[] {
-        // First, set up a qRAM with a single value set to 1; this will
-        // be arbitrarily set as the second cell
+        // First, set up a qRAM with a single value set to 1
         let groverMemoryContents = [MemoryCell(markedElement, [true])];
  
         // Is there a better way to do this in the situation where the memory register
         // is not explicitly owned by the qRAM?
+        // Also, the target is not really used here except to execute the query and perform
+        // phase kickback
         using ((groverQubits, targetQubit) = (Qubit[addressSize], Qubit[1])) {
             using (memoryRegister = Qubit[2^addressSize]) {
                 // Create a memory
@@ -26,16 +27,15 @@
                 let formattedMemoryRegister = MemoryRegister(Most(Partitioned(ConstantArray(2^addressSize, 1), memoryRegister)));
                 let memory = BucketBrigadeQRAMOracle(groverMemoryContents, formattedMemoryRegister);
 
-                // The target is not really used here except to execute the query and perform
-                // phase kickback
-                    // Initialize a uniform superposition over all possible inputs.
-                    PrepareUniform(groverQubits);
-                    // Grover iterations - the reflection about the marked element is implemented
-                    // as a QRAM phase query. only the memory cells storing a 1 will produce a phase
-                    for (idxIteration in 0..NIterations(addressSize) - 1) {
-                        memory::QueryPhase(AddressRegister(groverQubits), formattedMemoryRegister, targetQubit);
-                        ReflectAboutUniform(groverQubits);
-                    }
+                // Initialize a uniform superposition over all possible inputs.
+                PrepareUniform(groverQubits);
+
+                // Grover iterations - the reflection about the marked element is implemented
+                // as a QRAM phase query. Only the memory cells storing a 1 will produce a phase
+                for (idxIteration in 0..NIterations(addressSize) - 1) {
+                    memory::QueryPhase(AddressRegister(groverQubits), formattedMemoryRegister, targetQubit);
+                    ReflectAboutUniform(groverQubits);
+                }
 
                 ResetAll(memoryRegister);
             }
