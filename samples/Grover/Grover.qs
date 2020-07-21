@@ -4,6 +4,7 @@
     open Microsoft.Quantum.Arrays;
     open Microsoft.Quantum.Measurement;
     open Microsoft.Quantum.Intrinsic;
+    open Microsoft.Quantum.Diagnostics;
 
     open Qram;
 
@@ -27,6 +28,7 @@
                 let formattedMemoryRegister = MemoryRegister(Most(Partitioned(ConstantArray(2^addressSize, 1), memoryRegister)));
                 let memory = BucketBrigadeQRAMOracle(groverMemoryContents, formattedMemoryRegister);
 
+                DumpRegister("memory.txt", memoryRegister);
                 // Initialize a uniform superposition over all possible inputs.
                 PrepareUniform(groverQubits);
 
@@ -41,6 +43,7 @@
             }
         
             // Measure and return the answer.
+            ResetAll(targetQubit);
             return ForEach(MResetZ, groverQubits);
         }
     }
