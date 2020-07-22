@@ -5,6 +5,7 @@
     open Microsoft.Quantum.Measurement;
     open Microsoft.Quantum.Intrinsic;
     open Microsoft.Quantum.Diagnostics;
+    open Microsoft.Quantum.Arithmetic;
 
     open Qram;
 
@@ -13,7 +14,7 @@
     /// that uses a BucketBrigadeQRAM as an oracle, rather than the usual reflection
     /// about marked states.
     @EntryPoint()
-    operation GroverSearch(addressSize : Int, markedElement : Int) : Result[] {
+    operation GroverSearch(addressSize : Int, markedElement : Int) : Int {
         // First, set up a qRAM with a single value set to 1
         let groverMemoryContents = [MemoryCell(markedElement, [true])];
  
@@ -21,30 +22,32 @@
         // is not explicitly owned by the qRAM?
         // Also, the target is not really used here except to execute the query and perform
         // phase kickback
-        using ((groverQubits, targetQubit) = (Qubit[addressSize], Qubit[1])) {
-            using (memoryRegister = Qubit[2^addressSize]) {
+        using ((groverQubits, targetQubit, flatMemoryRegister) = 
+            (Qubit[addressSize], Qubit[1], Qubit[2^addressSize])
+        ) {
                 // Create a memory
                 // This part feels really clunky
-                let formattedMemoryRegister = MemoryRegister(Most(Partitioned(ConstantArray(2^addressSize, 1), memoryRegister)));
-                let memory = BucketBrigadeQRAMOracle(groverMemoryContents, formattedMemoryRegister);
+                //let memoryRegister = MemoryRegister(Most(Partitioned(ConstantArray(2^addressSize, 1), flatMemoryRegister)));
+                //let memory = BucketBrigadeQRAMOracle(groverMemoryContents, memoryRegister);
 
-                DumpRegister("memory.txt", memoryRegister);
+                DumpRegister("memory.txt", flatMemoryRegister);
                 // Initialize a uniform superposition over all possible inputs.
                 PrepareUniform(groverQubits);
 
                 // Grover iterations - the reflection about the marked element is implemented
                 // as a QRAM phase query. Only the memory cells storing a 1 will produce a phase
                 for (idxIteration in 0..NIterations(addressSize) - 1) {
-                    memory::QueryPhase(AddressRegister(groverQubits), formattedMemoryRegister, targetQubit);
+                    //memory::QueryPhase(AddressRegister(groverQubits), memoryRegister, targetQubit);
+                    ReflectAboutMarked(groverQubits, markedElement);
                     ReflectAboutUniform(groverQubits);
                 }
 
-                ResetAll(memoryRegister);
-            }
+                ResetAll(flatMemoryRegister);
+
         
             // Measure and return the answer.
             ResetAll(targetQubit);
-            return ForEach(MResetZ, groverQubits);
+            return MeasureInteger(LittleEndian(groverQubits));
         }
     }
 
