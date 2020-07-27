@@ -10,7 +10,7 @@ namespace GroverSample {
     /// Reflects about the basis state marked by alternating zeros and ones.
     /// This operation defines what input we are trying to find in the main
     /// search.
-    operation ReflectAboutMarked(inputQubits : Qubit[]) : Unit {
+    operation ReflectAboutMarked(inputQubits : Qubit[], idxMarkedItem : Int) : Unit {
         Message("Reflecting about marked state...");
         using (outputQubit = Qubit()) {
             within {
@@ -21,9 +21,9 @@ namespace GroverSample {
                 // Flip the outputQubit for marked states.
                 // Here, we get the state with alternating 0s and 1s by using
                 // the X instruction on every other qubit.
-                ApplyToEachA(X, inputQubits[...2...]);
+                //ApplyToEachA(X, inputQubits[...2...]);
             } apply {
-                Controlled X(inputQubits, outputQubit);
+                (ControlledOnInt(idxMarkedItem, X))(inputQubits, outputQubit);
             }
         }
     }
