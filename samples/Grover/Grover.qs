@@ -27,8 +27,8 @@
         ) {
                 // Create a memory
                 // This part feels really clunky
-                //let memoryRegister = MemoryRegister(Most(Partitioned(ConstantArray(2^addressSize, 1), flatMemoryRegister)));
-                //let memory = BucketBrigadeQRAMOracle(groverMemoryContents, memoryRegister);
+                let memoryRegister = MemoryRegister(Most(Partitioned(ConstantArray(2^addressSize, 1), flatMemoryRegister)));
+                let memory = BucketBrigadeQRAMOracle(groverMemoryContents, memoryRegister);
 
                 DumpRegister("memory.txt", flatMemoryRegister);
                 // Initialize a uniform superposition over all possible inputs.
@@ -37,11 +37,11 @@
                 // Grover iterations - the reflection about the marked element is implemented
                 // as a QRAM phase query. Only the memory cells storing a 1 will produce a phase
                 for (idxIteration in 0..NIterations(addressSize) - 1) {
-                    //memory::QueryPhase(AddressRegister(groverQubits), memoryRegister, targetQubit);
-                    ReflectAboutMarked(groverQubits, markedElement);
+                    //DumpRegister((), memoryRegister);
+                    memory::QueryPhase(AddressRegister(groverQubits), memoryRegister, targetQubit);
+                    //ReflectAboutMarked(groverQubits, markedElement);
                     ReflectAboutUniform(groverQubits);
                 }
-
                 ResetAll(flatMemoryRegister);
 
         

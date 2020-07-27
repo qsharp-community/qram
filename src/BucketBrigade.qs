@@ -181,8 +181,8 @@
         targetRegister : Qubit[]
     ) 
     : Unit is Adj + Ctl {
-        ApplyToEachCA(X, targetRegister);
         within {
+            ApplyToEachCA(X, targetRegister);
             ApplyToEachCA(H, targetRegister);
         }
         apply {
