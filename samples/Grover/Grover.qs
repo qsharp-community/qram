@@ -22,6 +22,7 @@
         for (markedElement in markedElements) {
             set groverMemoryContents += [MemoryCell(markedElement, [true])];
 		}
+        Message($"Num marked: {nMarkedElements}, Num Iterations: {NIterations(nMarkedElements, addressSize)}");
 
         // Is there a better way to do this in the situation where the memory register
         // is not explicitly owned by the qRAM?
@@ -35,14 +36,14 @@
                 let memoryRegister = MemoryRegister(Most(Partitioned(ConstantArray(2^addressSize, 1), flatMemoryRegister)));
                 let memory = BucketBrigadeQRAMOracle(groverMemoryContents, memoryRegister);
 
-                DumpRegister("memory.txt", flatMemoryRegister);
+                //DumpRegister("memory.txt", flatMemoryRegister);
                 // Initialize a uniform superposition over all possible inputs.
                 PrepareUniform(groverQubits);
 
                 // Grover iterations - the reflection about the marked element is implemented
                 // as a QRAM phase query. Only the memory cells storing a 1 will produce a phase
                 for (idxIteration in 0..NIterations(nMarkedElements, addressSize) - 1) {
-                    //DumpRegister((), memoryRegister);
+                    //DumpRegister((), flatMemoryRegister);
                     memory::QueryPhase(AddressRegister(groverQubits), memoryRegister, targetQubit);
                     //ReflectAboutMarked(groverQubits, markedElement);
                     ReflectAboutUniform(groverQubits);
