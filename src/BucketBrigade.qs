@@ -30,11 +30,14 @@
         }
 
         return Default<QRAM>()
-            w/ Read <-  BucketBrigadeRead(_, _, _)
+            w/ QueryPhase <- BucketBrigadeReadPhase(_, _, _)
+            w/ QueryBit <- BucketBrigadeReadBit(_, _, _)
             w/ Write <- BucketBrigadeWrite(_, _)
             w/ AddressSize <- bank::AddressSize
             w/ DataSize <- bank::DataSize;
     }
+
+    
 
 ///////////////////////////////////////////////////////////////////////////
 // INTERNAL IMPLEMENTATION
@@ -53,9 +56,9 @@
     ) 
     : Unit {
         let (address, data) = (dataCell::Address, dataCell::Value);
-        let range = SequenceI (address * Length(data), (address + 1) * Length(data) - 1);
-        ResetAll(Subarray(range, memoryRegister!));
-        ApplyPauliFromBitString(PauliX, true, data, Subarray(range, memoryRegister!));
+        Message($"Add:{address}|data:{data}|register:{Length(memoryRegister!)}");
+        ResetAll((memoryRegister!)[address]);
+        ApplyPauliFromBitString(PauliX, true, data, (memoryRegister!)[address]);
     }
 
     /// # Summary
@@ -67,7 +70,7 @@
     /// The qubit register that represents the memory you are reading from.
     /// ## targetRegister
     /// The register that will have the memory value transferred to.
-    operation BucketBrigadeRead(
+    operation BucketBrigadeReadBit(
         addressRegister : AddressRegister, 
         memoryRegister : MemoryRegister, 
         targetRegister : Qubit[]
@@ -79,7 +82,34 @@
                 ApplyAddressFanout(addressRegister, auxRegister);
             }
             apply {
-                ReadoutMemory(memoryRegister, auxRegister, targetRegister);
+                ReadoutMemoryBit(memoryRegister, auxRegister, targetRegister);
+            }
+        } 
+    }
+
+
+    /// # Summary
+    /// Reads out a value from a MemoryRegister to a target qubit given an address.
+    /// # Input
+    /// ## addressRegister
+    /// The qubit register that represents the address to be queried.
+    /// ## memoryRegister
+    /// The qubit register that represents the memory you are reading from.
+    /// ## targetRegister
+    /// The register that will have the memory value transferred to.
+    operation BucketBrigadeReadPhase(
+        addressRegister : AddressRegister, 
+        memoryRegister : MemoryRegister, 
+        targetRegister : Qubit[]
+    ) 
+    : Unit is Adj + Ctl {
+        using (auxRegister = Qubit[2^Length(addressRegister!)]) {
+            within {
+                X(Head(auxRegister));
+                ApplyAddressFanout(addressRegister, auxRegister);
+            }
+            apply {
+                ReadoutMemoryPhase(memoryRegister, auxRegister, targetRegister);
             }
         } 
     }
@@ -112,4 +142,52 @@
         }
     }
 
+    /// # Summary
+    /// Transfers the memory register values onto the target register.
+    /// # Input
+    /// ## memoryRegister
+    /// The qubit register that represents the memory you are reading from.
+    /// ## auxRegister
+    /// Qubit register that will have the same address as addressRegister, but
+    /// as a one-hot encoding.
+    /// ## targetRegister
+    /// The register that will have the memory value transferred to.
+    operation ReadoutMemoryBit(
+        memoryRegister : MemoryRegister, 
+        auxRegister : Qubit[], 
+        targetRegister : Qubit[]
+    ) 
+    : Unit is Adj + Ctl {
+        for ((idx, aux) in Enumerated(auxRegister)) {
+            let valuePairs = Zip((memoryRegister!)[idx], targetRegister);
+            ApplyToEachCA(CCNOT(aux, _, _), valuePairs);
+        }
+        
+    }
+
+    /// # Summary
+    /// Transfers the memory register values onto the target register.
+    /// # Input
+    /// ## memoryRegister
+    /// The qubit register that represents the memory you are reading from.
+    /// ## auxRegister
+    /// Qubit register that will have the same address as addressRegister, but
+    /// as a one-hot encoding.
+    /// ## targetRegister
+    /// The register that will have the memory value transferred to.
+    operation ReadoutMemoryPhase(
+        memoryRegister : MemoryRegister, 
+        auxRegister : Qubit[], 
+        targetRegister : Qubit[]
+    ) 
+    : Unit is Adj + Ctl {
+        within {
+            ApplyToEachCA(X, targetRegister);
+            ApplyToEachCA(H, targetRegister);
+        }
+        apply {
+            ReadoutMemoryBit(memoryRegister, auxRegister, targetRegister);
+        }
+        
+    }
 }

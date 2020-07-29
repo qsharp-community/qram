@@ -33,7 +33,8 @@ namespace Qram{
     /// ## DataSize
     /// The size (number of bits) needed to represent a data value for the QRAM.
     newtype QRAM = (
-        Read : ((AddressRegister, MemoryRegister, Qubit[]) => Unit is Adj + Ctl), 
+        QueryPhase : ((AddressRegister, MemoryRegister, Qubit[]) => Unit is Adj + Ctl),
+        QueryBit : ((AddressRegister, MemoryRegister, Qubit[]) => Unit is Adj + Ctl), 
         Write : ((MemoryRegister, MemoryCell) => Unit), 
         AddressSize : Int,
         DataSize : Int
@@ -41,7 +42,56 @@ namespace Qram{
 
     /// # Summary
     /// Wrapper for registers that represent a quantum memory.
-    newtype MemoryRegister = (Qubit[]);
+    newtype MemoryRegister = (Qubit[][]);
+
+    /// # Summary
+    /// Takes a flat qubit register and groups the qubits by the number of addresses it represents
+    /// # Input
+    /// ## flatRegister
+    /// 
+    /// ## numAddressBits
+    /// 
+    /// # Output
+    /// 
+    function PartitionMemoryRegister(flatRegister : Qubit[], memoryBank : MemoryBank) : MemoryRegister {
+        Message($"memoryBank::AddressSize {memoryBank::AddressSize}, memoryBank::DataSize {memoryBank::DataSize}");
+        return MemoryRegister(
+            // Partitioned always returns the rest of the list as an additional array, 
+            // dropping it here as it should be empty.
+            Most(
+                Partitioned(
+                    ConstantArray(2^memoryBank::AddressSize, memoryBank::DataSize), 
+                    flatRegister
+                )
+            )
+        );
+    }
+
+    /// # Summary
+    /// Takes a tuple of nested arrays and returns the $idx^{th}$ item from 
+    /// each array.
+    ///
+    /// # Input
+    /// ## dataArrayArray
+    /// Array of arrays that you want to take the $idx^{th}$ item from.
+    ///
+    /// # Output
+    /// An array of the $idx^{th}$ item from each nested array in dataArrayArray.
+    function ElementsAt<'T>(dataArrayArray : 'T[][], idx : Int) : 'T[] {
+        return Mapped(ElementAt<'T>(_, idx), dataArrayArray);
+    }
+
+    /// # Summary
+    /// Returns the $n^{th}$ item of an array. Basically a workaround for not 
+    /// having lambdas yet in Q#.
+    /// # Input
+    /// ## array
+    /// An array of type `'T`
+    /// # Output
+    /// The $idx^{th}$ item from `array`.
+    function ElementAt<'T>(array : 'T[], idx : Int) : 'T {
+        return array[idx];
+    }
 
     /// # Summary
     /// Wrapper for registers that represent addresses.
@@ -168,26 +218,16 @@ namespace Qram{
             w/ DataSize <- valueSize;
     }
 
-    /// # Summary
-    /// Transfers the memory register values onto the target register.
-    /// # Input
-    /// ## memoryRegister
-    /// The qubit register that represents the memory you are reading from.
-    /// ## auxRegister
-    /// Qubit register that will have the same address as addressRegister, but
-    /// as a one-hot encoding.
-    /// ## targetRegister
-    /// The register that will have the memory value transferred to.
-    operation ReadoutMemory(
-        memoryRegister : MemoryRegister, 
-        auxRegister : Qubit[], 
-        targetRegister : Qubit[]
-    ) 
-    : Unit is Adj + Ctl {
-        for ((index, auxEnable) in Enumerated(auxRegister)) {
-            let range = SequenceI (index * Length(targetRegister), (index + 1) * Length(targetRegister) - 1);
-            let memoryPairs = Zip(Subarray(range, memoryRegister!), targetRegister);
-            ApplyToEachCA(CCNOT(auxEnable, _, _), memoryPairs);
+
+    operation ApplyCNOTCascade(controls : Qubit[], targets : Qubit[]) :  Unit is Adj + Ctl
+    {
+        for (control in controls) {
+            ApplyToEachCA(CNOT(control, _), targets);
         }
-    }    
+    }
+
+    operation ApplyMultiTargetCNOT(control : Qubit, targets : Qubit[]) : Unit is Adj + Ctl
+    {
+        ApplyToEachCA(CNOT(control, _), targets);
+    }
 }
