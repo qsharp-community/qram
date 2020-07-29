@@ -14,22 +14,6 @@
     // NB: Much better extensible approach
     // AssertOperationEqualsReferenced(Memory that prepares bell state, BellState)
 
-    // Make sure that the query portion of the qRAM gives the same output when expressed as a
-    // sequence of Toffolis or sequence of CCZ with target conjugated by H.
-    // @Test("ResourcesEstimator")
-    // operation CompareBBReadouts() : Unit {
-    //     for ((addressSize, targetSize) in Zip(RangeAsIntArray(1..2), RangeAsIntArray(1..2))) {
-    //         using ((memoryRegister, targetRegister) = (Qubit[2^addressSize*targetSize], Qubit[targetSize])) {
-    //             AssertOperationsEqualInPlace(
-    //                 2^addressSize, 
-    //                 ReadoutMemory(MemoryRegister(memoryRegister), _, targetRegister),  
-    //                 ReadoutMemoryCCZ(MemoryRegister(memoryRegister), _, targetRegister)
-    //             );
-    //             ResetAll(memoryRegister + targetRegister);
-    //         }
-    //     }
-    // }
-
     // Verify empty qRAMs are empty
     @Test("QuantumSimulator") 
     operation BucketBrigadeOracleBitEmptyMatchResults() : Unit {
