@@ -14,45 +14,43 @@
     /// This sample is an adaptation of the Grover sample in the QDK documentation
     /// that uses a BucketBrigadeQRAM as an oracle, rather than the usual reflection
     /// about marked states.
+    /// https://github.com/microsoft/Quantum/tree/master/samples/algorithms/simple-grover
     @EntryPoint()
     operation GroverSearch(addressSize : Int, markedElements : Int[]) : Int {
-        // First, set up a qRAM with marked elements set to 1
+        // First, set up a qRAM with marked elements set to 1.
         let nMarkedElements = Length(markedElements);
-        mutable groverMemoryContents = new MemoryCell[0];
-        for (markedElement in markedElements) {
-            set groverMemoryContents += [MemoryCell(markedElement, [true])];
-		}
-        Message($"Num marked: {nMarkedElements}, Num Iterations: {NIterations(nMarkedElements, addressSize)}");
+        mutable groverMemoryContents = Mapped<Int,MemoryCell>(MemoryCell(_, [false]), RangeAsIntArray(0..2^addressSize - 1));
 
-        // Is there a better way to do this in the situation where the memory register
-        // is not explicitly owned by the qRAM?
-        // Also, the target is not really used here except to execute the query and perform
-        // phase kickback
+        // Set the data value to true for each marked address.
+        for (markedElement in markedElements) {
+            set groverMemoryContents w/= markedElement <- MemoryCell(markedElement, [true]);
+		}
+
         using ((groverQubits, targetQubit, flatMemoryRegister) = 
             (Qubit[addressSize], Qubit[1], Qubit[2^addressSize])
         ) {
-                // Create a memory
-                // This part feels really clunky
-                let memoryRegister = MemoryRegister(Most(Partitioned(ConstantArray(2^addressSize, 1), flatMemoryRegister)));
+                // Create a structured register to make indexing through the memory easier.
+                let memoryRegister = PartitionMemoryRegister(
+                    flatMemoryRegister, 
+                    GeneratedMemoryBank(groverMemoryContents)
+                );
+                // Prepare the memory register with the initial data. 
                 let memory = BucketBrigadeQRAMOracle(groverMemoryContents, memoryRegister);
 
-                //DumpRegister("memory.txt", flatMemoryRegister);
                 // Initialize a uniform superposition over all possible inputs.
                 PrepareUniform(groverQubits);
 
                 // Grover iterations - the reflection about the marked element is implemented
-                // as a QRAM phase query. Only the memory cells storing a 1 will produce a phase
+                // as a QRAM phase query. Only the memory cells storing a 1 will produce a phase.
                 for (idxIteration in 0..NIterations(nMarkedElements, addressSize) - 1) {
-                    //DumpRegister((), flatMemoryRegister);
-                    memory::QueryPhase(AddressRegister(groverQubits), memoryRegister, targetQubit);
-                    //ReflectAboutMarked(groverQubits, markedElement);
-                    ReflectAboutUniform(groverQubits);
-                    //DumpRegister($"reflect_{idxIteration}.txt", groverQubits);
 
-                    // It's necessary to remove phase since QueryPhase only sets phase on the specific address instead of inverting like traditional Grover's
+                    memory::QueryPhase(AddressRegister(groverQubits), memoryRegister, targetQubit);
+                    ReflectAboutUniform(groverQubits);
+
+                    // It's necessary to remove phase since QueryPhase only sets phase 
+                    // on the specific address instead of inverting like traditional Grover's.
                     ApplyToEach(Z, targetQubit);
                     ResetAll(targetQubit);
-                    //DumpRegister($"z_{idxIteration}.txt", groverQubits);
                 }
                 ResetAll(flatMemoryRegister);
 

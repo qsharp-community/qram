@@ -45,6 +45,29 @@ namespace Qram{
     newtype MemoryRegister = (Qubit[][]);
 
     /// # Summary
+    /// Takes a flat qubit register and groups the qubits by the number of addresses it represents
+    /// # Input
+    /// ## flatRegister
+    /// 
+    /// ## numAddressBits
+    /// 
+    /// # Output
+    /// 
+    function PartitionMemoryRegister(flatRegister : Qubit[], memoryBank : MemoryBank) : MemoryRegister {
+        Message($"memoryBank::AddressSize {memoryBank::AddressSize}, memoryBank::DataSize {memoryBank::DataSize}");
+        return MemoryRegister(
+            // Partitioned always returns the rest of the list as an additional array, 
+            // dropping it here as it should be empty.
+            Most(
+                Partitioned(
+                    ConstantArray(2^memoryBank::AddressSize, memoryBank::DataSize), 
+                    flatRegister
+                )
+            )
+        );
+    }
+
+    /// # Summary
     /// Takes a tuple of nested arrays and returns the $idx^{th}$ item from 
     /// each array.
     ///

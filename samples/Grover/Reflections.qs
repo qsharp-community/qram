@@ -6,6 +6,11 @@ namespace GroverSample {
     open Microsoft.Quantum.Arrays;
     open Microsoft.Quantum.Measurement;
 
+    /// This sample is an adaptation of the Grover sample in the QDK documentation
+    /// that uses a BucketBrigadeQRAM as an oracle, rather than the usual reflection
+    /// about marked states.
+    /// https://github.com/microsoft/Quantum/tree/master/samples/algorithms/simple-grover
+
     /// # Summary
     /// Reflects about the basis state marked by alternating zeros and ones.
     /// This operation defines what input we are trying to find in the main
