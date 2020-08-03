@@ -1,0 +1,12 @@
+name: qram
+channels:
+- conda-forge
+- quantum-engineering 
+dependencies:
+- notebook
+- numpy
+- scipy
+- qutip
+- matplotlib
+- pip
+- qsharp==0.12.2007.2031
