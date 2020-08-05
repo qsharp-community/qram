@@ -9,7 +9,7 @@ namespace ResourcesEstimation {
     
     open Qram;
 
-    function GenerateMemoryData() : MemoryBank {
+    function GenerateMemoryData(addressSize : Int) : MemoryBank {
         let numDataBits = 3;
         let data =  [(5, IntAsBoolArray(3, numDataBits)), 
             (4, IntAsBoolArray(2, numDataBits)), 
@@ -17,7 +17,13 @@ namespace ResourcesEstimation {
             (2, IntAsBoolArray(5, numDataBits))];
         return GeneratedMemoryBank(Mapped(MemoryCell, data));
     }
-    
+
+    // QRAM where only the last memory cell contains a 1
+    function LastCellFullQRAM(addressSize : Int, dataSize : Int) : MemoryBank {
+        return GeneratedMemoryBank([MemoryCell(2^addressSize - 1, ConstantArray(dataSize, true))]);
+    }
+
+
     operation QueryAndMeasureQROM(memory : QROM, queryAddress : Int) : Int {
         using ((addressRegister, targetRegister) = (Qubit[memory::AddressSize], Qubit[memory::DataSize])) {
             ApplyPauliFromBitString (PauliX, true, IntAsBoolArray(queryAddress, memory::AddressSize), addressRegister);
@@ -80,8 +86,19 @@ namespace ResourcesEstimation {
         }
     }
 
-    operation SetupBaseQRAM() : Unit {
-        let data = GenerateMemoryData();
+    operation ApplyMultipleH() : Bool {
+        using (q = Qubit[1]) {
+            H(q[0]);
+            H(q[0]);
+            let value = ResultAsBool(M(q[0]));
+            ResetAll(q);
+            return value; 
+        }
+    }
+
+    operation SetupBaseQRAM(addressSize : Int, dataSize : Int) : Unit {
+        let data = LastCellFullQRAM(addressSize, dataSize);
+
         // Create the QRAM.
         using (flatMemoryRegister = Qubit[(2^data::AddressSize) * data::DataSize]) {
             let memoryRegister = PartitionMemoryRegister(flatMemoryRegister, data);
@@ -95,8 +112,9 @@ namespace ResourcesEstimation {
         }
     }
 
-    operation QueryBaseQRAM(queryAddress : Int) : Int {
-        let data = GenerateMemoryData();
+    operation QueryBaseQRAM(addressSize : Int, dataSize : Int, queryAddress : Int) : Int {
+        let data = LastCellFullQRAM(addressSize, dataSize);
+
         // Create the QRAM.
         using (flatMemoryRegister = Qubit[(2^data::AddressSize) * data::DataSize]) {
             let memoryRegister = PartitionMemoryRegister(flatMemoryRegister, data);
