@@ -44,10 +44,13 @@
     /// The data stored at `queryAddress` expressed as a human readable integer.
     operation QueryAndMeasureQROM(memory : QROM, queryAddress : Int) : Int {
         using ((addressRegister, targetRegister) = (Qubit[memory::AddressSize], Qubit[memory::DataSize])) {
-            ApplyPauliFromBitString (PauliX, true, IntAsBoolArray(queryAddress, memory::AddressSize), addressRegister);
+            ApplyPauliFromBitString(PauliX, true, IntAsBoolArray(queryAddress, memory::AddressSize), addressRegister);
             memory::Read(LittleEndian(addressRegister), targetRegister);
-            ResetAll(addressRegister);
-            return MeasureInteger(LittleEndian(targetRegister));
+            Adjoint ApplyPauliFromBitString(PauliX, true, IntAsBoolArray(queryAddress, memory::AddressSize), addressRegister);
+            //ResetAll(addressRegister);
+            //AssertMeasurementProbability([PauliZ], targetRegister, One, 1.0, "", 1E-10);
+            return queryAddress;
+            //return MeasureInteger(LittleEndian(targetRegister));
         }
     }
 
@@ -57,11 +60,18 @@
     /// # Output
     /// Hardcoded data.
     function GenerateMemoryData() : MemoryBank {
-        let numDataBits = 3;
-        let data =  [(5, IntAsBoolArray(3, numDataBits)), 
-            (4, IntAsBoolArray(2, numDataBits)), 
-            (0, IntAsBoolArray(0, numDataBits)), 
-            (2, IntAsBoolArray(5, numDataBits))];
+        let numDataBits = 1;
+        let data =  [(1, IntAsBoolArray(1, numDataBits)), 
+            (0, IntAsBoolArray(0, numDataBits))];
         return GeneratedMemoryBank(Mapped(MemoryCell, data));
     }
+
+    // function GenerateMemoryData() : MemoryBank {
+    //     let numDataBits = 3;
+    //     let data =  [(5, IntAsBoolArray(3, numDataBits)), 
+    //         (4, IntAsBoolArray(2, numDataBits)), 
+    //         (0, IntAsBoolArray(0, numDataBits)), 
+    //         (2, IntAsBoolArray(5, numDataBits))];
+    //     return GeneratedMemoryBank(Mapped(MemoryCell, data));
+    // }
 }
