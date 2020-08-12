@@ -56,7 +56,6 @@ namespace Qram{
     /// # Output
     /// 
     function PartitionMemoryRegister(flatRegister : Qubit[], memoryBank : MemoryBank) : MemoryRegister {
-        Message($"memoryBank::AddressSize {memoryBank::AddressSize}, memoryBank::DataSize {memoryBank::DataSize}");
         return MemoryRegister(
             // Partitioned always returns the rest of the list as an additional array, 
             // dropping it here as it should be empty.

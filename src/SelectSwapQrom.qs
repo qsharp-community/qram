@@ -48,7 +48,10 @@
     /// A MemoryBank contained the addresses and contents of the memory
     /// # Output
     /// An operation that can be used to look up data `value` at `address`.
-    internal operation selectSwap(memoryBank : MemoryBank, tradeoffParameter : Int) 
+    internal operation selectSwap(
+        bank : MemoryBank, 
+        tradeoffParameter : Int
+    ) 
     : ((LittleEndian, Qubit[]) => Unit is Adj + Ctl) {
         // Create qubit register
         // Call select + swap as per fig 1c of the paper; for data of non-power-2 
@@ -76,39 +79,24 @@
     }
 
     /// # Summary
-    /// Select operation
+    /// 
     /// # Input
+    /// ## addressRegister
     /// 
-    /// # Output
+    /// ## targetRegister
     /// 
-    internal operation Select(
-        addressSubregister : Qubit[], 
-        partitionedAuxiliaryRegister: Qubit[][], 
-        memoryBank : MemoryBank, 
-        tradeoffParameter : Int
-    ) 
+    /// ## bank
+    /// 
+    internal operation Select(addressRegister : Qubit[], targetRegister : Qubit[], bank : MemoryBank) 
     : Unit is Adj + Ctl {
-        // for (memoryPartitionIndex in RangeAsIntArray(0..tradeoffParameter-1) {
-        //     // For each mixed-polarity gate, need to apply a different chunk of Paulis to the aux register
-        //     ApplyToEach(ApplyPauliFromBitString(PauliX, true, bank::DataSet[stuff], auxiliaryRegister[memoryPartition]);
-        // }
-
-        using (indicatorQubit = Qubit[0]) {
-            for (addressBits in RangeAsIntArray(0..2^Length(addressSubregister)-1)) {
-                // Apply the mixed polarity controlled gate
-                ApplyControlledOnInt(addressBits, X, addressSubregister, indicatorQubit);
-                // Perform the Paulis based on memory contents
-                ApplyToEachCA(Contr)
-            }
+        for (cell in bank::DataSet) {
+            ApplyControlledOnInt(
+                cell::Address, 
+                ApplyPauliFromBitString(PauliX, true, cell::Value, _), 
+                addressRegister, 
+                targetRegister
+            );
         }
-
-
-        // In the future, I want to be able to do this just using the multiplexing operation
-        // // Apply multiplexing operation
-        // MultiplexOperationsFromGenerator(
-        //     (2^Length(addressSubregister), unitaryGenerator), 
-        //     LittleEndian(addressSubregister), 
-        //     partitionedAuxiliaryRegister);
     }
 
 
