@@ -25,10 +25,10 @@
     /// data is a boolean array representing the user data.
     /// # Output
     /// A `QROM` type.
-    function SelectSwapQromOracle(dataValues : MemoryCell[], tradeoffFraction : Int) : QROM {
+    function SelectSwapQromOracle(dataValues : MemoryCell[], tradeoffParameter : Int) : QROM {
         let bank = GeneratedMemoryBank(dataValues);
         // Replace
-        let selectSwapQuery = selectSwap(bank, tradeoffFraction); 
+        let selectSwapQuery = selectSwap(bank, tradeoffParameter); 
         
         return Default<QROM>()
             w/ Read <- selectSwapQuery //Replace
@@ -48,11 +48,19 @@
     /// A MemoryBank contained the addresses and contents of the memory
     /// # Output
     /// An operation that can be used to look up data `value` at `address`.
-    internal operation selectSwap(bank : MemoryBank, tradeoffFraction : Int) 
+    internal operation selectSwap(bank : MemoryBank, tradeoffParameter : Int) 
     : ((LittleEndian, Qubit[]) => Unit is Adj + Ctl) {
         // Create qubit register
         // Call select + swap as per fig 1c of the paper; for data of non-power-2 
         // sizes we will have to also implement fig 1d.
+        
+        // A tradeoff parameter controls the relative size of an aux register 
+        let num_auxiliary_qubits = bank::DataSize * tradeoffParameter;
+
+        using ((addressRegister, indicatorQubit, auxiliaryRegister) = 
+        (Qubit[bank::AddressSize], Qubit(), Qubit[num_auxiliary_qubits])) {
+            Select(addressRegister[0..tradeoffParameter-1], indicatorQubit, auxiliaryRegister, bank, tradeoffParameter);
+            SwapNetwork(addressRegister[tradeoffParameter-1...], auxiliaryRegister);
         }
     }
 
@@ -62,9 +70,19 @@
     /// 
     /// # Output
     /// 
-    internal operation Select(bank : MemoryBank) 
+    internal operation Select(addressSubregister : Qubit[], indicatorQubit : Qubit, auxiliaryRegister: Qubit[], bank : MemoryBank, tradeoffParameter : Int) 
     : Unit is Adj + Ctl {
+        // Divide the memory into tradeoffParameter sets of addresses; 
+        // Python pseudocode
+        let unitaries = new operation[];
+
+        for (memoryPartitionIndex in RangeAsIntArray(0..tradeoffParameter-1) {
+            // unitaries
+            ApplyToEach(ApplyPauliFromBitString(PauliX, true, bank, auxiliaryRegister[memoryPartition]);
+        }
+
         // Apply multiplexing operation
+        MultiplexOperations(unitaries, LittleEndian(addressSubregister[0..tradeoffParameter-1]), auxiliaryRegister);
     }
 
     /// # Summary
@@ -73,7 +91,7 @@
     /// 
     /// # Output
     ///
-    internal operation SwapNetwork(dataValues : MemoryBank) 
+    internal operation SwapNetwork(addressSubregister : Qubit[], auxiliaryRegister : Qubit[]) 
     : Unit is Adj + Ctl {
         // Apply swap network
     }
