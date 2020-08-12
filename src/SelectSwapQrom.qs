@@ -57,9 +57,8 @@
         // A tradeoff parameter controls the relative size of an aux register 
         let num_auxiliary_qubits = bank::DataSize * tradeoffParameter;
 
-        using ((addressRegister, indicatorQubit, auxiliaryRegister) = 
-        (Qubit[bank::AddressSize], Qubit(), Qubit[num_auxiliary_qubits])) {
-            Select(addressRegister[0..tradeoffParameter-1], indicatorQubit, auxiliaryRegister, bank, tradeoffParameter);
+        using ((addressRegister, auxiliaryRegister) = (Qubit[bank::AddressSize], Qubit[num_auxiliary_qubits])) {
+            Select(addressRegister[0..tradeoffParameter-1], auxiliaryRegister, bank, tradeoffParameter);
             SwapNetwork(addressRegister[tradeoffParameter-1...], auxiliaryRegister);
         }
     }
@@ -70,19 +69,18 @@
     /// 
     /// # Output
     /// 
-    internal operation Select(addressSubregister : Qubit[], indicatorQubit : Qubit, auxiliaryRegister: Qubit[], bank : MemoryBank, tradeoffParameter : Int) 
+    internal operation Select(addressSubregister : Qubit[], auxiliaryRegister: Qubit[], bank : MemoryBank, tradeoffParameter : Int) 
     : Unit is Adj + Ctl {
         // Divide the memory into tradeoffParameter sets of addresses; 
-        // Python pseudocode
         let unitaries = new operation[];
 
-        for (memoryPartitionIndex in RangeAsIntArray(0..tradeoffParameter-1) {
-            // unitaries
-            ApplyToEach(ApplyPauliFromBitString(PauliX, true, bank, auxiliaryRegister[memoryPartition]);
-        }
+        // for (memoryPartitionIndex in RangeAsIntArray(0..tradeoffParameter-1) {
+        //     // For each mixed-polarity gate, need to apply a different chunk of Paulis to the aux register
+        //     ApplyToEach(ApplyPauliFromBitString(PauliX, true, bank::DataSet[stuff], auxiliaryRegister[memoryPartition]);
+        // }
 
         // Apply multiplexing operation
-        MultiplexOperations(unitaries, LittleEndian(addressSubregister[0..tradeoffParameter-1]), auxiliaryRegister);
+        MultiplexOperations(unitaries, LittleEndian(addressSubregister), auxiliaryRegister);
     }
 
     /// # Summary
