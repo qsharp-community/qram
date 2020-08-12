@@ -84,13 +84,38 @@
     }
 
     /// # Summary
-    /// Swap operation
+    /// SwapNetwork 
     /// # Input
     /// 
     /// # Output
     ///
-    internal operation SwapNetwork(addressSubregister : Qubit[], auxiliaryRegister : Qubit[]) 
+    internal operation SwapNetwork(addressSubregister : Qubit[], partitionedAuxiliaryRegister : Qubit[][]) 
     : Unit is Adj + Ctl {
-        // Apply swap network
-    }
+        // For convenience
+        let numAddressBits = Length(addressSubregister);
 
+        // Determine how many full registers we have to swap (should be 2^(Length(addressSubregister)))
+        let auxCopies = Length(partitionedAuxiliaryRegister);
+
+        // Loop through address qubits from the bottom up, and apply pairs of controlled swaps
+        // e.g. for 3 address qubits and 8 aux subregisters, address qubit 2 controls swaps of registers
+        // (0,1), (2,3), (4, 5), (6, 7), then address qubit 1 controls swaps of (0, 2), and (4, 6), finally
+        // address qubit 0 swaps (0, 4).
+
+        for (addressQubitIndex in RangeAsIntArray(numAddressBits-1..0)) {
+             // Get the indices of the subregister pairs we have to swap this round
+            let swapOffset = 2^(numAddressBits - addressQubitIndex -1);
+            let swapIndices = RangeAsIntArray(0..swapOffset..auxCopies-1);
+
+            // Organize into pairs
+            let registerPairIndices = Partitioned(ConstantArray(2, 2^addressQubitIndex), swapIndices);
+
+            // Perform the controlled swaps
+            for (pair in registerPairIndices) {   
+                Controlled SwapFullRegisters(
+                    [addressSubregister[addressQubitIndex]],
+                    (partitionedAuxiliaryRegister[pair[0]], partitionedAuxiliaryRegister[pair[1]]));
+            }
+        }
+    }
+}
