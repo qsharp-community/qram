@@ -50,7 +50,7 @@
         memoryBank : MemoryBank, 
         tradeoffParameter : Int,
         addressRegister : LittleEndian,
-        auxiliaryRegister : Qubit[]
+        targetRegister : Qubit[]
     ) 
     :  Unit is Adj + Ctl {
         // Create qubit register
@@ -58,22 +58,20 @@
         // sizes we will have to also implement fig 1d.
         
         // A tradeoff parameter controls the relative size of an aux register 
-        let num_auxiliary_qubits = memoryBank::DataSize * tradeoffParameter;
+        let numAuxQubits = memoryBank::DataSize * (tradeoffParameter - 1);
 
         // Partition the auxiliary register into chunks of the right size; can't use
         // the PartitionMemoryBank operation because aux register size depends on the tradeoffParameter
-        let partitionedAuxiliaryRegister = Most(
-            Partitioned(
-                ConstantArray(tradeoffParameter, memoryBank::DataSize), 
-                auxiliaryRegister
-            )  
-        );
+        using (auxRegister = Qubit[numAuxQubits]) {
+            let partitionedAuxRegister = [targetRegister] + Chunks<Qubit>(memoryBank::DataSize, auxRegister);
+            // Perform the select operation that "writes" memory contents to the aux register using the first address bits
+            Select(addressRegister![0..tradeoffParameter-1], partitionedAuxRegister, memoryBank);
 
-        // Perform the select operation that "writes" memory contents to the aux register using the first address bits
-        Select(addressRegister![0..tradeoffParameter-1], partitionedAuxiliaryRegister, memoryBank);
-
-        // Apply the swap network controlled on the remaining address qubits
-        SwapNetwork(addressRegister![tradeoffParameter-1...], partitionedAuxiliaryRegister);
+            // Apply the swap network controlled on the remaining address qubits
+            SwapNetwork(addressRegister![tradeoffParameter-1...], partitionedAuxRegister);
+            //ResetAll(auxRegister);
+        }
+        
     }
 
     /// # Summary
@@ -106,7 +104,7 @@
         let multiplexSize = Length(auxRegister);
         let addressSubspace = (Chunks(multiplexSize, RangeAsIntArray(0..2^bank::AddressSize-1)))[subAddress];
         let dataSubspace = Mapped<Int,Bool[]>(DataAtAddress(bank, _), addressSubspace);
-
+    
         for((value, aux) in Zip(dataSubspace, auxRegister)) {
             ApplyPauliFromBitString(PauliX, true, value, aux);
         }
