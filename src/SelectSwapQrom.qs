@@ -26,14 +26,14 @@
     /// # Output
     /// A `QROM` type.
     function SelectSwapQromOracle(dataValues : MemoryCell[], tradeoffParameter : Int) : QROM {
-        let bank = GeneratedMemoryBank(dataValues);
+        let memoryBank = GeneratedMemoryBank(dataValues);
         // Replace
-        let selectSwapQuery = selectSwap(bank, tradeoffParameter); 
+        let selectSwapQuery = selectSwap(memoryBank, tradeoffParameter); 
         
         return Default<QROM>()
             w/ Read <- selectSwapQuery //Replace
-            w/ AddressSize <- bank::AddressSize
-            w/ DataSize <- bank::DataSize;
+            w/ AddressSize <- memoryBank::AddressSize
+            w/ DataSize <- memoryBank::DataSize;
             // Add tradeoffFraction?
     }
 
@@ -67,8 +67,10 @@
                 )  
             );
 
-            // Perform the select operation that "writes" memory contents to the aux register
+            // Perform the select operation that "writes" memory contents to the aux register using the first address bits
             Select(addressRegister[0..tradeoffParameter-1], partitionedAuxiliaryRegister, memoryBank, tradeoffParameter);
+
+            // Apply the swap network controlled on the remaining address qubits
             SwapNetwork(addressRegister[tradeoffParameter-1...], partitionedAuxiliaryRegister);
         }
     }
@@ -79,19 +81,37 @@
     /// 
     /// # Output
     /// 
-    internal operation Select(addressSubregister : Qubit[], partitionedAuxiliaryRegister: Qubit[][], memoryBank : MemoryBank, tradeoffParameter : Int) 
+    internal operation Select(
+        addressSubregister : Qubit[], 
+        partitionedAuxiliaryRegister: Qubit[][], 
+        memoryBank : MemoryBank, 
+        tradeoffParameter : Int
+    ) 
     : Unit is Adj + Ctl {
-        // Divide the memory into tradeoffParameter sets of addresses; 
-        let unitaries = new operation[];
-
         // for (memoryPartitionIndex in RangeAsIntArray(0..tradeoffParameter-1) {
         //     // For each mixed-polarity gate, need to apply a different chunk of Paulis to the aux register
         //     ApplyToEach(ApplyPauliFromBitString(PauliX, true, bank::DataSet[stuff], auxiliaryRegister[memoryPartition]);
         // }
 
-        // Apply multiplexing operation
-        MultiplexOperations(unitaries, LittleEndian(addressSubregister), partitionedAuxiliaryRegister);
+        using (indicatorQubit = Qubit[0]) {
+            for (addressBits in RangeAsIntArray(0..2^Length(addressSubregister)-1)) {
+                // Apply the mixed polarity controlled gate
+                ApplyControlledOnInt(addressBits, X, addressSubregister, indicatorQubit);
+                // Perform the Paulis based on memory contents
+                ApplyToEachCA(Contr)
+            }
+        }
+
+
+        // In the future, I want to be able to do this just using the multiplexing operation
+        // // Apply multiplexing operation
+        // MultiplexOperationsFromGenerator(
+        //     (2^Length(addressSubregister), unitaryGenerator), 
+        //     LittleEndian(addressSubregister), 
+        //     partitionedAuxiliaryRegister);
     }
+
+
 
     /// # Summary
     /// SwapNetwork 

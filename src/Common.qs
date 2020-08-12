@@ -64,7 +64,7 @@ namespace Qram{
                 Partitioned(
                     ConstantArray(2^memoryBank::AddressSize, memoryBank::DataSize), 
                     flatRegister
-                )  )
+                )  
             )
         );
     }
