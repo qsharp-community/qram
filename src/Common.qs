@@ -5,6 +5,8 @@ namespace Qram{
     open Microsoft.Quantum.Arrays;
     open Microsoft.Quantum.Math;
     open Microsoft.Quantum.Arithmetic;
+    open Microsoft.Quantum.Diagnostics;
+    open Microsoft.Quantum.Convert;
 
     /// # Summary
     /// Type representing a generic QROM type.
@@ -62,7 +64,7 @@ namespace Qram{
                 Partitioned(
                     ConstantArray(2^memoryBank::AddressSize, memoryBank::DataSize), 
                     flatRegister
-                )
+                )  )
             )
         );
     }
@@ -230,4 +232,22 @@ namespace Qram{
     {
         ApplyToEachCA(CNOT(control, _), targets);
     }
+
+
+    /// # Summary
+    /// Swap qubits at the level of registers
+    /// # Input
+    /// Two registers with the same number of qubits
+    /// # Output
+    /// 
+    operation SwapFullRegisters(registerA : Qubit[], registerB : Qubit[]) 
+    : Unit is Adj + Ctl {
+        EqualityFactB(Length(registerA) == Length(registerB), true, "Cannot SWAP registers of unequal size.");
+
+        // TODO: find a way to do this in one line with ApplyToEach 
+        for (qubitIndex in RangeAsIntArray(0..Length(registerA)-1)) {
+            SWAP(registerA[qubitIndex], registerB[qubitIndex]);
+        }
+    }
+
 }
