@@ -48,18 +48,28 @@
     /// A MemoryBank contained the addresses and contents of the memory
     /// # Output
     /// An operation that can be used to look up data `value` at `address`.
-    internal operation selectSwap(bank : MemoryBank, tradeoffParameter : Int) 
+    internal operation selectSwap(memoryBank : MemoryBank, tradeoffParameter : Int) 
     : ((LittleEndian, Qubit[]) => Unit is Adj + Ctl) {
         // Create qubit register
         // Call select + swap as per fig 1c of the paper; for data of non-power-2 
         // sizes we will have to also implement fig 1d.
         
         // A tradeoff parameter controls the relative size of an aux register 
-        let num_auxiliary_qubits = bank::DataSize * tradeoffParameter;
+        let num_auxiliary_qubits = memoryBank::DataSize * tradeoffParameter;
 
-        using ((addressRegister, auxiliaryRegister) = (Qubit[bank::AddressSize], Qubit[num_auxiliary_qubits])) {
-            Select(addressRegister[0..tradeoffParameter-1], auxiliaryRegister, bank, tradeoffParameter);
-            SwapNetwork(addressRegister[tradeoffParameter-1...], auxiliaryRegister);
+        using ((addressRegister, auxiliaryRegister) = (Qubit[memoryBank::AddressSize], Qubit[num_auxiliary_qubits])) {
+            // Partition the auxiliary register into chunks of the right size; can't use
+            // the PartitionMemoryBank operation because aux register size depends on the tradeoffParameter
+            let partitionedAuxiliaryRegister = Most(
+                Partitioned(
+                    ConstantArray(tradeoffParameter, memoryBank::DataSize), 
+                    auxiliaryRegister
+                )  
+            );
+
+            // Perform the select operation that "writes" memory contents to the aux register
+            Select(addressRegister[0..tradeoffParameter-1], partitionedAuxiliaryRegister, memoryBank, tradeoffParameter);
+            SwapNetwork(addressRegister[tradeoffParameter-1...], partitionedAuxiliaryRegister);
         }
     }
 
@@ -69,7 +79,7 @@
     /// 
     /// # Output
     /// 
-    internal operation Select(addressSubregister : Qubit[], auxiliaryRegister: Qubit[], bank : MemoryBank, tradeoffParameter : Int) 
+    internal operation Select(addressSubregister : Qubit[], partitionedAuxiliaryRegister: Qubit[][], memoryBank : MemoryBank, tradeoffParameter : Int) 
     : Unit is Adj + Ctl {
         // Divide the memory into tradeoffParameter sets of addresses; 
         let unitaries = new operation[];
@@ -80,15 +90,18 @@
         // }
 
         // Apply multiplexing operation
-        MultiplexOperations(unitaries, LittleEndian(addressSubregister), auxiliaryRegister);
+        MultiplexOperations(unitaries, LittleEndian(addressSubregister), partitionedAuxiliaryRegister);
     }
 
     /// # Summary
     /// SwapNetwork 
     /// # Input
-    /// 
+    /// ## addressSubregister
+    /// A (sub)register of address bits that will be used to control a swap network.
+    /// ## partitionedAuxiliaryRegister
+    /// A register of qubits, organized into memory chunks, that will be swapped.
     /// # Output
-    ///
+    /// 
     internal operation SwapNetwork(addressSubregister : Qubit[], partitionedAuxiliaryRegister : Qubit[][]) 
     : Unit is Adj + Ctl {
         // For convenience
@@ -101,16 +114,15 @@
         // e.g. for 3 address qubits and 8 aux subregisters, address qubit 2 controls swaps of registers
         // (0,1), (2,3), (4, 5), (6, 7), then address qubit 1 controls swaps of (0, 2), and (4, 6), finally
         // address qubit 0 swaps (0, 4).
-
         for (addressQubitIndex in RangeAsIntArray(numAddressBits-1..0)) {
              // Get the indices of the subregister pairs we have to swap this round
             let swapOffset = 2^(numAddressBits - addressQubitIndex -1);
             let swapIndices = RangeAsIntArray(0..swapOffset..auxCopies-1);
 
             // Organize into pairs
-            let registerPairIndices = Partitioned(ConstantArray(2, 2^addressQubitIndex), swapIndices);
+            let registerPairIndices = Most(Partitioned(ConstantArray(2^addressQubitIndex, 2), swapIndices));
 
-            // Perform the controlled swaps
+            // Perform the controlled swaps from the address bit in question to the set of aux registers
             for (pair in registerPairIndices) {   
                 Controlled SwapFullRegisters(
                     [addressSubregister[addressQubitIndex]],
