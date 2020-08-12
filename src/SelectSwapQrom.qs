@@ -27,11 +27,9 @@
     /// A `QROM` type.
     function SelectSwapQromOracle(dataValues : MemoryCell[], tradeoffParameter : Int) : QROM {
         let memoryBank = GeneratedMemoryBank(dataValues);
-        // Replace
-        let selectSwapQuery = selectSwap(memoryBank, tradeoffParameter); 
-        
+
         return Default<QROM>()
-            w/ Read <- selectSwapQuery //Replace
+            w/ Read <- selectSwap(memoryBank, tradeoffParameter, _, _)
             w/ AddressSize <- memoryBank::AddressSize
             w/ DataSize <- memoryBank::DataSize;
             // Add tradeoffFraction?
@@ -49,10 +47,12 @@
     /// # Output
     /// An operation that can be used to look up data `value` at `address`.
     internal operation selectSwap(
-        bank : MemoryBank, 
-        tradeoffParameter : Int
+        memoryBank : MemoryBank, 
+        tradeoffParameter : Int,
+        addressRegister : LittleEndian,
+        auxiliaryRegister : Qubit[]
     ) 
-    : ((LittleEndian, Qubit[]) => Unit is Adj + Ctl) {
+    :  Unit is Adj + Ctl {
         // Create qubit register
         // Call select + swap as per fig 1c of the paper; for data of non-power-2 
         // sizes we will have to also implement fig 1d.
@@ -60,22 +60,20 @@
         // A tradeoff parameter controls the relative size of an aux register 
         let num_auxiliary_qubits = memoryBank::DataSize * tradeoffParameter;
 
-        using ((addressRegister, auxiliaryRegister) = (Qubit[memoryBank::AddressSize], Qubit[num_auxiliary_qubits])) {
-            // Partition the auxiliary register into chunks of the right size; can't use
-            // the PartitionMemoryBank operation because aux register size depends on the tradeoffParameter
-            let partitionedAuxiliaryRegister = Most(
-                Partitioned(
-                    ConstantArray(tradeoffParameter, memoryBank::DataSize), 
-                    auxiliaryRegister
-                )  
-            );
+        // Partition the auxiliary register into chunks of the right size; can't use
+        // the PartitionMemoryBank operation because aux register size depends on the tradeoffParameter
+        let partitionedAuxiliaryRegister = Most(
+            Partitioned(
+                ConstantArray(tradeoffParameter, memoryBank::DataSize), 
+                auxiliaryRegister
+            )  
+        );
 
-            // Perform the select operation that "writes" memory contents to the aux register using the first address bits
-            Select(addressRegister[0..tradeoffParameter-1], partitionedAuxiliaryRegister, memoryBank, tradeoffParameter);
+        // Perform the select operation that "writes" memory contents to the aux register using the first address bits
+        Select(addressRegister![0..tradeoffParameter-1], partitionedAuxiliaryRegister, memoryBank);
 
-            // Apply the swap network controlled on the remaining address qubits
-            SwapNetwork(addressRegister[tradeoffParameter-1...], partitionedAuxiliaryRegister);
-        }
+        // Apply the swap network controlled on the remaining address qubits
+        SwapNetwork(addressRegister![tradeoffParameter-1...], partitionedAuxiliaryRegister);
     }
 
     /// # Summary
@@ -83,22 +81,36 @@
     /// # Input
     /// ## addressRegister
     /// 
-    /// ## targetRegister
+    /// ## auxRegister
     /// 
     /// ## bank
     /// 
-    internal operation Select(addressRegister : Qubit[], targetRegister : Qubit[], bank : MemoryBank) 
+    internal operation Select(addressSubRegister : Qubit[], auxRegister : Qubit[][], bank : MemoryBank) 
     : Unit is Adj + Ctl {
-        for (cell in bank::DataSet) {
+        for (subAddress in 0..2^Length(addressSubRegister)-1) {
             ApplyControlledOnInt(
-                cell::Address, 
-                ApplyPauliFromBitString(PauliX, true, cell::Value, _), 
-                addressRegister, 
-                targetRegister
+                subAddress, 
+                FanoutMemoryContents(bank, _, subAddress), 
+                addressSubRegister, 
+                auxRegister
             );
         }
     }
 
+    internal operation FanoutMemoryContents(
+        bank : MemoryBank, 
+        auxRegister : Qubit[][], 
+        subAddress : Int
+    ) 
+    : Unit is Adj + Ctl {
+        let multiplexSize = Length(auxRegister);
+        let addressSubspace = (Chunks(multiplexSize, RangeAsIntArray(0..2^bank::AddressSize-1)))[subAddress];
+        let dataSubspace = Mapped<Int,Bool[]>(DataAtAddress(bank, _), addressSubspace);
+
+        for((value, aux) in Zip(dataSubspace, auxRegister)) {
+            ApplyPauliFromBitString(PauliX, true, value, aux);
+        }
+    }
 
 
     /// # Summary
