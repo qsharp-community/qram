@@ -53,23 +53,23 @@
         targetRegister : Qubit[]
     ) 
     :  Unit is Adj + Ctl {
-        // Create qubit register
-        // Call select + swap as per fig 1c of the paper; for data of non-power-2 
-        // sizes we will have to also implement fig 1d.
-        
         // A tradeoff parameter controls the relative size of an aux register 
-        let numAuxQubits = memoryBank::DataSize * (tradeoffParameter - 1);
+        let numAuxQubits = memoryBank::DataSize * tradeoffParameter;
 
         // Partition the auxiliary register into chunks of the right size; can't use
         // the PartitionMemoryBank operation because aux register size depends on the tradeoffParameter
         using (auxRegister = Qubit[numAuxQubits]) {
-            let partitionedAuxRegister = [targetRegister] + Chunks<Qubit>(memoryBank::DataSize, auxRegister);
+            let partitionedAuxRegister = Chunks(memoryBank::DataSize, auxRegister);
             // Perform the select operation that "writes" memory contents to the aux register using the first address bits
-            Select(addressRegister![0..tradeoffParameter-1], partitionedAuxRegister, memoryBank);
+            within {
+                Select(addressRegister![0..tradeoffParameter-1], partitionedAuxRegister, memoryBank);
+                // Apply the swap network controlled on the remaining address qubits
+                SwapNetwork(addressRegister![tradeoffParameter-1...], partitionedAuxRegister);
+            }
+            apply {
+                ApplyToEachCA(CNOT,Zip(partitionedAuxRegister[0],targetRegister));
+            }
 
-            // Apply the swap network controlled on the remaining address qubits
-            SwapNetwork(addressRegister![tradeoffParameter-1...], partitionedAuxRegister);
-            //ResetAll(auxRegister);
         }
         
     }

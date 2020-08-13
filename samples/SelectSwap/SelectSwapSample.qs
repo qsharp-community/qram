@@ -21,14 +21,14 @@
     /// # Remarks
     /// ## Example
     /// ```ps
-    /// dotnet run -- --query-address 2
+    /// dotnet run -- --query-address 2 --tradeoff-parameter 2
     /// ```
     @EntryPoint()
-    operation QromQuerySample(queryAddress : Int) : Int {
+    operation QromQuerySample(queryAddress : Int, tradeoffParameter : Int) : Int {
         // Generate a (Int, Bool[]) array of data.
         let data = GenerateMemoryData();
         // Create the QRAM.
-        let memory = SelectSwapQromOracle(data::DataSet, 2);
+        let memory = SelectSwapQromOracle(data::DataSet, tradeoffParameter);
         // Measure and return the data value stored at `queryAddress`.
         return QueryAndMeasureQROM(memory, queryAddress);
     }
