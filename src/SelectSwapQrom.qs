@@ -60,11 +60,12 @@
         // the PartitionMemoryBank operation because aux register size depends on the tradeoffParameter
         using (auxRegister = Qubit[numAuxQubits]) {
             let partitionedAuxRegister = Chunks(memoryBank::DataSize, auxRegister);
+            let partitionedAddressRegister = Partitioned([tradeoffParameter], addressRegister!);
             // Perform the select operation that "writes" memory contents to the aux register using the first address bits
             within {
-                ApplySelect(addressRegister![0..tradeoffParameter-1], partitionedAuxRegister, memoryBank);
+                ApplySelect(partitionedAddressRegister[0], partitionedAuxRegister, memoryBank);
                 // Apply the swap network controlled on the remaining address qubits
-                ApplySwapNetwork(addressRegister![tradeoffParameter-1...], partitionedAuxRegister);
+                ApplySwapNetwork(partitionedAddressRegister[1], partitionedAuxRegister);
             }
             apply {
                 ApplyToEachCA(CNOT,Zip(partitionedAuxRegister[0],targetRegister));
@@ -131,7 +132,7 @@
         for (idx in numAddressBits-1..0) {
             let stride = 2^((numAddressBits - 1) - idx);
             let registerPairs = Chunks(2, RangeAsIntArray(0..stride..auxCopies-1));
-            Message($"regPairs: {registerPairs}");
+            Message($"regPairs: {Length(registerPairs)}");
             ApplyToEachCA(SwapRegistersByIndex(addressSubregister[idx], auxRegister, _), registerPairs);
         }
     }
