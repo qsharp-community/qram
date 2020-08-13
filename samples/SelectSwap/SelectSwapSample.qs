@@ -16,6 +16,8 @@
     /// # Input
     /// ## queryAddress
     /// The address you want to lookup.
+    /// ## tradeoffParameter
+    /// VALID VALUES HERE ARE {1, 2}
     /// # Output
     /// The data value stored at `queryAddress`.
     /// # Remarks

@@ -54,7 +54,7 @@
     ) 
     :  Unit is Adj + Ctl {
         // A tradeoff parameter controls the relative size of an aux register 
-        let numAuxQubits = memoryBank::DataSize * tradeoffParameter;
+        let numAuxQubits = memoryBank::DataSize * 2^(tradeoffParameter-1);
 
         // Partition the auxiliary register into chunks of the right size; can't use
         // the PartitionMemoryBank operation because aux register size depends on the tradeoffParameter
@@ -62,9 +62,9 @@
             let partitionedAuxRegister = Chunks(memoryBank::DataSize, auxRegister);
             // Perform the select operation that "writes" memory contents to the aux register using the first address bits
             within {
-                Select(addressRegister![0..tradeoffParameter-1], partitionedAuxRegister, memoryBank);
+                ApplySelect(addressRegister![0..tradeoffParameter-1], partitionedAuxRegister, memoryBank);
                 // Apply the swap network controlled on the remaining address qubits
-                SwapNetwork(addressRegister![tradeoffParameter-1...], partitionedAuxRegister);
+                ApplySwapNetwork(addressRegister![tradeoffParameter-1...], partitionedAuxRegister);
             }
             apply {
                 ApplyToEachCA(CNOT,Zip(partitionedAuxRegister[0],targetRegister));
@@ -83,7 +83,7 @@
     /// 
     /// ## bank
     /// 
-    internal operation Select(addressSubRegister : Qubit[], auxRegister : Qubit[][], bank : MemoryBank) 
+    internal operation ApplySelect(addressSubRegister : Qubit[], auxRegister : Qubit[][], bank : MemoryBank) 
     : Unit is Adj + Ctl {
         for (subAddress in 0..2^Length(addressSubRegister)-1) {
             ApplyControlledOnInt(
@@ -120,32 +120,32 @@
     /// A register of qubits, organized into memory chunks, that will be swapped.
     /// # Output
     /// 
-    internal operation SwapNetwork(addressSubregister : Qubit[], partitionedAuxiliaryRegister : Qubit[][]) 
+    internal operation ApplySwapNetwork(addressSubregister : Qubit[], auxRegister : Qubit[][]) 
     : Unit is Adj + Ctl {
         // For convenience
         let numAddressBits = Length(addressSubregister);
 
         // Determine how many full registers we have to swap (should be 2^(Length(addressSubregister)))
-        let auxCopies = Length(partitionedAuxiliaryRegister);
+        let auxCopies = Length(auxRegister);
 
-        // Loop through address qubits from the bottom up, and apply pairs of controlled swaps
-        // e.g. for 3 address qubits and 8 aux subregisters, address qubit 2 controls swaps of registers
-        // (0,1), (2,3), (4, 5), (6, 7), then address qubit 1 controls swaps of (0, 2), and (4, 6), finally
-        // address qubit 0 swaps (0, 4).
-        for (addressQubitIndex in RangeAsIntArray(numAddressBits-1..0)) {
-             // Get the indices of the subregister pairs we have to swap this round
-            let swapOffset = 2^(numAddressBits - addressQubitIndex -1);
-            let swapIndices = RangeAsIntArray(0..swapOffset..auxCopies-1);
-
-            // Organize into pairs
-            let registerPairIndices = Most(Partitioned(ConstantArray(2^addressQubitIndex, 2), swapIndices));
-
-            // Perform the controlled swaps from the address bit in question to the set of aux registers
-            for (pair in registerPairIndices) {   
-                Controlled SwapFullRegisters(
-                    [addressSubregister[addressQubitIndex]],
-                    (partitionedAuxiliaryRegister[pair[0]], partitionedAuxiliaryRegister[pair[1]]));
-            }
+        for (idx in numAddressBits-1..0) {
+            let stride = 2^((numAddressBits - 1) - idx);
+            let registerPairs = Chunks(2, RangeAsIntArray(0..stride..auxCopies-1));
+            Message($"regPairs: {registerPairs}");
+            ApplyToEachCA(SwapRegistersByIndex(addressSubregister[idx], auxRegister, _), registerPairs);
         }
+    }
+
+    internal operation SwapRegistersByIndex(
+        control : Qubit, 
+        auxRegister : Qubit[][], 
+        swapIndices : Int[]
+    ) 
+    : Unit is Adj + Ctl {
+        Controlled SwapFullRegisters(
+            [control], 
+            (auxRegister[Head(swapIndices)], 
+            auxRegister[Tail(swapIndices)])
+        );
     }
 }
