@@ -61,6 +61,7 @@
         using (auxRegister = Qubit[numAuxQubits]) {
             let partitionedAuxRegister = Chunks(memoryBank::DataSize, auxRegister);
             let partitionedAddressRegister = Partitioned([tradeoffParameter], addressRegister!);
+            Message($"numAuxQubits: {numAuxQubits}| partitionedAuxRegister: {Length(partitionedAuxRegister)}| partitionedAddressRegister: {Length(partitionedAddressRegister)}");
             // Perform the select operation that "writes" memory contents to the aux register using the first address bits
             within {
                 ApplySelect(partitionedAddressRegister[0], partitionedAuxRegister, memoryBank);
@@ -129,11 +130,11 @@
         // Determine how many full registers we have to swap (should be 2^(Length(addressSubregister)))
         let auxCopies = Length(auxRegister);
 
-        for (idx in numAddressBits-1..0) {
-            let stride = 2^((numAddressBits - 1) - idx);
+        for ((idx, addressBit) in Enumerated(Reversed(addressSubregister))) {
+            let stride = 2^(idx);
             let registerPairs = Chunks(2, RangeAsIntArray(0..stride..auxCopies-1));
-            Message($"regPairs: {Length(registerPairs)}");
-            ApplyToEachCA(SwapRegistersByIndex(addressSubregister[idx], auxRegister, _), registerPairs);
+            Message($"auxCopies: {auxCopies}| numAddressBits: {numAddressBits} | idx: {idx} | stride: {stride} |list: {RangeAsIntArray(0..stride..auxCopies-1)}| regPairs: {registerPairs}");
+            ApplyToEachCA(SwapRegistersByIndex(addressBit, auxRegister, _), registerPairs);
         }
     }
 
