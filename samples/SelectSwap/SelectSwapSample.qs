@@ -17,7 +17,7 @@
     /// ## queryAddress
     /// The address you want to lookup.
     /// ## tradeoffParameter
-    /// VALID VALUES HERE ARE {1, 2}
+    /// VALID VALUES HERE ARE {1, 2, 3}
     /// # Output
     /// The data value stored at `queryAddress`.
     /// # Remarks
@@ -26,13 +26,18 @@
     /// dotnet run -- --query-address 2 --tradeoff-parameter 2
     /// ```
     @EntryPoint()
-    operation QromQuerySample(queryAddress : Int, tradeoffParameter : Int) : Int {
+    operation QromQuerySample(queryAddress : Int, tradeoffParameter : Int) : Int[] {
         // Generate a (Int, Bool[]) array of data.
         let data = GenerateMemoryData();
         // Create the QRAM.
         let memory = SelectSwapQromOracle(data::DataSet, tradeoffParameter);
         // Measure and return the data value stored at `queryAddress`.
-        return QueryAndMeasureQROM(memory, queryAddress);
+        mutable results = new Int[2^data::AddressSize];
+        for (address in 0..2^data::AddressSize-1) {
+            set results w/= address <- QueryAndMeasureQROM(memory, queryAddress);
+        } 
+
+        return results;
     }
 
     /// # Summary
@@ -59,13 +64,14 @@
     /// # Output
     /// Hardcoded data.
     function GenerateMemoryData() : MemoryBank {
-        let numDataBits = 4;
+        let numDataBits = 2;
         let data =  [
             (0, IntAsBoolArray(0, numDataBits)), 
-            (1, IntAsBoolArray(11, numDataBits)), 
-            (2, IntAsBoolArray(5, numDataBits)),
+            (1, IntAsBoolArray(1, numDataBits)), 
+            (2, IntAsBoolArray(1, numDataBits)),
             (4, IntAsBoolArray(2, numDataBits)), 
-            (5, IntAsBoolArray(3, numDataBits))
+            (5, IntAsBoolArray(3, numDataBits)),
+            (11, IntAsBoolArray(1, numDataBits))
         ];
         return GeneratedMemoryBank(Mapped(MemoryCell, data));
     }

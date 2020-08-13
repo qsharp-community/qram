@@ -54,7 +54,7 @@
     ) 
     :  Unit is Adj + Ctl {
         // A tradeoff parameter controls the relative size of an aux register 
-        let numAuxQubits = memoryBank::DataSize * 2^(tradeoffParameter-1);
+        let numAuxQubits = memoryBank::DataSize * 2^(memoryBank::AddressSize - tradeoffParameter);
 
         // Partition the auxiliary register into chunks of the right size; can't use
         // the PartitionMemoryBank operation because aux register size depends on the tradeoffParameter
@@ -66,7 +66,7 @@
             within {
                 ApplySelect(partitionedAddressRegister[0], partitionedAuxRegister, memoryBank);
                 // Apply the swap network controlled on the remaining address qubits
-                ApplySwapNetwork(partitionedAddressRegister[1], partitionedAuxRegister);
+                ApplySwapNetwork(partitionedAddressRegister[1], partitionedAuxRegister, memoryBank);
             }
             apply {
                 ApplyToEachCA(CNOT,Zip(partitionedAuxRegister[0],targetRegister));
@@ -105,7 +105,7 @@
     : Unit is Adj + Ctl {
         let multiplexSize = Length(auxRegister);
         let addressSubspace = (Chunks(multiplexSize, RangeAsIntArray(0..2^bank::AddressSize-1)))[subAddress];
-        let dataSubspace = Mapped<Int,Bool[]>(DataAtAddress(bank, _), addressSubspace);
+        let dataSubspace = Mapped(DataAtAddress(bank, _), addressSubspace);
     
         for((value, aux) in Zip(dataSubspace, auxRegister)) {
             ApplyPauliFromBitString(PauliX, true, value, aux);
@@ -122,7 +122,7 @@
     /// A register of qubits, organized into memory chunks, that will be swapped.
     /// # Output
     /// 
-    internal operation ApplySwapNetwork(addressSubregister : Qubit[], auxRegister : Qubit[][]) 
+    internal operation ApplySwapNetwork(addressSubregister : Qubit[], auxRegister : Qubit[][], bank : MemoryBank) 
     : Unit is Adj + Ctl {
         // For convenience
         let numAddressBits = Length(addressSubregister);
@@ -146,8 +146,8 @@
     : Unit is Adj + Ctl {
         Controlled SwapFullRegisters(
             [control], 
-            (auxRegister[Head(swapIndices)], 
-            auxRegister[Tail(swapIndices)])
+            (auxRegister[swapIndices[0]], 
+            auxRegister[swapIndices[1]])
         );
     }
 }
