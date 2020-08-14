@@ -56,14 +56,14 @@
         // A tradeoff parameter controls the relative size of an aux register 
         let numAuxQubits = memoryBank::DataSize * 2^(memoryBank::AddressSize - tradeoffParameter);
 
-        PermuteQubits(RangeAsIntArray(Length(addressRegister!)-1..-1..0), addressRegister!);
+        //PermuteQubits(RangeAsIntArray(Length(addressRegister!)-1..-1..0), addressRegister!);
 
         // Partition the auxiliary register into chunks of the right size; can't use
         // the PartitionMemoryBank operation because aux register size depends on the tradeoffParameter
         using (auxRegister = Qubit[numAuxQubits]) {
             let partitionedAuxRegister = Chunks(memoryBank::DataSize, auxRegister);
             let partitionedAddressRegister = Partitioned([tradeoffParameter], addressRegister!);
-            
+            //Message($"{Length(partitionedAddressRegister[0])}|{Length(partitionedAddressRegister[1])}");
             // Perform the select operation that "writes" memory contents to the aux register using the first address bits
             within {
                 ApplySelect(partitionedAddressRegister[0], partitionedAuxRegister, memoryBank);
@@ -75,7 +75,7 @@
             }
         }
                 
-        PermuteQubits(RangeAsIntArray(Length(addressRegister!)-1..-1..0), addressRegister!);
+        //PermuteQubits(RangeAsIntArray(Length(addressRegister!)-1..-1..0), addressRegister!);
         
     }
 
@@ -88,13 +88,17 @@
     /// 
     /// ## bank
     /// 
-    internal operation ApplySelect(addressSubRegister : Qubit[], auxRegister : Qubit[][], bank : MemoryBank) 
+    internal operation ApplySelect(
+        addressSubRegister : Qubit[], 
+        auxRegister : Qubit[][], 
+        bank : MemoryBank
+    ) 
     : Unit is Adj + Ctl {
         for (subAddress in 0..2^Length(addressSubRegister)-1) {
             ApplyControlledOnInt(
                 subAddress, 
                 FanoutMemoryContents(bank, _, subAddress), 
-                addressSubRegister, 
+                Reversed(addressSubRegister), 
                 auxRegister
             );
         }
@@ -125,7 +129,10 @@
     /// A register of qubits, organized into memory chunks, that will be swapped.
     /// # Output
     /// 
-    internal operation ApplySwapNetwork(addressSubregister : Qubit[], auxRegister : Qubit[][]) 
+    internal operation ApplySwapNetwork(
+        addressSubregister : Qubit[],
+        auxRegister : Qubit[][]
+    ) 
     : Unit is Adj + Ctl {
         // For convenience
         let numAddressBits = Length(addressSubregister);

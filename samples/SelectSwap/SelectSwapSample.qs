@@ -26,7 +26,7 @@
     /// dotnet run -- --query-address 2 --tradeoff-parameter 2
     /// ```
     @EntryPoint()
-    operation QromQuerySample(queryAddress : Int, tradeoffParameter : Int) : Int[] {
+    operation QromQuerySample(tradeoffParameter : Int) : Int[] {
         // Generate a (Int, Bool[]) array of data.
         let data = GenerateMemoryData();
         // Create the QRAM.
@@ -47,11 +47,11 @@
     /// A QRAM to query.
     /// ## queryAddress
     /// The address you want to look up.
-    /// # Output
+    /// # Outputs
     /// The data stored at `queryAddress` expressed as a human readable integer.
     operation QueryAndMeasureQROM(memory : QROM, queryAddress : Int) : Int {
         using ((addressRegister, targetRegister) = (Qubit[memory::AddressSize], Qubit[memory::DataSize])) {
-            ApplyPauliFromBitString (PauliX, true, IntAsBoolArray(queryAddress, memory::AddressSize), addressRegister);
+            ApplyPauliFromBitString (PauliX, true, Reversed(IntAsBoolArray(queryAddress, memory::AddressSize)), addressRegister);
             memory::Read(LittleEndian(addressRegister), targetRegister);
             ResetAll(addressRegister);
             return MeasureInteger(LittleEndian(targetRegister));
@@ -68,10 +68,20 @@
         let data =  [
             (0, IntAsBoolArray(0, numDataBits)), 
             (1, IntAsBoolArray(1, numDataBits)), 
-            (2, IntAsBoolArray(1, numDataBits)),
-            (4, IntAsBoolArray(2, numDataBits)), 
-            (5, IntAsBoolArray(3, numDataBits)),
-            (11, IntAsBoolArray(1, numDataBits))
+            (2, IntAsBoolArray(2, numDataBits)),
+            (3, IntAsBoolArray(3, numDataBits)),
+            (4, IntAsBoolArray(0, numDataBits)), 
+            (5, IntAsBoolArray(1, numDataBits)),
+            (6, IntAsBoolArray(2, numDataBits)),
+            (7, IntAsBoolArray(3, numDataBits)),
+            (8, IntAsBoolArray(0, numDataBits)),
+            (9, IntAsBoolArray(1, numDataBits)),
+            (10, IntAsBoolArray(2, numDataBits)),
+            (11, IntAsBoolArray(3, numDataBits)),
+            (12, IntAsBoolArray(0, numDataBits)),
+            (13, IntAsBoolArray(1, numDataBits)),
+            (14, IntAsBoolArray(2, numDataBits)),
+            (15, IntAsBoolArray(3, numDataBits))
         ];
         return GeneratedMemoryBank(Mapped(MemoryCell, data));
     }
