@@ -56,23 +56,26 @@
         // A tradeoff parameter controls the relative size of an aux register 
         let numAuxQubits = memoryBank::DataSize * 2^(memoryBank::AddressSize - tradeoffParameter);
 
+        PermuteQubits(RangeAsIntArray(Length(addressRegister!)-1..-1..0), addressRegister!);
+
         // Partition the auxiliary register into chunks of the right size; can't use
         // the PartitionMemoryBank operation because aux register size depends on the tradeoffParameter
         using (auxRegister = Qubit[numAuxQubits]) {
             let partitionedAuxRegister = Chunks(memoryBank::DataSize, auxRegister);
             let partitionedAddressRegister = Partitioned([tradeoffParameter], addressRegister!);
-            Message($"numAuxQubits: {numAuxQubits}| partitionedAuxRegister: {Length(partitionedAuxRegister)}| partitionedAddressRegister: {Length(partitionedAddressRegister)}");
+            
             // Perform the select operation that "writes" memory contents to the aux register using the first address bits
             within {
                 ApplySelect(partitionedAddressRegister[0], partitionedAuxRegister, memoryBank);
                 // Apply the swap network controlled on the remaining address qubits
-                ApplySwapNetwork(partitionedAddressRegister[1], partitionedAuxRegister, memoryBank);
+                ApplySwapNetwork(partitionedAddressRegister[1], partitionedAuxRegister);
             }
             apply {
                 ApplyToEachCA(CNOT,Zip(partitionedAuxRegister[0],targetRegister));
             }
-
         }
+                
+        PermuteQubits(RangeAsIntArray(Length(addressRegister!)-1..-1..0), addressRegister!);
         
     }
 
@@ -106,7 +109,7 @@
         let multiplexSize = Length(auxRegister);
         let addressSubspace = (Chunks(multiplexSize, RangeAsIntArray(0..2^bank::AddressSize-1)))[subAddress];
         let dataSubspace = Mapped(DataAtAddress(bank, _), addressSubspace);
-    
+
         for((value, aux) in Zip(dataSubspace, auxRegister)) {
             ApplyPauliFromBitString(PauliX, true, value, aux);
         }
@@ -122,7 +125,7 @@
     /// A register of qubits, organized into memory chunks, that will be swapped.
     /// # Output
     /// 
-    internal operation ApplySwapNetwork(addressSubregister : Qubit[], auxRegister : Qubit[][], bank : MemoryBank) 
+    internal operation ApplySwapNetwork(addressSubregister : Qubit[], auxRegister : Qubit[][]) 
     : Unit is Adj + Ctl {
         // For convenience
         let numAddressBits = Length(addressSubregister);
@@ -133,7 +136,7 @@
         for ((idx, addressBit) in Enumerated(Reversed(addressSubregister))) {
             let stride = 2^(idx);
             let registerPairs = Chunks(2, RangeAsIntArray(0..stride..auxCopies-1));
-            Message($"auxCopies: {auxCopies}| numAddressBits: {numAddressBits} | idx: {idx} | stride: {stride} |list: {RangeAsIntArray(0..stride..auxCopies-1)}| regPairs: {registerPairs}");
+            //Message($"auxCopies: {auxCopies}| numAddressBits: {numAddressBits} | idx: {idx} | stride: {stride} |list: {RangeAsIntArray(0..stride..auxCopies-1)}| regPairs: {registerPairs}");
             ApplyToEachCA(SwapRegistersByIndex(addressBit, auxRegister, _), registerPairs);
         }
     }
