@@ -34,7 +34,7 @@
         // Measure and return the data value stored at `queryAddress`.
         mutable results = new Int[2^data::AddressSize];
         for (address in 0..2^data::AddressSize-1) {
-            set results w/= address <- QueryAndMeasureQROM(memory, queryAddress);
+            set results w/= address <- QueryAndMeasureQROM(memory, address);
         } 
 
         return results;
