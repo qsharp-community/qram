@@ -62,7 +62,7 @@
         // the PartitionMemoryBank operation because aux register size depends on the tradeoffParameter
         using (auxRegister = Qubit[numAuxQubits]) {
             let partitionedAuxRegister = Chunks(memoryBank::DataSize, auxRegister);
-            let partitionedAddressRegister = Partitioned([tradeoffParameter], addressRegister!);
+            let partitionedAddressRegister = Partitioned([tradeoffParameter], Reversed(addressRegister!));
             //Message($"{Length(partitionedAddressRegister[0])}|{Length(partitionedAddressRegister[1])}");
             // Perform the select operation that "writes" memory contents to the aux register using the first address bits
             within {

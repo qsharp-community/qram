@@ -50,8 +50,10 @@
     /// # Outputs
     /// The data stored at `queryAddress` expressed as a human readable integer.
     operation QueryAndMeasureQROM(memory : QROM, queryAddress : Int) : Int {
-        using ((addressRegister, targetRegister) = (Qubit[memory::AddressSize], Qubit[memory::DataSize])) {
-            ApplyPauliFromBitString (PauliX, true, Reversed(IntAsBoolArray(queryAddress, memory::AddressSize)), addressRegister);
+        using ((addressRegister, targetRegister) = 
+            (Qubit[memory::AddressSize], Qubit[memory::DataSize])
+        ) {
+            ApplyPauliFromBitString (PauliX, true, IntAsBoolArray(queryAddress, memory::AddressSize), addressRegister);
             memory::Read(LittleEndian(addressRegister), targetRegister);
             ResetAll(addressRegister);
             return MeasureInteger(LittleEndian(targetRegister));
