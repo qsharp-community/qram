@@ -17,7 +17,7 @@
         let data = MultiBitData();
         for (i in 0..2^data::AddressSize-1) {
             for (t in 1..data::AddressSize) {
-                CreateQueryMeasureOneAddressSelectSwap(data, i, 1);
+                CreateQueryMeasureOneAddressSelectSwap(data, i, t);
             }
         }
     }
