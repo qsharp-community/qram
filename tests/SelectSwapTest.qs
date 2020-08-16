@@ -11,7 +11,7 @@
     open Microsoft.Quantum.Logical;
     open Qram;    
 
-    // Basic lookup with all addresses checked
+    // Basic lookup with all addresses checked, all valid tradeoff parameters tested.
     @Test("QuantumSimulator")
     operation SelectSwapOracleSingleLookupMatchResults() : Unit {
         let data = MultiBitData();

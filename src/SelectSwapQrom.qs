@@ -20,9 +20,8 @@
     /// ## dataValues
     /// An array of memory cells where the address is an Int and the 
     /// data is a boolean array representing the user data.
-    /// ## tradeoffFraction (TODO: RENAME)
-    /// An array of memory cells where the address is an Int and the 
-    /// data is a boolean array representing the user data.
+    /// ## tradeoffParameter 
+    /// TODO:
     /// # Output
     /// A `QROM` type.
     function SelectSwapQromOracle(dataValues : MemoryCell[], tradeoffParameter : Int) : QROM {
