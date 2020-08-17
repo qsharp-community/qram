@@ -20,7 +20,8 @@ namespace Tests {
     // Hardcoded data set for a multi-bit output situation
     internal function MultiBitData() : MemoryBank {
         let numDataBits = 3;
-        let data =  [(5, IntAsBoolArray(3, numDataBits)), 
+        let data =  [
+            (5, IntAsBoolArray(3, numDataBits)), 
             (4, IntAsBoolArray(2, numDataBits)), 
             (0, IntAsBoolArray(0, numDataBits)), 
             (2, IntAsBoolArray(5, numDataBits))];

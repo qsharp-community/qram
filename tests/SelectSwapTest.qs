@@ -11,36 +11,42 @@
     open Microsoft.Quantum.Logical;
     open Qram;    
 
-    // Basic lookup with all addresses checked for single-bit data
+
+    // Basic lookup with all addresses checked, all valid tradeoff parameters tested
+    // for single-bit data.
     @Test("QuantumSimulator")
-    operation QROMOracleSingleBitSingleLookupMatchResults() : Unit {
+    operation SelectSwapOracleSingleBitSingleLookupMatchResults() : Unit {
         let data = SingleBitData();
-        for (i in 0..7) {
-            CreateQueryMeasureOneAddressQROM(data, i);
+        for (i in 0..2^data::AddressSize-1) {
+            for (t in 1..data::AddressSize) {
+                CreateQueryMeasureOneAddressSelectSwap(data, i, t);
+            }
         }
     }
 
-    // Basic lookup with all addresses checked for multi-bit data
+    // Basic lookup with all addresses checked, all valid tradeoff parameters tested
+    // for multi-bit data.
     @Test("QuantumSimulator")
-    operation QROMOracleMultiBitSingleLookupMatchResults() : Unit {
+    operation SelectSwapOracleMultiBitSingleLookupMatchResults() : Unit {
         let data = MultiBitData();
-        for (i in 0..7) {
-            CreateQueryMeasureOneAddressQROM(data, i);
+        for (i in 0..2^data::AddressSize-1) {
+            for (t in 1..data::AddressSize) {
+                CreateQueryMeasureOneAddressSelectSwap(data, i, t);
+            }
         }
     }
 
-    internal operation CreateQueryMeasureOneAddressQROM(
+    internal operation CreateQueryMeasureOneAddressSelectSwap(
         data : MemoryBank, 
-        queryAddress : Int
+        queryAddress : Int,
+        tradeoffParameter : Int
     ) 
     : Unit {
         // Get the data value you expect to find at queryAddress
         let expectedValue = DataAtAddress(data, queryAddress);
-        // Setup the var to hold the result of the measurement
-        mutable result = new Bool[0];
 
         // Create the new Qrom oracle
-        let memory = QromOracle(data::DataSet);
+        let memory = SelectSwapQromOracle(data::DataSet, tradeoffParameter);
 
         using((addressRegister, targetRegister) = 
             (Qubit[memory::AddressSize], Qubit[memory::DataSize])
@@ -52,12 +58,12 @@
             // Perform the lookup
             memory::Read(LittleEndian(addressRegister), targetRegister);
             // Get results and make sure its the same format as the data provided i.e. Bool[].
-            set result = ResultArrayAsBoolArray(MultiM(targetRegister));
+            let result = ResultArrayAsBoolArray(MultiM(targetRegister));
             // Reset all the qubits before returning them
             ResetAll(addressRegister+targetRegister);
+            AllEqualityFactB(result, expectedValue, 
+                $"Expecting value {expectedValue} at address {queryAddress}, got {result}."); 
         }
-        AllEqualityFactB(result, expectedValue, 
-            $"Expecting value {expectedValue} at address {queryAddress}, got {result}."); 
     }
 
 }
