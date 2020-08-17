@@ -56,7 +56,7 @@
     ) 
     : Unit {
         let (address, data) = (dataCell::Address, dataCell::Value);
-        Message($"Add:{address}|data:{data}|register:{Length(memoryRegister!)}");
+
         ResetAll((memoryRegister!)[address]);
         ApplyPauliFromBitString(PauliX, true, data, (memoryRegister!)[address]);
     }

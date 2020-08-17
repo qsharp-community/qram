@@ -11,9 +11,18 @@
     open Microsoft.Quantum.Logical;
     open Qram;    
 
-    // Basic lookup with all addresses checked
+    // Basic lookup with all addresses checked for single-bit data
     @Test("QuantumSimulator")
-    operation QROMOracleSingleLookupMatchResults() : Unit {
+    operation QROMOracleSingleBitSingleLookupMatchResults() : Unit {
+        let data = SingleBitData();
+        for (i in 0..7) {
+            CreateQueryMeasureOneAddressQROM(data, i);
+        }
+    }
+
+    // Basic lookup with all addresses checked for multi-bit data
+    @Test("QuantumSimulator")
+    operation QROMOracleMultiBitSingleLookupMatchResults() : Unit {
         let data = MultiBitData();
         for (i in 0..7) {
             CreateQueryMeasureOneAddressQROM(data, i);

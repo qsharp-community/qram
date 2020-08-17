@@ -183,7 +183,7 @@
         for ((idx, addressBit) in Enumerated(Reversed(addressSubregister))) {
             let stride = 2^(idx);
             let registerPairs = Chunks(2, RangeAsIntArray(0..stride..auxCopies-1));
-            //Message($"auxCopies: {auxCopies}| numAddressBits: {numAddressBits} | idx: {idx} | stride: {stride} |list: {RangeAsIntArray(0..stride..auxCopies-1)}| regPairs: {registerPairs}");
+            
             ApplyToEachCA(SwapRegistersByIndex(addressBit, auxRegister, _), registerPairs);
         }
     }
