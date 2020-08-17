@@ -1,17 +1,17 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.26124.0
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30330.147
 MinimumVisualStudioVersion = 15.0.26124.0
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "qram", "src\qram.csproj", "{DDD89D88-1484-4D86-B18C-F9267AB73C74}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "qram", "src\qram.csproj", "{DDD89D88-1484-4D86-B18C-F9267AB73C74}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "tests", "tests\tests.csproj", "{F0398818-74CB-4B47-981B-39CA7B214E5A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "tests", "tests\tests.csproj", "{F0398818-74CB-4B47-981B-39CA7B214E5A}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{BC9A489D-88AF-4DE2-A3EE-F31A1FE47D7A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Qrom", "samples\Qrom\QromSample.csproj", "{7DAD2361-E333-4076-B840-FACA90D354F7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "QromSample", "samples\Qrom\QromSample.csproj", "{7DAD2361-E333-4076-B840-FACA90D354F7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BucketBrigade", "samples\BucketBrigade\BucketBrigadeSample.csproj", "{7DAD2361-E333-4076-B840-FACA90D354F7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BucketBrigadeSample", "samples\BucketBrigade\BucketBrigadeSample.csproj", "{187BDA1B-2BF1-488D-9B8B-D1F0C7D83235}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,9 +21,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 		Release|x64 = Release|x64
 		Release|x86 = Release|x86
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{DDD89D88-1484-4D86-B18C-F9267AB73C74}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -62,8 +59,26 @@ Global
 		{7DAD2361-E333-4076-B840-FACA90D354F7}.Release|x64.Build.0 = Release|Any CPU
 		{7DAD2361-E333-4076-B840-FACA90D354F7}.Release|x86.ActiveCfg = Release|Any CPU
 		{7DAD2361-E333-4076-B840-FACA90D354F7}.Release|x86.Build.0 = Release|Any CPU
+		{187BDA1B-2BF1-488D-9B8B-D1F0C7D83235}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{187BDA1B-2BF1-488D-9B8B-D1F0C7D83235}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{187BDA1B-2BF1-488D-9B8B-D1F0C7D83235}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{187BDA1B-2BF1-488D-9B8B-D1F0C7D83235}.Debug|x64.Build.0 = Debug|Any CPU
+		{187BDA1B-2BF1-488D-9B8B-D1F0C7D83235}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{187BDA1B-2BF1-488D-9B8B-D1F0C7D83235}.Debug|x86.Build.0 = Debug|Any CPU
+		{187BDA1B-2BF1-488D-9B8B-D1F0C7D83235}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{187BDA1B-2BF1-488D-9B8B-D1F0C7D83235}.Release|Any CPU.Build.0 = Release|Any CPU
+		{187BDA1B-2BF1-488D-9B8B-D1F0C7D83235}.Release|x64.ActiveCfg = Release|Any CPU
+		{187BDA1B-2BF1-488D-9B8B-D1F0C7D83235}.Release|x64.Build.0 = Release|Any CPU
+		{187BDA1B-2BF1-488D-9B8B-D1F0C7D83235}.Release|x86.ActiveCfg = Release|Any CPU
+		{187BDA1B-2BF1-488D-9B8B-D1F0C7D83235}.Release|x86.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{7DAD2361-E333-4076-B840-FACA90D354F7} = {BC9A489D-88AF-4DE2-A3EE-F31A1FE47D7A}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {59FFFA5F-EA28-4011-8AE3-3AF0A57A9265}
 	EndGlobalSection
 EndGlobal

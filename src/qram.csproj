@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.Quantum.Sdk/0.12.20070124">
+<Project Sdk="Microsoft.Quantum.Sdk/0.12.20072031">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
@@ -13,5 +13,9 @@
     <RepositoryUrl>https://github.com/qsharp-community/qram.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Update="Microsoft.Quantum.QSharp.Core" Version="0.12.20072031" />
+    <PackageReference Update="Microsoft.Quantum.Standard" Version="0.12.20072031" />
+  </ItemGroup>
 
 </Project>
