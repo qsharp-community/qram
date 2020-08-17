@@ -12,16 +12,37 @@
 ///////////////////////////////////////////////////////////////////////////
 
 
-
     /// # Summary
     /// Creates an instance of a SelectSWAP QROM given the data it needs to store.
-    /// Source: https://arxiv.org/abs/1812.00954
+    /// Source: https://arxiv.org/abs/1812.00954.
+    /// SelectSWAP qROMs consist of two parts: 
+    /// 1) a "select" part in which the memory contents are specified and written 
+    ///    out to auxiliary registers
+    /// 2) a "SWAP" part, where the memory contents at the queried address are
+    ///    transferred to the target register.
+    /// A tradeoff can be made between the sizes of the two parts.
     /// # Input
     /// ## dataValues
     /// An array of memory cells where the address is an Int and the 
     /// data is a boolean array representing the user data.
     /// ## tradeoffParameter 
-    /// TODO:
+    /// An integer representing the number of address bits that will be "split off"
+    /// to perform the mixed-polarity gates that detail the memory contents. This also
+    /// affects the size of the auxiliary registers, making 2^(addressBits - tradeoffParameter). 
+    /// copies. Valid tradeoff parameters are integers from 1 to addressBits - 1.
+    ///   Example 1:
+    ///   A memory has 4 address bits. Rather than doing mixed-polarity gates with 4 controls,
+    ///   and holding a single copy of the target register, we can make a tradeoff. Setting
+    ///   tradeoffParameter = 1 will "splinter off" 1 address bit from the rest, and make 
+    ///   2^(4-1) = 8 copies of the auxiliary register. The select portion will be controlled on 
+    ///   that first address bits, whereas the swap network is controlled on the remaining 3.
+    ///   Example 2: (as shown in the paper)
+    ///   Setting tradeoffParameter = 2 partitions the address space such 2^(4-2) = 4 copies
+    ///   of the auxiliary register are created. The select portion uses the first 2 address bits 
+    ///   as controls, and the swap network uses the remaining 2.
+    /// (Note: the original paper uses a different definition of the tradeoffParameter in which
+    ///  the number of auxiliary copies does not need to be a power of 2, however this complicates
+    ///  the implementation. Here we consider only the more straightforward case.)
     /// # Output
     /// A `QROM` type.
     function SelectSwapQromOracle(dataValues : MemoryCell[], tradeoffParameter : Int) : QROM {
@@ -55,38 +76,43 @@
         // A tradeoff parameter controls the relative size of an aux register 
         let numAuxQubits = memoryBank::DataSize * 2^(memoryBank::AddressSize - tradeoffParameter);
 
-        //PermuteQubits(RangeAsIntArray(Length(addressRegister!)-1..-1..0), addressRegister!);
-
         // Partition the auxiliary register into chunks of the right size; can't use
         // the PartitionMemoryBank operation because aux register size depends on the tradeoffParameter
         using (auxRegister = Qubit[numAuxQubits]) {
             let partitionedAuxRegister = Chunks(memoryBank::DataSize, auxRegister);
             let partitionedAddressRegister = Partitioned([tradeoffParameter], Reversed(addressRegister!));
-            //Message($"{Length(partitionedAddressRegister[0])}|{Length(partitionedAddressRegister[1])}");
-            // Perform the select operation that "writes" memory contents to the aux register using the first address bits
+            
             within {
+                // Perform the select operation that "writes" memory contents to the aux register 
+                // using the first tradeoffParameter address bits
                 ApplySelect(partitionedAddressRegister[0], partitionedAuxRegister, memoryBank);
                 // Apply the swap network controlled on the remaining address qubits
                 ApplySwapNetwork(partitionedAddressRegister[1], partitionedAuxRegister);
             }
             apply {
-                ApplyToEachCA(CNOT,Zip(partitionedAuxRegister[0],targetRegister));
+                // Copy the memory contents from the topmost auxiliary register to a target register 
+                ApplyToEachCA(CNOT, Zip(partitionedAuxRegister[0],targetRegister));
             }
         }
-                
-        //PermuteQubits(RangeAsIntArray(Length(addressRegister!)-1..-1..0), addressRegister!);
-        
     }
 
     /// # Summary
-    /// 
+    /// Applies the `Select` operation. This operation applies specific gates to
+    /// a qubit register controlled on the different number state $\ket{j}$.
+    ///
+    /// $U = \sum^{N-1}_{j=0}\ket{j}\bra{j}\otimes V_j$.
+    ///
+    /// For the SelectSWAP qROMs, the $V_j$ operations are $X^{a_j}$ where $a_j$ is 
+    /// the bit string of memory contents stored in cell $j$.
+    ///
     /// # Input
     /// ## addressRegister
-    /// 
+    /// A qubit register holding the address (or superposition of addresses) to be queried.  
     /// ## auxRegister
-    /// 
+    /// A qubit register on which the contents of the memory will be written to
+    /// enable further processing.
     /// ## bank
-    /// 
+    /// A `MemoryBank` that comprises a qROM.
     internal operation ApplySelect(
         addressSubRegister : Qubit[], 
         auxRegister : Qubit[][], 
@@ -103,6 +129,23 @@
         }
     }
 
+    /// # Summary
+    /// Copy memory contents onto an auxiliary register in appropriately 
+    /// sized chunks, based on the SelectSWAP tradeoffParameter.
+    /// # Input
+    /// ## bank
+    /// A memory bank with the contents of the qROM.
+    /// ## auxRegister
+    /// The auxiliary register of the qROM onto which the data will be "written".
+    /// ## subAddress
+    /// Indexes which chunk of memory to write to the `auxRegister`. This will be 
+    /// a contiguous subset of the memory, the size of which depends on the initial
+    /// tradeoffParameter. 
+    ///    Example:
+    ///    For a 4-bit address and tradeoffParameter = 2, we create an auxRegister with
+    ///    4 chunks. For each subaddress controlled on the first two address bits, we write
+    ///    4 consecutive memory cells to the auxRegister. For subAddress = 0, this is memory 
+    ///    elements stored at cells 0-3, for subAddress = 1, this is cells 4-7, and so on.
     internal operation FanoutMemoryContents(
         bank : MemoryBank, 
         auxRegister : Qubit[][], 
@@ -126,8 +169,6 @@
     /// A (sub)register of address bits that will be used to control a swap network.
     /// ## partitionedAuxiliaryRegister
     /// A register of qubits, organized into memory chunks, that will be swapped.
-    /// # Output
-    /// 
     internal operation ApplySwapNetwork(
         addressSubregister : Qubit[],
         auxRegister : Qubit[][]
@@ -147,6 +188,16 @@
         }
     }
 
+    /// # Summary
+    /// Perform a controlled-SWAP on the full contents of two specified subregisters.   
+    /// # Input
+    /// ## control
+    /// A qubit from which a controlled-SWAP will be performed.
+    /// ## auxRegister
+    /// A register of qubits, organized into memory chunks, that will be swapped. 
+    /// ## swapIndices
+    /// An array of 2 integers indexing the two subregisters of `auxRegister` that
+    /// will be acted on by the controlled swap.
     internal operation SwapRegistersByIndex(
         control : Qubit, 
         auxRegister : Qubit[][], 
