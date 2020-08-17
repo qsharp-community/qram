@@ -461,7 +461,105 @@ Calculating by hand, the resources for the multi-output bit case are as follows:
 
 \todo{Verify and cross-check with \texttt{ResourcesEstimator}}
 
-\subsection{Improving $T$ depth with the CCZ gate}
+
+\subsection{Phase query circuit model}
+
+In some situations, most notably in Grover's algorithm, one is concerned with retrieving the memory contents not in bit form, but as a phase. 
+Explicitly, 
+\begin{equation}
+ \ket{i} \rightarrow (-1)^{m_i} \ket{i}
+\end{equation}
+
+Such a query can be done using slight modifications from the bucket brigade model.
+In particular, all that must be done is to start with the target in the state $\ket{1}$, and replace the Toffolis in the query with CCZs.
+An example is shown in \autoref{fig:bb-phase-query} for a 2-bit address. 
+This circuit can be parallelized using the same techniques as shown in \autoref{fig:bb_2address_ccz_full}.
+In fact, the only difference is that the target qubit starts in $\ket{1}$, and the Hadamards are removed.
+
+\begin{figure}[ht!]
+ \centering
+  \captionsetup{width=.89\linewidth}
+ \includegraphics[scale=0.7]{images/bb_phase_query}
+ \caption{Bucket-brigade style circuit that performs the query $\ket{i} \rightarrow (-1)^{m_i}\ket{i}$, where $m_i$ is  the contents of the memory at address $\ket{i}$.
+ Note that the target qubit starts in $\ket{1}$ allow for phase kickback with the CCZ; the CCZ triggers only if all of the auxiliary, memory, and targets are in $\ket{1}$.}
+ \label{fig:bb-phase-query}
+\end{figure}
+
+\todo{What should this look like for multioutput bit? Should it be the product of the memory contents?}
+
+\subsubsection{Resource estimation}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Quantum ROM}
+\label{sec:circuits}
+
+\subsection{Quantum ROM}
+
+\subsection{Select-SWAP qROM}
+
+\begin{figure}[ht!]
+ \centering
+ \includegraphics[scale=1.3]{images/select-swap-lambda-1}
+ \caption{A select-SWAP qROM with 4 address bits and tradeoff parameter 1.}
+ \end{figure}
+
+\begin{figure}[ht!]
+ \centering
+ \includegraphics[scale=1.3]{images/select-swap-lambda-2}
+ \caption{A select-SWAP qROM with 4 address bits and tradeoff parameter 2.}
+ \end{figure}
+ 
+\begin{figure}[ht!]
+ \centering
+ \includegraphics[scale=1.3]{images/select-swap-lambda-3}
+ \caption{A select-SWAP qROM with 4 address bits and tradeoff parameter 3.}
+ \end{figure}
+ 
+ 
+\subsection{Optimizing quantum ROMs}
+
+\subsection{Problem-specific qROMs}
+
+Talk about the qROM in \cite{Babbush2018}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Hardware proposals for qRAM}
+\label{sec:hardware}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Outlook}
+\label{sec:outlook}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\bibliography{primer}
+\bibliographystyle{unsrt}
+
+\appendix
+
+
+\section{Improving $T$ depth of bucket-brigade qRAM with the CCZ gate}
 
 Looking at the circuits of \autoref{fig:bb-combined}, one notes that there are many instances of sequential Toffolis. 
 In \cite{DiMatteo2020}, a parallelized version of the circuit was proposed. 
@@ -559,82 +657,5 @@ In the case where the memory cells store multiple data bits, the query portion i
 For $k$-bit output, the $T$-depth is thus $8n - 8 + 4k$.
 
 \todo{Add discussion of circuit depth and complexity of `quantum fanout'.}
-
-\subsection{Phase query circuit model}
-
-In some situations, most notably in Grover's algorithm, one is concerned with retrieving the memory contents not in bit form, but as a phase. 
-Explicitly, 
-\begin{equation}
- \ket{i} \rightarrow (-1)^{m_i} \ket{i}
-\end{equation}
-
-Such a query can be done using slight modifications from the bucket brigade model.
-In particular, all that must be done is to start with the target in the state $\ket{1}$, and replace the Toffolis in the query with CCZs.
-An example is shown in \autoref{fig:bb-phase-query} for a 2-bit address. 
-This circuit can be parallelized using the same techniques as shown in \autoref{fig:bb_2address_ccz_full}.
-In fact, the only difference is that the target qubit starts in $\ket{1}$, and the Hadamards are removed.
-
-\begin{figure}[ht!]
- \centering
-  \captionsetup{width=.89\linewidth}
- \includegraphics[scale=0.7]{images/bb_phase_query}
- \caption{Bucket-brigade style circuit that performs the query $\ket{i} \rightarrow (-1)^{m_i}\ket{i}$, where $m_i$ is  the contents of the memory at address $\ket{i}$.
- Note that the target qubit starts in $\ket{1}$ allow for phase kickback with the CCZ; the CCZ triggers only if all of the auxiliary, memory, and targets are in $\ket{1}$.}
- \label{fig:bb-phase-query}
-\end{figure}
-
-\todo{What should this look like for multioutput bit? Should it be the product of the memory contents?}
-
-\subsubsection{Resource estimation}
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\section{Quantum ROM}
-\label{sec:circuits}
-
-\subsection{Quantum ROM}
-
-\subsection{Efficient state preparation with a qROM}
-
-Discuss \cite{Vadym2018}
-
-\subsection{Optimizing quantum ROMs}
-
-\subsection{Problem-specific qROMs}
-
-Talk about the qROM in \cite{Babbush2018}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\section{Hardware proposals for qRAM}
-\label{sec:hardware}
-
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\section{Outlook}
-\label{sec:outlook}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\bibliography{primer}
-\bibliographystyle{unsrt}
 
 \end{document}
