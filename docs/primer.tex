@@ -529,8 +529,16 @@ The ``naive'' way to estimate resources for a circuit of the type in \autoref{fi
 
 Circuits like that in \autoref{fig:basic-qrom} are a special type of circuit called a \emph{reversible} circuit. While all unitary operations are reversible in the sense that they can be run ``backwards'', reversible circuit here refers specifically to circuits that represent Boolean functions, i.e. can be expressed only in terms of CNOTs, Toffolis, and $n$-qubit controlled gates. For circuits of this type, we can dive into the extensive literature of classical optimization techniques for Boolean functions. 
 
-\todo{Run \autoref{fig:basic-qrom} through EXORCISM-4 and see what it actually looks like.}
-\
+\todo{Add description about EXORCISM-4; ESOP representation, etc.} Running the circuit of \autoref{fig:basic-qrom} through \textsc{EXORCISM-4} yields a significantly simpler circuit, depicted in. Rather than having five 4-controlled gates, it can be reduced to one 4-controlled gate and two Toffolis. 
+
+
+\begin{figure}
+ \centering
+ \captionsetup{width=0.89\linewidth}
+ \includegraphics[scale=1.6]{images/basic-qrom-exorcised}
+ \caption{Basic qROMs can be greatly simplified using Boolean circuit optimization techniques. On the right is shown an optimized version of the circuit on the left, obtained using EXORCISM-4. The resource counts are significantly reduced. Understanding what savings are available on average is an interesting research topic.}
+ \label{fig:basic-qrom}
+\end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
