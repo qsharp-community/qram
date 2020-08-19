@@ -1,3 +1,5 @@
+from mpmct_resources import *
+
 def qrom_to_pla(n, ones_addresses, filename):
 	"""
 	Translate an n-bit qROM that contains a 1 at multiple addresses to a .pla file.
@@ -23,3 +25,54 @@ def qrom_to_pla(n, ones_addresses, filename):
 			pla_file.write(f"{binary_rep} 1\n")
 
 		pla_file.write(".e\n")
+
+
+def pla_to_resource_counts(filename):
+	mpmct_tally = {}
+
+	resources = {
+		"WIDTH" : 0, # TODO
+		"D" : 0,
+		"TC" : 0,
+		"TD" : 0,
+		"H" : 0,
+		"CNOT" : 0
+	}
+
+	# Use the output PLA file to determine how many MPMCTs with each
+	# different number of possible controls
+	with open(filename, "r") as exorcised_file:
+		gate_lines = exorcised_file.readlines()[11:-1]
+
+		for line in gate_lines:
+			control_string = line.strip().split(" ")[0]
+			num_controls = len(control_string) - control_string.count("-")
+
+			if num_controls not in resources:
+				mpmct_tally[num_controls] = 1
+			else:
+				mpmct_tally[num_controls] += 1
+
+	# Go through the dictionary now and get resource counts for everything
+	for num_controls, num_occs in mpmct_tally.items():
+		# Special case: CNOT
+		if num_controls == 1:
+			resources["CNOT"] += num_occs
+		# Special case: Toffoli; use the one in the primer
+		elif num_controls == 2:
+			resources["D"] += num_occs * 9
+			resources["TC"] += num_occs * 7
+			resources["TD"] += num_occs * 3
+			resources["H"] += num_occs * 2
+			resources["CNOT"] += num_occs * 7
+		# For k >= 4, can use the formulas from 1902.01329
+		# TODO: add explicit resource counts for 3 controls; also look into whether
+		# we can do the larger ones without any aux qubits 
+		else:
+			resources["D"] += num_occs * mpmct_depth(num_controls)
+			resources["TC"] += num_occs * mpmct_t_c(num_controls)
+			resources["TD"] += num_occs * mpmct_t_d(num_controls)
+			resources["H"] += num_occs * mpmct_h_c(num_controls)
+			resources["CNOT"] += num_occs * mpmct_cnot_c(num_controls)
+
+	return resources
