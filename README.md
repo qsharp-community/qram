@@ -17,7 +17,7 @@ This library will help achieve these goals by giving us a concrete way to measur
 
 - **Do I need a qRAM?**
 
-  _Sometime_.
+  _Sometimes_.
   You'll need a qRAM, or some more general means of _quantum state preparation_ in quantum machine learning (QML) algorithms that require you to load in classical data, or query an oracle that returns classical data.
   I've heard a number of stories of people working on QML being actively discouraged from doing so because ``QML won't work without a qRAM''.
   That's just not true, because \emph{many QML algorithms do not need a qRAM}.
