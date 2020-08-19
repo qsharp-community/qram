@@ -30,7 +30,7 @@ jobs:
         path: docs/primer.pdf
       
     - name: Add & Commit
-      uses: EndBug/add-and-commit@v4.2.1
+      uses: EndBug/add-and-commit@v4.4.0
       with:
         # Arguments for the git add command
         add: docs/primer.pdf
@@ -47,4 +47,4 @@ jobs:
         # Arguments for the git rm command
         #remove: # optional, default is 
         # The name of the tag to add to the new commit
-        #tag: # optional, default is 
+        tag: docs-bot
