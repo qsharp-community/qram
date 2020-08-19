@@ -125,7 +125,7 @@ We will first take a graphical look at the bucket brigade algorithm; following t
 
 \subsection{Increasing efficiency of RAM with a bucket brigade}
 
-The motiviation for bucket brigade lies in a less efficient type of RAM denoted as `fanout RAM'. 
+The motivation for bucket brigade lies in a less efficient type of RAM denoted as `fanout RAM'. 
 In the fanout RAM, the nodes of this tree are transistors that, depending on their state, will route incoming current left or right towards the next level of the tree. 
 Each level of the tree is associated to an address bit; the value of the address bit can set a level-specific switch that tells all transistors in the level to send current left, or send current right. 
 This is shown in the right panel of \autoref{fig:fanout-ram-sequence}, and has the effect creating only one complete path from the root of the tree to a leaf.
