@@ -1,10 +1,9 @@
-name: sisyphus
+name: Update Docs
 
 on:
   push:
     branches: [ master ]
-    paths:
-      - 'docs/*'
+    
   pull_request:
     branches: [ master ]
     paths:
