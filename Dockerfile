@@ -8,8 +8,13 @@ USER root
 RUN apt-get -y update && \
     apt-get -y install \
         g++ && \
-    apt-get clean && rm -rf /var/lib/apt/lists/
+    apt-get clean && rm -rf /var/lib/apt/lists/ && \
+    apt-get install dotnet-sdk-3.1
 
 COPY . ${HOME}
 RUN chown -R ${USER} ${HOME}
+
+RUN nuget sources Add -Name "Qram" -Source ${HOME}/src/bin/Debug/ && \
+    dotnet pack ${HOME}/src/qram.csproj
+
 USER ${USER}
