@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using Microsoft.Quantum.Simulation.Simulators;
 using Microsoft.Quantum.Simulation.Core;
 
-namespace implicitQRAM
+namespace QromSample
 {
     class Program
     {
@@ -12,7 +12,7 @@ namespace implicitQRAM
             var rng = new System.Random();
             var queryAddress = rng.Next(0, 7);
             var estimator = new ResourcesEstimator();
-            var output = await TestImplicitQRAM.Run(estimator, queryAddress);
+            var output = await QromQuerySample.Run(estimator, queryAddress);
 
             // Print out a table of required resources, using the
             // ToTSV method of the ResourcesEstimator.
