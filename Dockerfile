@@ -14,7 +14,7 @@ RUN apt-get -y update && \
 COPY . ${HOME}
 RUN chown -R ${USER} ${HOME}
 
-RUN nuget sources Add -Name "Qram" -Source ${HOME}/src/bin/Debug/ && \
+RUN dotnet sources Add -Name "Qram" -Source ${HOME}/src/bin/Debug/ && \
     dotnet pack ${HOME}/src/qram.csproj
 
 USER ${USER}
