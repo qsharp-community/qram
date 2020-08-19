@@ -3,12 +3,8 @@ name: Update Docs
 on:
   push:
     branches: [ master ]
-    
-  pull_request:
-    branches: [ master ]
     paths:
-      - 'docs/*'
-  
+      - 'docs/*' 
 
 jobs:
   build:
