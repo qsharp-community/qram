@@ -1,7 +1,7 @@
 name: Update Docs
 
 on:
-  push:
+  pull_request:
     branches: [ master ]
     paths:
       - 'docs/*' 
