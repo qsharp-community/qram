@@ -5,7 +5,7 @@
 This library implements a variety of different proposals for memory for quantum computers, also commonly called qRAM.
 
 > Want to learn more about what qRAM is?
-> Check out the [primer on memory for quantum computers](https://github.com/qsharp-community/qram/blob/docs/docs/primer.pdf) in our docs!
+> Check out the [primer on memory for quantum computers](https://github.com/qsharp-community/qram/tree/master/docs/primer.pdf) in our docs!
 
 ## Motivation
 
@@ -33,7 +33,7 @@ This library will help achieve these goals by giving us a concrete way to measur
 - **Can I build one?**
 
   _Maybe_.
-  No one has actually done so, but there are a handful of hardware proposals that will be discussed in more detail in the hardware section of [the primer on memory for quantum computers](https://github.com/qsharp-community/qram/blob/docs/docs/primer.pdf).
+  No one has actually done so, but there are a handful of hardware proposals that will be discussed in more detail in the hardware section of [the primer on memory for quantum computers](https://github.com/qsharp-community/qram/tree/master/docs/primer.pdf).
 
 ## Build status
 
