@@ -12,5 +12,7 @@ RUN chown -R ${USER} ${HOME}
 # Drop back down to user permissions for things that don't need it.
 USER ${USER}
 
-RUN dotnet nuget add source ${HOME}/src/bin/Debug/ -n "Qram" && \
-    dotnet pack ${HOME}/src/qram.csproj
+RUN mkdir ${HOME}/local-nuget && \
+    dotnet nuget add source ${HOME}/local-nuget -n "Qram" && \
+    dotnet pack ${HOME}/src/qram.csproj && \
+    cp ${HOME}/src/bin/Debug/*.nupkg ${HOME}/local-nuget
