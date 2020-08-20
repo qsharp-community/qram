@@ -39,6 +39,8 @@ def pla_to_resource_counts(filename):
 		"CNOT" : 0
 	}
 
+	num_total_controls = -1
+
 	# Use the output PLA file to determine how many MPMCTs with each
 	# different number of possible controls
 	with open(filename, "r") as exorcised_file:
@@ -48,19 +50,34 @@ def pla_to_resource_counts(filename):
 			control_string = line.strip().split(" ")[0]
 			num_controls = len(control_string) - control_string.count("-")
 
+			if num_total_controls == -1:
+				num_total_controls = num_controls
+
 			if num_controls not in resources:
 				mpmct_tally[num_controls] = 1
 			else:
 				mpmct_tally[num_controls] += 1
 
+
+	# Number of aux qubits needed; it is at most n - 1, but depends on the
+	# largest MPMCT after optimization. Suppose that has c controls, then we can 
+	# use the idle n - c as aux qubits as well, so total is 2*c - n - 1
+	largest_num_controls = max(list(mpmct_tally.keys()))
+	num_aux_required = max(0, 2 * largest_num_controls - num_total_controls - 1)
+
+	# Total qubits required is n + 1 + aux
+	resources["WIDTH"] = num_total_controls + 1 + num_aux_required 
+
 	# Go through the dictionary now and get resource counts for everything
 	for num_controls, num_occs in mpmct_tally.items():
 		# Special case: CNOT
 		if num_controls == 1:
+			resources["D"] += 1
 			resources["CNOT"] += num_occs
 		# Special case: Toffoli; use the one in the primer
+		# TODO: update to add T-depth 1 version
 		elif num_controls == 2:
-			resources["D"] += num_occs * 9
+			resources["D"] += num_occs * 10
 			resources["TC"] += num_occs * 7
 			resources["TD"] += num_occs * 3
 			resources["H"] += num_occs * 2
