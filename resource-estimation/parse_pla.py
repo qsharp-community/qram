@@ -33,7 +33,7 @@ def count_mpmcts(filename):
     of gates with each different number of controls
 
     Parameters:
-        filename (str): Name prefix for the output file
+        filename (str): Name of a .pla-formatted file
 
     Outputs:
         num_total_controls (int): the maximum number of control bits
@@ -65,6 +65,27 @@ def count_mpmcts(filename):
 
 
 def pla_to_resource_counts(filename):
+    """
+    Given a .pla file, determine the amount of Clifford+T resources required. 
+
+    Resources are a worst-case estimate obtained by counting the number of MPMCTs with
+    each different number of controls, and adding the number of resources required for each.
+    (No further simplification is done.)
+
+    Parameters:
+        filename (str): Name prefix for the output file
+
+    Outputs:
+        resources (dict[string, int]): A dictionary indicating estimated resources and their 
+            quantity for the Boolean circuit in the input file. 
+            "WIDTH" -> number of qubits
+            "D" -> circuit depth
+            "TC" -> T-count (includes both T and its inverse)
+            "TD" -> T-depth (number of layers of depth containing T and/or its inverse)
+            "H" -> Hadamard count
+            "CNOT" -> CNOT count  
+    """
+
     resources = {
         "WIDTH" : 0, # TODO
         "D" : 0,
