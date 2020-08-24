@@ -27,18 +27,21 @@ def qrom_to_pla(n, ones_addresses, filename):
         pla_file.write(".e\n")
 
 
-def pla_to_resource_counts(filename):
+def count_mpmcts(filename):
+    """
+    Given a .pla file with a list of MPMCT gates, tally up the number
+    of gates with each different number of controls
+
+    Parameters:
+        filename (str): Name prefix for the output file
+
+    Outputs:
+        num_total_controls (int): the maximum number of control bits
+        mpmct_tally (dict[int, int])): A dictionary with keys as the number of control bits
+            and values as the number of occurences of that many controls in the .pla file. 
+    """
+
     mpmct_tally = {}
-
-    resources = {
-        "WIDTH" : 0, # TODO
-        "D" : 0,
-        "TC" : 0,
-        "TD" : 0,
-        "H" : 0,
-        "CNOT" : 0
-    }
-
     num_total_controls = -1
 
     # Use the output PLA file to determine how many MPMCTs with each
@@ -51,13 +54,27 @@ def pla_to_resource_counts(filename):
             num_controls = len(control_string) - control_string.count("-")
 
             if num_total_controls == -1:
-                num_total_controls = num_controls
+                num_total_controls = len(control_string)
 
-            if num_controls not in resources:
+            if num_controls not in mpmct_tally:
                 mpmct_tally[num_controls] = 1
             else:
                 mpmct_tally[num_controls] += 1
 
+    return num_total_controls, mpmct_tally
+
+
+def pla_to_resource_counts(filename):
+    resources = {
+        "WIDTH" : 0, # TODO
+        "D" : 0,
+        "TC" : 0,
+        "TD" : 0,
+        "H" : 0,
+        "CNOT" : 0
+    }
+
+    num_total_controls, mpmct_tally = count_mpmcts(filename)
 
     # Number of aux qubits needed; it is at most n - 1, but depends on the
     # largest MPMCT after optimization. Suppose that has c controls, then we can 
