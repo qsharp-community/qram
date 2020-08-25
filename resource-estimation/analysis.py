@@ -11,7 +11,7 @@ n_random_qroms = 1000
 
 # Number of address bits
 n_min = 5
-n_max = 33
+n_max = 15
 
 header = ["n", "q", "width", "depth", "tc", "td", "h", "cnot"]
 
@@ -45,7 +45,7 @@ with open(exorcised_filename, "w") as exorcised_file:
 		print(f"Working on n={n}")
 		q = n - 1
 		for qrom_idx in range(n_random_qroms):
-			file_string = f"n{n}-q{q}-qrom_idx{qrom_idx}"
+			file_string = f"exorcised/n{n}-q{q}-qrom_idx{qrom_idx}"
 			addresses = np.random.choice(2 ** n, 2 ** q, replace=False)
 			qrom_to_pla(n, addresses, file_string)
 
@@ -54,7 +54,6 @@ with open(exorcised_filename, "w") as exorcised_file:
 			os.system(cli_string)
 
 			resources = pla_to_resource_counts(f"{file_string}.exorcised")
-
 	
 			combined_resources = [
 				n,
