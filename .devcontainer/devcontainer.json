@@ -8,5 +8,6 @@
     ],
     "remoteEnv": {
         "IQSHARP_HOSTING_ENV": "QRAM_DEVCONTAINER"
-    }
+    },
+    "postStartCommand": "jupyter notebook --ip 0.0.0.0"
 }

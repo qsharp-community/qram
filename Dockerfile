@@ -15,4 +15,6 @@ USER ${USER}
 RUN mkdir ${HOME}/local-nuget && \
     dotnet nuget add source ${HOME}/local-nuget -n "Qram" && \
     dotnet pack ${HOME}/src/qram.csproj && \
-    cp ${HOME}/src/bin/Debug/*.nupkg ${HOME}/local-nuget
+    cp ${HOME}/src/bin/Debug/*.nupkg ${HOME}/local-nuget && \
+    pip install numpy matplotlib
+
