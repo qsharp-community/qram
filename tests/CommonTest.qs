@@ -9,6 +9,7 @@ namespace Tests {
     open Microsoft.Quantum.Diagnostics;
     open Microsoft.Quantum.Measurement;
     open Microsoft.Quantum.Logical;
+    open Microsoft.Quantum.Random;
     open Qram;
 
     // Hardcoded data set

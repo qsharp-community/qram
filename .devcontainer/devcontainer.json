@@ -1,5 +1,5 @@
 {
-    "image": "mcr.microsoft.com/quantum/samples:latest",
+    "dockerFile": "../Dockerfile",
     "extensions": [
         "quantum.quantum-devkit-vscode",
         "ms-vscode.csharp",

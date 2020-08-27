@@ -1,0 +1,13 @@
+name: qsharpcommunity-qram
+channels:
+- conda-forge
+- quantum-engineering 
+dependencies:
+- notebook
+- numpy
+- ipykernel
+- qsharp==0.12.2008.2513
+- pip
+- matplotlib
+- pip:
+  - RISE
