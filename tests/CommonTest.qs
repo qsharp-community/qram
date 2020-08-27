@@ -9,11 +9,16 @@ namespace Tests {
     open Microsoft.Quantum.Diagnostics;
     open Microsoft.Quantum.Measurement;
     open Microsoft.Quantum.Logical;
+    open Microsoft.Quantum.Random;
     open Qram;
 
     // Hardcoded data set
-    internal function SingleBitData() : MemoryBank {
-        let data = [(5, [true]), (4, [true]), (1, [false]), (2, [false])];
+    internal operation SingleBitData() : MemoryBank {
+        let numAddresses = 2^3-1;
+        let addresses = RangeAsIntArray(0..numAddresses);
+        let values = DrawMany(DrawMany(DrawRandomBool, 1, _), numAddresses, 0.5);
+        //let data = DrawMany(DrawRandomBool, 10, 0.6)
+        let data = Zip(addresses, values);
         return GeneratedMemoryBank(Mapped(MemoryCell, data));
     }
 
