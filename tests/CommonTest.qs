@@ -13,12 +13,8 @@ namespace Tests {
     open Qram;
 
     // Hardcoded data set
-    internal operation SingleBitData() : MemoryBank {
-        let numAddresses = 2^3-1;
-        let addresses = RangeAsIntArray(0..numAddresses);
-        let values = DrawMany(DrawMany(DrawRandomBool, 1, _), numAddresses, 0.5);
-        //let data = DrawMany(DrawRandomBool, 10, 0.6)
-        let data = Zip(addresses, values);
+    internal function SingleBitData() : MemoryBank {
+        let data = [(5, [true]), (4, [true]), (1, [false]), (2, [false])];
         return GeneratedMemoryBank(Mapped(MemoryCell, data));
     }
 
