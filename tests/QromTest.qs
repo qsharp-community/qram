@@ -14,18 +14,28 @@
     // Basic lookup with all addresses checked for single-bit data
     @Test("QuantumSimulator")
     operation QROMOracleSingleBitSingleLookupMatchResults() : Unit {
-        let data = SingleBitData();
-        for (i in 0..7) {
-            CreateQueryMeasureOneAddressQROM(data, i);
+        let numAddressBits = 3;
+        for (add in 1..numAddressBits){
+            let data = RandomFullMemory(add, 1);
+            for (i in 0..2^numAddressBits-1) {
+                CreateQueryMeasureOneAddressQROM(data, i);
+            }
         }
+
     }
 
     // Basic lookup with all addresses checked for multi-bit data
     @Test("QuantumSimulator")
     operation QROMOracleMultiBitSingleLookupMatchResults() : Unit {
-        let data = MultiBitData();
-        for (i in 0..7) {
-            CreateQueryMeasureOneAddressQROM(data, i);
+        let numAddressBits = 3;
+        let numDataBits = 3;
+        for (add in 1..numAddressBits){
+            for (bits in 1..numDataBits){
+                let data = RandomFullMemory(add, 1);
+                for (i in 0..2^numAddressBits-1) {
+                    CreateQueryMeasureOneAddressQROM(data, i);
+                }
+            }
         }
     }
 

@@ -12,61 +12,69 @@ namespace Tests {
     open Microsoft.Quantum.Random;
     open Qram;
 
-    // Hardcoded data set
-    internal operation SingleBitData() : MemoryBank {
-        let numAddresses = 2^3-1;
+    // Memory where every address is specified and contains a bitstring for 
+    // the data bit to one is probOne.
+    internal operation FullMemory(
+        numAddressBits : Int, 
+        numDataBits : Int, 
+        probOne : Double
+    ) 
+    : MemoryBank {
+        let numAddresses = 2^numAddressBits-1;
         let addresses = RangeAsIntArray(0..numAddresses);
-        let values = DrawMany(DrawMany(DrawRandomBool, 1, _), numAddresses, 0.5);
-        //let data = DrawMany(DrawRandomBool, 10, 0.6)
+        let values = DrawMany(DrawMany(DrawRandomBool, numDataBits, _), numAddresses, probOne);
         let data = Zip(addresses, values);
         return GeneratedMemoryBank(Mapped(MemoryCell, data));
     }
 
-    // Hardcoded data set for a multi-bit output situation
-    internal function MultiBitData() : MemoryBank {
-        let numDataBits = 3;
-        let data =  [
-            (5, IntAsBoolArray(3, numDataBits)), 
-            (4, IntAsBoolArray(2, numDataBits)), 
-            (0, IntAsBoolArray(0, numDataBits)), 
-            (2, IntAsBoolArray(5, numDataBits))];
-        return GeneratedMemoryBank(Mapped(MemoryCell, data));
+    // Memory where every address is specified and contains a random bitstring for the data.
+    internal operation RandomFullMemory(
+        numAddressBits : Int, 
+        numDataBits : Int
+    ) 
+    : MemoryBank {
+        return FullMemory(numAddressBits, numDataBits, 0.5);
     }
 
-    // TODO: parameterize data values as w
-    // QRAM where every memory cell contains a 0
-    internal function EmptyQRAM(addressSize : Int) : MemoryBank {
-        let addresses = SequenceI(0, 2^addressSize - 1);
-        let data = ConstantArray(2^addressSize, [false]);
-        return GeneratedMemoryBank(Mapped(MemoryCell,Zip(addresses, data)));
+    // Memory where every address contains a 0.
+    internal operation ZerosFullMemory(
+        numAddressBits : Int, 
+        numDataBits : Int
+    ) 
+    : MemoryBank {
+        return FullMemory(numAddressBits, numDataBits, 0.0);
     }
 
     // QRAM where every memory cell contains a 1
-    internal function FullQRAM(addressSize : Int) : MemoryBank {
-        let addresses = SequenceI(0, 2^addressSize - 1);
-        let data = ConstantArray(2^addressSize, [true]);
-        return GeneratedMemoryBank(Mapped(MemoryCell,Zip(addresses, data)));
-    }
-
-    // QRAM where only the first memory cell contains a 1
-    internal function FirstCellFullQRAM() : MemoryBank {
-        return GeneratedMemoryBank([MemoryCell(0, [true])]);
-    }
-
-    // QRAM where only the second memory cell contains a 1
-    internal function SecondCellFullQRAM() : MemoryBank {
-        return GeneratedMemoryBank([MemoryCell(1, [true])]);
-    }
-
-    // QRAM where only the last memory cell contains a 1
-    internal function LastCellFullQRAM(addressSize : Int) : MemoryBank {
-        return GeneratedMemoryBank([MemoryCell(2^addressSize - 1, [true])]);
+    internal operation OnesFullMemory(
+        numAddressBits : Int, 
+        numDataBits : Int
+    ) 
+    : MemoryBank {
+        return FullMemory(numAddressBits, numDataBits, 1.0);
     }
     
     internal operation PrepareIntAddressRegister(address : Int, register : Qubit[]) 
     : Unit is Adj + Ctl {
         let queryAddressAsBoolArray = IntAsBoolArray(address, Length(register));
         ApplyPauliFromBitString(PauliX, true, queryAddressAsBoolArray, register);
+    }
+
+    //FIXME: Need a way to randomly generate a subselection of addresses 
+    //to specify in the memory
+    internal operation PartialMemory(
+        numAddressBits : Int, 
+        numDataBits : Int, 
+        probOne : Double,
+        numMemoryCells: Int
+    ) 
+    : MemoryBank {
+        let numAddresses = 2^numAddressBits-1;
+        Fact(numMemoryCells<=numAddresses, "More cells were asked for than address bits can support.");
+        let addresses = RangeAsIntArray(0..numAddresses);
+        let values = DrawMany(DrawMany(DrawRandomBool, numDataBits, _), numMemoryCells, probOne);
+        let data = Zip(addresses, values);
+        return GeneratedMemoryBank(Mapped(MemoryCell, data));
     }
 
 
