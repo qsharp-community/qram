@@ -18,22 +18,15 @@ This library will help achieve these goals by giving us a concrete way to measur
 - **Do I need a qRAM?**
 
   _Sometimes_.
-  You'll need a qRAM, or some more general means of _quantum state preparation_ in quantum machine learning (QML) algorithms that require you to load in classical data, or query an oracle that returns classical data.
-  I've heard a number of stories of people working on QML being actively discouraged from doing so because ``QML won't work without a qRAM''.
-  That's just not true, because \emph{many QML algorithms do not need a qRAM}.
-  Now, whether or not they yield any quantum advantage is a separate question, and won't be discussed here.
-  The key point I want to make is that \emph{some} QML algorithms need a qRAM, and they will potentially run into trouble as per the next question.
-
+  You'll need a qRAM, or some more general means of _quantum state preparation_ in quantum machine learning (QML) algorithms that require you to load in classical data, or query an oracle that returns classical data. I've heard a number of stories of people working on QML being actively discouraged from doing so because ``QML won't work without a qRAM''. That's just not true, because *many QML algorithms do not need a qRAM*. Now, whether or not they yield any quantum advantage is a separate question, and won't be discussed here. The key point is that *some* QML algorithms need a qRAM, and they will potentially run into trouble as per the next question.
+  
 - **Can we design an efficient qRAM?**
 
-  _Maybe_.
- In this primer we'll take a look at proposals that will in principle run in polynomial depth, and others that scale far worse.
- There are some very interesting qubit-time tradeoffs one can explore, in particular if the data being stored has some sort of underlying structure.
- Regardless, even if we can design an efficient circuit, we'd also like something that is efficient in a fault-tolerant setting, and this is potentially very expensive.
+  _Maybe_. In the primer we'll take a look at proposals that will in principle run in polynomial depth, and others that scale far worse. There are some very interesting qubit-time tradeoffs one can explore, in particular if the data being stored has some sort of underlying structure. Regardless, even if we can design an efficient circuit, we'd also like something that is efficient in a fault-tolerant setting, and this is potentially very expensive.
+
 - **Can I build one?**
 
-  _Maybe_.
-  No one has actually done so, but there are a handful of hardware proposals that will be discussed in more detail in the hardware section of [the primer on memory for quantum computers](https://github.com/qsharp-community/qram/tree/master/docs/primer.pdf).
+  _Maybe_. No one has actually done so, but there are a handful of hardware proposals that will be discussed in more detail in the hardware section of [the primer on memory for quantum computers](https://github.com/qsharp-community/qram/tree/master/docs/primer.pdf).
 
 ## Build status
 
@@ -67,21 +60,23 @@ TODO: Source in VS Code/gif
 
 ## Features
 
-This library implements a [**variety of different approaches**]() for QRAM and QROM, including:
-- **QROM:** A read-only style memory that creates a fixed operation that given an address and a target, encodes the data at that address on the target.
-  - Relevant paper(s): [0708.1879](https://arxiv.org/abs/0708.1879), []().
-- **SELECT-SWAP QROM:** A read-only style memory similar to the basic QROM but that has multiplexing optimizations that can help you adjust your program resources.
-  - Relevant paper(s): [1812.00954](https://arxiv.org/abs/1812.00954).
-- **Bucket Brigade QRAM:** A read/write style memory where specific qubits are set aside to hold the data in the memory. The information can be queried so that the data returned is either bit encoded or phase encoded.
-  - Relevant paper(s): [Initial proposal: 0708.1879](https://arxiv.org/abs/0708.1879).
+This library implements a [**variety of different approaches**]() for qRAM and qROM, including:
 
-It is important to us that we come up with an extensible framework for implementing as many QRAM/QROM implementation as possible so we can have a uniform way to evaluate and compare these proposals.
+- **Bucket Brigade qRAM:** A read/write style memory where specific qubits are set aside to hold the data in the memory. The information can be queried so that the data returned is either bit encoded or phase encoded.
+  - Relevant paper(s): Initial proposals in [0708.1879](https://arxiv.org/abs/0708.1879), [0807.4994](https://arxiv.org/abs/0807.4994); circuit model [1502.03450](https://arxiv.org/abs/1502.03450), and recent optimization [2002.09340](https://arxiv.org/abs/2002.09340)
+
+- **qROM:** A read-only style memory that creates a fixed operation that given an address and a target, encodes the data at that address on the target. qROMs are like quantum lookup tables.
+  - Relevant paper(s): [Shafaei et al.](http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.407.9599), [Abdessaied et al.](https://ieeexplore.ieee.org/document/7515539), [1902.01329](https://arxiv.org/abs/1902.01329).
+- **SELECT-SWAP qROM:** A read-only style memory similar to the basic qROM but that has multiplexing optimizations that can help you adjust your program resources.
+  - Relevant paper(s): [1812.00954](https://arxiv.org/abs/1812.00954). 
+
+It is important to us that we come up with an extensible framework for implementing as many qRAM/qROM implementation as possible so we can have a uniform way to evaluate and compare these proposals.
 We also include a [**sample for doing resource estimation**](./samples/ResourcesEstimation) (and not actually simulating) so that you can get an idea of what the resources are needed to run your memory.
 
-To validate the QRAM/QROM implementations in this library, this library includes [**unit tests for small memories**](./tests/) that can be simulated classically.
+To validate the qRAM/qROM implementations in this library, this library includes [**unit tests for small memories**](./tests/) that can be simulated classically.
 
 This library is highly portable, and can easily be added to any Q# project with just a package include in your project file!
-Check out the [**instructions below**](./README.md#how-to-use) for adding this qram library to your project.
+Check out the [**instructions below**](./README.md#how-to-use) for adding the qRAM library to your project.
 
 ## Code Example
 
@@ -222,6 +217,7 @@ Please see our [contributing guidelines](CONTRIBUTING.md) and our [code of condu
 #### Anything else that seems useful
 
 - [WIQCA talk](https://www.wiqca.dev/events/quantum101-qml_qram.html) on qRAM by @glassnotes
+- [QSI seminar](https://www.youtube.com/watch?v=IicCWK2D7sg) by @glassnotes
 - Live development of this library with @crazy4pi314 on [Twitch](https://twitch.tv/crazy4pi314)
 
 ## License
