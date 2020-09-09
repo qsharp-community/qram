@@ -32,11 +32,11 @@
 \setcounter{secnumdepth}{4}
 \tableofcontents
 
-\section{Introduction and FAQ}
+\section{FAQ}
 
 Quantum RAM (qRAM) has gained some notoriety in the past few years, and attitudes toward it depend quite heavily on the circles you run in. 
 The goal of this set of notes is to provide a general overview of the subject, as well as discuss some very specific implementations. 
-It is meant to be a companion to the Q\# qRAM libraries we are writing (cite the repo), but can also serve as a standalone reference.
+It is meant to be a companion to the Q\# qRAM libraries we are writing \cite{OurLibrary}, but can also serve as a standalone reference.
 
 
 In my experience, explaining qRAM to someone boils down to answering a handful of key questions. 
@@ -56,37 +56,78 @@ I'll provide some potentially unsatisfactory answers up front, but go into far m
  \item \textbf{Can I build one?} \emph{Maybe.} No one has actually done so, but there are a handful of hardware proposals that will be discussed in more detail in \autoref{sec:hardware}. 
 \end{enumerate}
 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{A brief history of the brief history of quantum machine learning}
-\label{sec:qml}
+\section{Introduction}
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Classical memory}
 
-\section{Encoding classical data on a quantum computer}
+Random access memory (RAM) is an integral part of modern-day computers.
+It's what stores the active state of a computation, or data that you might actively be processing. 
+The more RAM you have, the more applications you can have open simultaneously.
+At the time of writing, the average laptop computer comes with about 8 or 16 GB. 
+RAM is plentiful, and it is also reasonably cheap - you can outfit a desktop computer with 16 GB RAM for about 100\$ CAD. 
+Considering that some of the earliest personal computers had only 4 KB of RAM, the technology has come a long way, and is continuously improving.
 
+\begin{figure}[ht]
+ \centering
+  \captionsetup{width=.89\linewidth}
+ \includegraphics[scale=0.8]{images/memory-models}
+ \caption{Cartoon depiction of RAM as a 2-dimensional array of transistor/capacitor pairs.
+ Rows are called \emph{wordlines}, and columns are called \emph{bitlines}.
+ Control electronics can write to and read contents of arbitrary cells, hence the term `random access'.}
+ \label{fig:memory-models}
+\end{figure}
+
+A simplified model of RAM is shown in \autoref{fig:memory-models}. 
+It's depicted as a 2-dimensional array of memory cells where a capacitor and transistor live together. 
+A capacitor can either hold a charge, or not hold a charge - this can be used to represent a 1 or a 0 respectively. 
+The transistors are essentially control electronics. 
+By sending current through particular rows (wordlines) and columns (bitlines) of the grid, you can read or write to arbitrary memory cells (hence `random access' memory).
+
+
+Unfortunately, charge leaks out of the capacitors over time.
+To preserve the integrity of the data, a \emph{memory controller} continuously performs a refresh operation.
+It scans across all memory cells, reads their contents, and then immediatley writes them back.
+The frequency at which this is done is called the refresh rate.
+In addition to the charge degrading over time, the capacitors hold charge only when powered.
+Thus when you turn off your computer, everything stored in your RAM disappears.
+
+The cousin of RAM is ROM, or read-only memory.
+In its most basic form\footnote{In fact there are a variety of different ROMs, many of which are in fact reprogrammable. See \url{
+https://studyelectrical.com/2017/06/different-types-of-rom-prom-eprom.html} for a brief and accessible overview of the different types.} data is written to a ROM only once, and subsequent interaction involves only reading said data.
+Essentially, ROM is like a look-up table.
+Unlike RAM, the data stored in ROM does persist when its powered off. 
+ROM therefore has applications in things like special-purpose appliances, old video game cartridges, and even parts of modern processors.
+\todo{Give some specific examples - CDs, flash memory, etc.}
+
+\subsection{Encoding classical data on a quantum computer}
 \label{sec:encoding}
 
-There is a nice overview of the encodings below in \cite{Schuld2018}.
+Given the importance of ROM and RAM for classical hardware, it's not unreasonable to assume that quantum computers will require something conceptually similar.
+In this work (and in the Q\# library), we consider the problem of how to load up and store \emph{classical} data on a quantum computer.
+One of the key applications is of course quantum machine learning.
+However many other quantum algorithms rely on things like quantum state preparation based on classical data, or look up tables.
+\todo{Include some examples.}
 
-\subsection{Basis encoding}
-
-Give overview of the basis encoding, i.e.
+A number of different methods can be used to load classical data onto a quantum machine.
+Consider an arbitrary $n$-qubit quantum state
 \begin{equation}
- \hbox{data} \enskip 01001 \rightarrow \ket{01001}
+ \ket{\psi} = \sum_{\mathbf{x} \in \{0, 1\}^n} \alpha_{\mathbf{x}} \ket{\mathbf{x}}, \quad \alpha_{\mathbf{x}} \in \mathds{C}.
 \end{equation}
+There are two aspects in which we can consider encoding the classical information:
+\begin{enumerate}
+ \item Incorporate into the amplitudes $\alpha_{\mathbf{x}}$
+ \item Incorporate into the qubit basis states $\ket{\mathbf{x}}$
+\end{enumerate}
+The subsections below elaborate on different examples of each, however only one of these is what's traditionally defined as a qRAM.
+This list is not exhaustive, and for a more in-depth overview the reader is referred to an excellent quantum machine textbook \cite{Schuld2018}.
 
-
-\subsection{Quantum RAM / ROM}
+\subsubsection{Quantum RAM / ROM}
 
 Query as bits in superposition:
 \begin{equation}
@@ -98,8 +139,15 @@ Query as phase in superposition (applications to Grover)
  \sum_i \ket{i} \rightarrow \sum_i (-1)^{b_i} \ket{i}
 \end{equation}
 
+\subsubsection{Basis encoding}
 
-\subsection{Quantum state preparation (amplitude encoding)}
+Give overview of the basis encoding, i.e.
+\begin{equation}
+ \hbox{data} \enskip 01001 \rightarrow \ket{01001}
+\end{equation}
+
+
+\subsubsection{Quantum state preparation (amplitude encoding)}
 
 Given some vector $\mathbf{a} = \left( a_0, \cdots,  a_{n-1} \right)$, create the quantum state
 \begin{equation}
