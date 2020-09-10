@@ -605,6 +605,7 @@ While there are many types of ROMs with varying degrees of reusability, conceptu
 We have some known, relatively fixed set of values at specified addresses, and we want to be able to query them in superposition.
 
 \subsection{A simple qROM}
+\label{subsec:naive-qrom}
 
 An advantage of the bucket-brigade type qRAMs discussed earlier is that actual qubits store the memory contents in a completely separate register. This can be treated as a black box, in that the contents of the memory have no effect on the structure or resource requirements of the query circuit. A disadvantage in practice, of course, is that those memory qubits have to be initialized and maintain coherence throughout the entire quantum algorithm.
 
@@ -660,7 +661,7 @@ As $T$-count and $T$-depth are typically the metrics of interest, we present the
 \begin{figure}[ht]
  \centering
  \captionsetup{width=0.89\linewidth}
- \includegraphics[scale=0.6]{images/exorcism-t-count}
+ \includegraphics[scale=0.55]{images/exorcism-t-count}
  \caption{$T$-counts averaged over 1000 random, half-full qROMs computed from naive resource estimation (as per \cite{DiMatteo2020}) and optimization with \textsc{Exorcism-4}. Optimization yields a little shy of an order of magnitude reduction in $T$-count.}
  \label{fig:qrom-exorcism-tcount}
 \end{figure}
@@ -668,7 +669,7 @@ As $T$-count and $T$-depth are typically the metrics of interest, we present the
 \begin{figure}[ht]
  \centering
  \captionsetup{width=0.89\linewidth}
- \includegraphics[scale=0.6]{images/exorcism-t-depth}
+ \includegraphics[scale=0.55]{images/exorcism-t-depth}
  \caption{$T$-depth of 1000 random qROMs computed from naive resource estimation (as per \cite{DiMatteo2020}) and optimization with \textsc{Exorcism-4}. As with $T$-count, optimization yielded a less than an order of magnitude reduction in $T$-depth.}
  \label{fig:qrom-exorcism-tdepth}
 \end{figure}
@@ -681,9 +682,37 @@ To obtain further improvement, we have to look to different circuit construction
 
 \subsection{\textsc{SelectSwap} qROM}
 
-The qROM in \autoref{fig:basic-qrom} represents just one extreme of a spectrum of space-time tradeoffs that can be made. One not-so-efficient way of making that tradeoff is to make multiple copies of the address register, perform all the MPMCTs in parallel, and then apply a parity operation of those results to get the output bit. While this works, and would work quickly, the qubit overhead is \emph{astronomical} and so this isn't really something we would want to do in practice \cite{DiMatteo2020}. Instead it pays off to look for something in between the two extremes - can we add \emph{some} extra qubits to reduce the time without going full parallel?
+The qROM in \autoref{fig:basic-qrom} represents just one extreme of a spectrum of space-time tradeoffs that can be made. 
+One not-so-efficient way of making that tradeoff is to make multiple copies of the address register, perform all the MPMCTs in parallel, and then apply a parity operation of those results to get the output bit. 
+While this works, and would work quickly, the qubit overhead is \emph{astronomical} and so this isn't really something we would want to do in practice \cite{DiMatteo2020}. 
+Instead it pays to look for something in between the two extremes - can we add \emph{some} extra qubits to reduce the time without going full parallel?
 
-Some ``hybrid'' circuits to that effect were explored in \cite{DiMatteo2018, DiMatteo2020}, though around the same time as \cite{DiMatteo2018}, a better approach was presented in \cite{Vadym2018}. These are called the \textsc{SelectSwap} circuits, after their two-part structure.
+Some ``hybrid'' circuits to that effect were explored in \cite{DiMatteo2018, DiMatteo2020}, though around the same time as \cite{DiMatteo2018}, a better approach was presented in \cite{Vadym2018}. 
+These are called the \textsc{SelectSwap} circuits, after their two-part structure: a \textsc{Select} operation, and a \textsc{Swap} operation.
+
+\begin{figure}[ht]
+ \centering
+ \captionsetup{width=0.89\linewidth}
+ \includegraphics[scale=1.2]{images/select-swap-only-select}
+ \caption{A \textsc{Select} operation being used as a qROM for a 3-bit address space. The controlled-$m$ blocks indicate application of Pauli $X$ gates according to the bit strings in memory $m_i$.}
+ \label{fig:select-swap-only-select}
+\end{figure}
+
+The \textsc{Select} operation is what's known as a multiplexing operation.
+Suppose we have a set of $2^n$ unitaries $\{U_i\}$ that we would like to apply conditioned on different basis states.
+For example, if a set of control qubits is in the state $\ket{00\cdots0}$, we want to apply $U_0$ to a set of target qubits.
+If the control qubits are in state $\ket{00\cdots1}$, we apply $U_1$, and so on.
+This is \textsc{Select}, and it is expressed mathematically as 
+\begin{equation}
+ \textsc{Select} = \sum_{i=0}^{2^n - 1} \ket{i}\bra{i} \otimes U_i.
+\end{equation}
+Recall that a qROM is a circuit designed to output specific memory contents based on the address that is fed in.
+We can use \textsc{Select} to perform this task, and an example circuit is presented in \autoref{fig:select-swap-only-select}.
+The first register (the $\ket{i} \bra{i}$ part of the equation) represents a controlled operation from a register of address bits.
+Then, the $U_i$ is an operation that writes the appropriate memory contents at cell $i$ to a target register. 
+Note that a key difference between \textsc{Select} and the naive qROMs of \autoref{subsec:naive-qrom} is that the \textsc{Select} operation cycles through \emph{all} possible addresses, whereas the naive qROM only includes gates for addresses that contain a 1.
+Running through the full address space leads to some interesting optimization methods that rely on this \todo{cite relevant paper}.
+\todo{Say something about uniformly controlled rotations?}
 
 
 
