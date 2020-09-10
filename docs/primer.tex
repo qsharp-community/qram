@@ -702,7 +702,7 @@ The \textsc{Select} operation is what's known as a multiplexing operation.
 Suppose we have a set of $2^n$ unitaries $\{U_i\}$ that we would like to apply conditioned on different basis states.
 For example, if a set of control qubits is in the state $\ket{00\cdots0}$, we want to apply $U_0$ to a set of target qubits.
 If the control qubits are in state $\ket{00\cdots1}$, we apply $U_1$, and so on.
-This is \textsc{Select}, and it is expressed mathematically as 
+\textsc{Select} is expressed mathematically as 
 \begin{equation}
  \textsc{Select} = \sum_{i=0}^{2^n - 1} \ket{i}\bra{i} \otimes U_i.
 \end{equation}
@@ -714,29 +714,60 @@ Note that a key difference between \textsc{Select} and the naive qROMs of \autor
 Running through the full address space leads to some interesting optimization methods that rely on this \todo{cite relevant paper}.
 \todo{Say something about uniformly controlled rotations?}
 
+The \textsc{Swap} operation comes into play when we begin to parallelize.
+Rather than controlling on all $n$ address bits, what if we controlled on only some of them, and used those results to perform further processing?
+This would lead to less complex operations, but potentially additional qubit overhead.
+In what follows we will discuss a somewhat simplified version of the original circuits in \cite{Vadym2018}.
 
-
-\begin{figure}
+\begin{figure}[ht!]
 \centering
+ \captionsetup{width=0.89\linewidth}
 \begin{subfigure}{0.6\textwidth}
  \centering
  \includegraphics[scale=1.3]{images/select-swap-lambda-1}
  \caption{Tradeoff parameter 1.}
+ \label{fig:select-swap-1}
  \end{subfigure} \\ \vspace{0.5cm}
 \begin{subfigure}[ht!]{0.8\textwidth}
  \centering
  \includegraphics[scale=1.3]{images/select-swap-lambda-2}
  \caption{Tradeoff parameter 2.}
+ \label{fig:select-swap-2}
  \end{subfigure} \\ \vspace{0.5cm}
 \begin{subfigure}[ht!]{\textwidth}
  \centering
  \includegraphics[scale=1.3]{images/select-swap-lambda-3}
  \caption{Tradeoff parameter 3.}
+ \label{fig:select-swap-3}
  \end{subfigure}
  \caption{Highlighting the space time tradeoffs available from the \textsc{SelectSwap} qROM. Boxes labeled by $m_i$ indicate the memory contents stored at address $i$. While only a single qubit is shown, these may be multi-bit values. The circuits consist of a \textsc{Select}  operation to identify the correct memory cells, followed by a \textsc{Swap}  network to move the desired contents to a target register (not shown: the memory contents would have to be copied to a final output register with a cascade of CNOTs.) A tradeoff parameter controls the relative size of the two operations, and consequently the depth and width of the circuit.}
+ \label{fig:select-swap}
 \end{figure} 
- 
-\subsection{Optimizing quantum ROMs}
+
+\todo{I'm not really happy with this explanation - suggestions welcome. A lot of my conceptual understanding comes from looking at the circuit diagrams, and I'm having a hard time expressing it verbally.}
+
+These are best explained visually, and a number of examples are shown in \autoref{fig:select-swap}.
+In \textsc{SelectSwap} circuits, the address space is partitioned, and multiple copies of an output register are made depending on how many qubits are split off in the partitioning.
+Rather than performing the full-size MPMCTs, one with only a subset of the address bits is performed, and it writes to the output register all the memory contents where that subset of addresses match.
+Then, the remaining address bits are used to perform a sequence of controlled Swap operations.
+This effectively moves the desired memory contents to an output register.
+
+The tradeoff lies in how the address space is partitioned.
+As in \autoref{fig:select-swap}, for a 4-bit space (16 memory cells) we can partition three ways.
+In \autoref{fig:select-swap-1}, the first address bit is separated from the rest, and 8 copies of the output register are made (because separating the first bit divides the space in 2).
+The select operation then has two portions, one which writes the first 8 contents where the first address bit is 0, and another that writes the 8 contents where the first address bit is 1.
+The remaining three address bits are then used to swap these contents up to a specified location to be read out.
+Similarly, we can control on the first two address bits, and partition the space into 4 sets of 4, as in \autoref{fig:select-swap-2}. 
+Here the MPMCTs in \textsc{Select} get larger, the number of qubits is less than that of \autoref{fig:select-swap-1} and the swap network is smaller.
+Finally in \autoref{fig:select-swap-3} we control on the first 3 address bits. 
+Now only one extra copy of the output must be made and a single controlled-swap performed, but the MPMCTs have become even larger, approaching those of a standalone \textsc{Select}.
+
+\subsubsection{Resource estimation}
+
+A nice resource analysis of \textsc{SelectSwap} is provided in the original work \cite{Vadym2018}.
+A key feature of these circuits is that one can solve for an \emph{optimum} tradeoff parameter.
+Namely, how many copies of the output register should we make to get the best qubit-time tradeoff?
+\todo{More details. Discuss $\lambda = O(\sqrt{N})$, and $T$-count / $T$-depth results.}
 
 \subsection{Problem-specific qROMs}
 
