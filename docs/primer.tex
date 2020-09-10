@@ -108,10 +108,10 @@ ROM therefore has applications in things like special-purpose appliances, old vi
 \subsection{Encoding classical data on a quantum computer}
 \label{sec:encoding}
 
-Given the importance of ROM and RAM for classical hardware, it's not unreasonable to assume that quantum computers will require something conceptually similar.
+Given the importance of ROM and RAM for classical hardware, it's not unreasonable to assume that quantum computers will require something conceptually similar, a qRAM or qROM.
 In this work (and in the Q\# library), we consider the problem of how to load up and store \emph{classical} data on a quantum computer.
 One of the key applications is of course quantum machine learning.
-However many other quantum algorithms rely on things like quantum state preparation based on classical data, or look up tables.
+However many other quantum algorithms rely on things like \emph{quantum state preparation} based on classical data, or look up tables.
 \todo{Include some examples.}
 
 A number of different methods can be used to load classical data onto a quantum machine.
@@ -124,38 +124,97 @@ There are two aspects in which we can consider encoding the classical informatio
  \item Incorporate into the amplitudes $\alpha_{\mathbf{x}}$
  \item Incorporate into the qubit basis states $\ket{\mathbf{x}}$
 \end{enumerate}
-The subsections below elaborate on different examples of each, however only one of these is what's traditionally defined as a qRAM.
-This list is not exhaustive, and for a more in-depth overview the reader is referred to an excellent quantum machine textbook \cite{Schuld2018}.
+The subsections below elaborate on different examples of each, however only one of these is what's traditionally defined as qRAM.
+This list is not exhaustive, and for a more in-depth overview see Chapter 5 of the excellent quantum machine learning textbook \cite{Schuld2018}.
 
 \subsubsection{Quantum RAM / ROM}
-
-Query as bits in superposition:
+Suppose we have some classical data represented as $m$-bit strings, $\mathbf{b} \in \{0, 1\}^m$. 
+For simplicity, assume there are $N = 2^n$ such strings.
+We can store these bit strings in a memory by setting up a set of $N$ memory cells addressed by $n$ bits, such that the address $\mathbf{x} \in \{0, 1\}^n$ contains the $m$-bit string $\mathbf{b}_{\mathbf{x}}$.
+For example, let $n = 3$ and $m = 4$.
+A memory would look something like this:
 \begin{equation}
- \sum_i \ket{i} \ket{0} \rightarrow \sum_i \ket{i} \ket{b_i}
+ \begin{tabular}{c|c}
+  \hbox{Address (}$\mathbf{x}$) & \hbox{Contents (}$\mathbf{b}_{\mathbf{x}})$ \\ \hline
+  000 & 0110 \\
+  001 & 1000 \\
+  010 & 1011 \\ 
+  $\vdots$ & $\vdots$
+  \end{tabular}
+  \label{eq:qram_table}
+\end{equation}
+In the general case where $N$ is not a power of 2, $n = \lceil \log_2 N \rceil$ bits would be required to express the addresses, and the contents of a number of the cells would simply be $m$ 0s.
+
+A qRAM (or similarly a qROM) is a unitary operation that \emph{queries} the contents of these memory cells in superposition. 
+The operation works on two quantum registers (sets of qubits): the first encodes the addresses, and the second is there to hold the memory contents after the query.
+We call these the address register and output register respectively.
+Expressed mathematically, a qRAM/qROM performs the operation
+\begin{equation}
+ \sum_{\mathbf{x}} \ket{\mathbf{x}} \ket{0} \rightarrow \sum_{\mathbf{x}} \ket{\mathbf{x}} \ket{\mathbf{b}_{\mathbf{x}}},
+\end{equation}
+where for simplicity we have ignored the amplitudes.
+Using \autoref{eq:qram_table} as example data, the qRAM effects the transformation
+\begin{equation}
+ \left(\ket{000} + \ket{001} + \ket{010} + \cdots \right) \ket{0000} \rightarrow \ket{000}\ket{0110} + \ket{001}\ket{1000} + \ket{010}\ket{1011} + \cdots. 
 \end{equation}
 
-Query as phase in superposition (applications to Grover)
+While the operation has the same effect for both a qRAM and qROM, they differ in how the memory contents are stored and modified.
+In this primer, we use qRAM to refer to a system where there are actual qubits present that store the memory (in \cite{DiMatteo2020}, this was referred to as an `explicit' memory since the qubits are explicitly there).
+These qubits are set up in $\ket{0}$ or $\ket{1}$, and their state is maintained throughout the computation.
+Reading the memory corresponds to coupling with the address register and transferring the contents to the output register.
+The memory contents need not even be known by us!
+Writing to the memory can be accomplished by simply modifying the state of the qubits.
+An example of a qRAM will be discussed in \autoref{sec:bb}
+
+A qROM on the other hand does not have qubits holding the memory contents.
+Rather, like a classical ROM, the memory contents must be known.
+A quantum circuit is constructed that, given an address, will produce the approrpriate output (in \cite{DiMatteo2020} this was called an `implicit' memory because the contents are stored implicitly in the circuit).
+Any modification to the memory contents would thus require construction (and optimization) of a new quantum circuit.
+The specifics of how to implement this type of operation will be discussed in \autoref{sec:qrom}.
+
+Both descriptions above involve reading in memory contents into the qubit state. 
+A similar operation reads bit values into the \emph{phase} of a state.
+Suppose that rather than $m$-bit strings, the memory contents consist of only a single bit $b$.
+One can construct a qRAM/qROM of the form 
 \begin{equation}
- \sum_i \ket{i} \rightarrow \sum_i (-1)^{b_i} \ket{i}
+ \sum_{\mathbf{x}} \ket{\mathbf{x}}  \rightarrow \sum_{\mathbf{x}} (-1)^{b_{\mathbf{x}}} \ket{\mathbf{x}},
 \end{equation}
+This might look familiar if you've studied Grover's algorithm: it can be used to perform the portion of the Grover iterate that is the reflection about the marked element.
+Thus one can think of querying the oracle in Grover search as querying a qROM in which we store 1 if an element is marked, and 0 otherwise. 
+\todo{Reword this paragraph.}
 
 \subsubsection{Basis encoding}
 
-Give overview of the basis encoding, i.e.
+The basis encoding bears some similarity to the qRAM/qROM formulation of the previous section.
+It is a state preparation technique in which we prepare a linear combination of basis vectors corresponding to the data.
+Suppose again that we have classical data consisting of $N$ $m$-bit strings $\mathbf{b}_i$, $i = 1, \ldots N$.
+The basis encoding involves preparation of the state
 \begin{equation}
- \hbox{data} \enskip 01001 \rightarrow \ket{01001}
+ \ket{\psi} = \frac{1}{\sqrt{N}} \sum_{i=1}^{N} \ket{\mathbf{b}_i}
 \end{equation}
-
-
-\subsubsection{Quantum state preparation (amplitude encoding)}
-
-Given some vector $\mathbf{a} = \left( a_0, \cdots,  a_{n-1} \right)$, create the quantum state
+Returning again to the example of \autoref{eq:qram_table}, a basis encoding would prepare the state
 \begin{equation}
- \ket{\psi} = \sum_{i=0}^{n-1} a_i \ket{i}
+ \ket{\psi} \sim \ket{0110} + \ket{1000} + \ket{1011} + \cdots
 \end{equation}
+where the normalization coefficient would be set according to the number of data points.
 
-Discuss how this relies on having a qROM as an underlying subroutine.
+\subsubsection{Amplitude encoding}
 
+As a final example of encodings, suppose that we have a classical data set that is expressed in terms of vectors  $\mathbf{a} = \left( a_0, \cdots,  a_{m-1} \right)$, where the $a_i$ can be real or complex numbers.
+Some quantum machine learning algorithms work by preparing a state of the form 
+\begin{equation}
+ \ket{\psi} = \sum_{i=0}^{m-1} a_i \ket{i},
+\end{equation}
+where $\ket{i}$ corresponds to the basis state obtained from the binary representation of $i$.
+
+This encoding allows us to make closer analogies with classical machine learning, where feature vectors are loaded in data and processed.
+Suppose we have $N$ such vectors.
+A quantum circuit must be constructed that takes the feature vector as input and prepares the appropriate quantum state.
+This process does not happen in superposition - we have to run the circuit for all $N$ vectors individually.
+It is thus crucial that the state preparation process is efficient.
+In fact, a number of state preparation techniques \todo{cite some} require a qROM-style query as an underlying subroutine.
+Therefore the ability to implement efficient qRAM/qROM is important not only in applications that require such operations explicitly, but for other methods as well.
+\todo{Rephrase this part?}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -545,7 +604,7 @@ In fact, the only difference is that the target qubit starts in $\ket{1}$, and t
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Quantum ROM}
-\label{sec:circuits}
+\label{sec:qrom}
 
 The distinguishing feature of RAM is that elements in the memory can be read or written arbitrarily, in any order. It is assumed that its contents will change over time. However, there are other situations where perhaps one does not intend to change the memory contents (or at least, not very frequently). The cousin of RAM is ROM, or read-only memory. ROMs have applications in things like single-purpose home appliances. (For those of us who grew up in the 90s and early 2000s, we are quite familiar with ROMs in the form of CD-ROMs.)
 
