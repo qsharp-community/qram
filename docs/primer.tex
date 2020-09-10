@@ -18,6 +18,7 @@
 }
 
 \newcommand\todo[1]{\textcolor{red}{#1}}
+\newcommand{\olsi}[1]{\,\overline{\!{#1}}} % overline short italic
 
 %opening
 \title{A primer on quantum RAM}
@@ -226,23 +227,18 @@ Therefore the ability to implement efficient qRAM/qROM is important not only in 
 \section{Bucket-brigade quantum RAM}
 \label{sec:bb}
 
-Architectures for qRAM began to emerge roughly a decade ago with the bucket brigade RAM model of \cite{Giovannetti2008, Giovannetti2008b}. 
-The particular storage model of RAM that is used is a binary tree, where $2^n$ bits are located at the leaves of an $n$-level binary tree, as depicted in \autoref{fig:fanout-ram-sequence}. 
+Architectures for qRAM first emerged in the late 2000s, starting with the bucket brigade RAM model of \cite{Giovannetti2008, Giovannetti2008b}. 
+Unlike the 2-dimensional grid in \autoref{fig:memory-models}, the storage model of RAM used here is a binary tree.
+The memory contents are represented by $2^n$ bits located at the leaves of an $n$-level binary tree, as depicted in \autoref{fig:fanout-ram-sequence}. 
 We will first take a graphical look at the bucket brigade algorithm; following this, we will see it modelled as a quantum circuit.
 
 \subsection{Increasing efficiency of RAM with a bucket brigade}
 
 The motivation for bucket brigade lies in a less efficient type of RAM denoted as `fanout RAM'. 
-In the fanout RAM, the nodes of this tree are transistors that, depending on their state, will route incoming current left or right towards the next level of the tree. 
+In fanout RAM the nodes of this tree are transistors that, depending on their state, will route incoming current left or right towards the next level of the tree. 
 Each level of the tree is associated to an address bit; the value of the address bit can set a level-specific switch that tells all transistors in the level to send current left, or send current right. 
 This is shown in the right panel of \autoref{fig:fanout-ram-sequence}, and has the effect creating only one complete path from the root of the tree to a leaf.
 
-
-The issue with fanout RAM in this form is its efficiency - for an $n$-bit address, we are turning on $2^n - 1$ transistors, while only $n$ of them are involved in the actual query. 
-A further issue arises if we make a direct translation into qubits. 
-Suppose we replace each node of the tree with a qubit; we can let its $\ket{0}$ state indicate `route left', and its $\ket{1}$ state indicate `route right'. 
-When we go to initialize the qubits to create the path, the $k$'th address qubit will have to couple with $2^k$ node qubits. 
-This is a very precarious superposition, especially in an era where coherence times are low and multi-qubit operations are significantly noisier than single-qubit ones.
 
 \begin{figure}[ht!]
  \centering
@@ -265,34 +261,23 @@ This is a very precarious superposition, especially in an era where coherence ti
     \label{fig:fanout-ram-sequence}
 \end{figure}
 
+The issue with fanout RAM is its efficiency - for an $n$-bit address, we are turning on $2^n - 1$ transistors, but only $n$ of them are involved in the actual query. 
+A further issue arises if we make a direct translation into qubits. 
+Suppose we replace each node of the tree with a qubit; we can let its $\ket{0}$ state indicate `route left', and its $\ket{1}$ state indicate `route right'. 
+When we go to initialize the qubits to create the path, the $k$'th address qubit will have to couple with $2^k$ node qubits. 
+This is a very precarious superposition, especially in an era where coherence times are low and multi-qubit operations are significantly noisier than single-qubit ones.
+
+
 The bucket-brigade model is an improvement that addresses both of these issues.
-Rather than using qubits at each node, we use \emph{qutrits}, or three-state systems. 
-In what follows we will discuss the quantum case, but the methodology is the same for the classical case (it uses trits instead of bits).
+Rather than using qubits at each node, it uses \emph{qutrits}, or three-state systems. 
+In what follows we discuss the quantum case, but the methodology is the same for the classical case (with trits instead of bits).
 
 In the top left of \autoref{fig:bb-sequence} is our familiar binary tree. 
 At each node sits a qutrit whose states are descriptively named $\ket{\hbox{wait}}, \ket{\hbox{left}}, \ket{\hbox{right}}$. 
 All the qutrits begin in $\ket{\hbox{wait}}$. 
 To perform a query, \emph{address qubits} are introduced to the tree one by one; the $k$'th address qubit will effect an operation in the $k$'th level of the tree to carve a path to the desired memory cell.
 
-The key to the bucket brigade model is to define a unitary transformation that allows address qubits to alter the state of the qutrit nodes depending on their own state. 
-Specifically, we need to find some unitary that performs:
-\begin{eqnarray}
- U(\ket{0}\ket{\hbox{wait}}) &\rightarrow& \ket{s}\ket{\hbox{left}} \\
- U(\ket{1}\ket{\hbox{wait}}) &\rightarrow& \ket{s}\ket{\hbox{right}}
-\end{eqnarray}
-Here, $\ket{s}$ refers to some arbitrary state; we don't particularly care what it is, as $U$ is reversible and will be undone later on.
-
-When an address qubit reaches a qutrit in the $\ket{\hbox{wait}}$, $U$ is performed. 
-If it instead encounters $\ket{\hbox{left}}$ or $\ket{\hbox{right}}$ it `passes through' the node without altering it, and continues traveling along the path until it reaches its particular level. 
-This is shown in the top right of \autoref{fig:bb-sequence}.
-
-The bottom half of \autoref{fig:bb-sequence} describes how the contents of the memory are retrieved. 
-After all the address qubits are sent, a `quantum bus' qubit traverses the path, couples to the desired memory cell to gather the data, and is reflected back the way it came. 
-As it passes upwards through the tree, it re-initializes the qutrits back to $\ket{\hbox{wait}}$ by running $U^\dag$. 
-Note that such an algorithm allows us to query in superposition, as all operations are unitary.
-
-
-\begin{figure}
+\begin{figure}[ht]
  \centering  
  \captionsetup{width=.89\linewidth}
  \begin{subfigure}{0.45\textwidth}
@@ -323,7 +308,22 @@ Note that such an algorithm allows us to query in superposition, as all operatio
     \label{fig:bb-sequence}
 \end{figure}
 
+The key to the bucket brigade model is to define a unitary transformation that allows address qubits to alter the state of the qutrit nodes depending on their own state. 
+Specifically, we need to find some unitary that performs:
+\begin{eqnarray}
+ U(\ket{0}\ket{\hbox{wait}}) &\rightarrow& \ket{s}\ket{\hbox{left}} \\
+ U(\ket{1}\ket{\hbox{wait}}) &\rightarrow& \ket{s}\ket{\hbox{right}}
+\end{eqnarray}
+Here, $\ket{s}$ refers to some arbitrary state; we don't particularly care what it is, as $U$ is reversible and will be undone later on.
 
+When an address qubit reaches a qutrit in the $\ket{\hbox{wait}}$, $U$ is performed. 
+If it instead encounters $\ket{\hbox{left}}$ or $\ket{\hbox{right}}$ it `passes through' the node without altering it, and continues traveling along the path until it reaches its particular level. 
+This is shown in the top right of \autoref{fig:bb-sequence}.
+
+The bottom half of \autoref{fig:bb-sequence} describes how the contents of the memory are retrieved. 
+After all the address qubits are sent, a `quantum bus' qubit traverses the path, couples to the desired memory cell to gather the data, and is reflected back the way it came. 
+As it passes upwards through the tree, it re-initializes the qutrits back to $\ket{\hbox{wait}}$ by running $U^\dag$. 
+Note that such an algorithm allows us to query in superposition, as all operations are unitary.
 
 To see how efficiency is improved let's count the number of unitary operations.
 The first address qubit performs one operation by coupling with the root qutrit.
@@ -406,12 +406,9 @@ The indicator qubits then couple with the memory contents and copy the values to
 
 \subsubsection{Resource estimation}
 
-One of the primary reasons for designing qRAM libraries in Q\# was to get better resource estimates for qRAM circuits using the functionality afforded to us by both the \texttt{ResourcesEstimator} and the \texttt{ToffoliSimulator}.
-Note that all the gates in \autoref{fig:bb-combined} and \autoref{fig:bb-multioutput} are Toffolis, and so bucket brigade qRAMs are really just fancy Boolean circuits. 
-Plenty of optimization tools (\todo{cite some}) exist for Boolean circuits, and so we anticipate that we'll be able to do reasonably well. 
-But first, let's do some resource estimation `by hand' to get an idea of the worst we can expect.
-
-We will do resource estimation at the \emph{logical level}, i.e. not delve into the fault-tolerant level and estimate things like physical qubits and time required. 
+One of the primary reasons for designing qRAM libraries in Q\# was to get better resource estimates for qRAM circuits using the functionality afforded to us by both the \texttt{ResourcesEstimator}.
+First, let's do some resource estimation `by hand' to get an idea of the worst we can expect.
+We do resource estimation at the \emph{logical level}, i.e. not delve into the fault-tolerant level and estimate things like physical qubits and time required. 
 Instead, we will focus on the following set of parameters:
 \begin{itemize}
  \item Number of qubits $N_q$ (or, circuit width)
@@ -571,7 +568,7 @@ Calculating by hand, the resources for the multi-output bit case are as follows:
 
 \subsection{Phase query circuit model}
 
-In some situations, most notably in Grover's algorithm, one is concerned with retrieving the memory contents not in bit form, but as a phase. 
+In some situations, most notably in Grover's algorithm\footnote{A \href{https://github.com/qsharp-community/qram/tree/master/samples/Grover}{sample implementation of Grover's algorithm} is included in the Q\# qRAM library}, one is concerned with retrieving the memory contents not in bit form, but as a phase. 
 Explicitly, 
 \begin{equation}
  \ket{i} \rightarrow (-1)^{m_i} \ket{i}
@@ -592,11 +589,6 @@ In fact, the only difference is that the target qubit starts in $\ket{1}$, and t
  \label{fig:bb-phase-query}
 \end{figure}
 
-\todo{What should this look like for multioutput bit? Should it be the product of the memory contents?}
-
-\subsubsection{Resource estimation}
-
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -606,15 +598,17 @@ In fact, the only difference is that the target qubit starts in $\ket{1}$, and t
 \section{Quantum ROM}
 \label{sec:qrom}
 
-The distinguishing feature of RAM is that elements in the memory can be read or written arbitrarily, in any order. It is assumed that its contents will change over time. However, there are other situations where perhaps one does not intend to change the memory contents (or at least, not very frequently). The cousin of RAM is ROM, or read-only memory. ROMs have applications in things like single-purpose home appliances. (For those of us who grew up in the 90s and early 2000s, we are quite familiar with ROMs in the form of CD-ROMs.)
-
-While there are many types of ROMs with varying degrees of reusability, conceptually we will consider a ROM (and quantum ROM) as a look up table. We have some known, relatively fixed set of values at specified addresses, and we want to be able to query them in superposition.
+The distinguishing feature of RAM is that elements in the memory can be read or written arbitrarily, in any order. 
+It is assumed that its contents will change over time. 
+However, there are other situations where perhaps one does not intend to change the memory contents (or at least, not very frequently). 
+While there are many types of ROMs with varying degrees of reusability, conceptually we will consider ROM (and qROM) as a look up table. 
+We have some known, relatively fixed set of values at specified addresses, and we want to be able to query them in superposition.
 
 \subsection{A simple qROM}
 
 An advantage of the bucket-brigade type qRAMs discussed earlier is that actual qubits store the memory contents in a completely separate register. This can be treated as a black box, in that the contents of the memory have no effect on the structure or resource requirements of the query circuit. A disadvantage in practice, of course, is that those memory qubits have to be initialized and maintain coherence throughout the entire quantum algorithm.
 
-Having knowledge about the memory contents allows for a different approach. Let's suppose we have a quantum memory with a 4-bit address that stores a single bit in each memory cell (the arguments here extend naturally to the case of multi-bit data). Now, suppose that we know which of those memory cells contain a 1 (the rest of course containing a 0). A straightforward way of designing a qROM is to design a circuit that takes an address register and flips a target bit from $\ket{0}$ to $\ket{1}$ if the input address is known to have a 1.
+Having knowledge about the memory contents allows for a different approach. Let's suppose we have a quantum memory with a 4-bit address that stores a single bit in each memory cell (the arguments here extend naturally to the case of multi-bit data). Now, suppose that we know which of those memory cells contain a 1 (the rest of course contain a 0). A straightforward way of designing a qROM is to construct a circuit that takes an address register and flips a target bit from $\ket{0}$ to $\ket{1}$ if the input address is known to have a 1.
 
 As a concrete example, consider the circuit in \autoref{fig:basic-qrom}. This is a qROM for a 4-bit address. Five of the memory cells contain a 1: 0001, 0011, 0101, 1011, 1101. To perform a query, for each address that contains a 1 we add a mixed-polarity multi-controlled Toffoli (MPMCT) operation that will ``catch'' the associated address. For example, if the address 0001 is queried, the first MPMCT in the circuit (3 white controls, 1 black) will be triggered and flip the output bit, while none of the subsequent operations will occur. Similarly, if we query at address 1101, the final MPMCT of the circuit will go off, but none of the prior ones will, so the target bit flipped exactly once. For any addresses that contain a 0, none of the MPMCTs will run and the target bit remains in its initial state. As all of these operations are unitary, we can use this qROM to query in superposition. 
 
@@ -628,30 +622,66 @@ As a concrete example, consider the circuit in \autoref{fig:basic-qrom}. This is
  \label{fig:basic-qrom}
 \end{figure}
 
-\subsubsection{Resource estimation}
+\subsubsection{Resource estimation with \textsc{Exorcism-4}}
 
-\todo{This section needs to be re-written when we know more about how to properly optimize these kinds of circuits.}
-
-The ``naive'' way to estimate resources for a circuit of the type in \autoref{fig:basic-qrom} is to first compute the resources required for a single $n$-bit MPMCT, and multiply them by the number of 1s in the memory. While this will give us an estimate of the resources, it will not be the best one available - in fact, it represents the worst case!
+The ``naive'' way to estimate resources for a circuit of the type in \autoref{fig:basic-qrom} is to first compute the resources required for a single $n$-bit MPMCT, and then multiply by the number of 1s in the memory. While this will give us an estimate of the resources, it will not be the best one available - in fact, it represents the worst case!
 
 Circuits like that in \autoref{fig:basic-qrom} are a special type of circuit called a \emph{reversible} circuit. While all unitary operations are reversible in the sense that they can be run ``backwards'', reversible circuit here refers specifically to circuits that represent Boolean functions, i.e. can be expressed only in terms of CNOTs, Toffolis, and $n$-qubit controlled gates. For circuits of this type, we can dive into the extensive literature of classical optimization techniques for Boolean functions. 
 
-\todo{Add description about EXORCISM-4; ESOP representation, etc.} Running the circuit of \autoref{fig:basic-qrom} through \textsc{EXORCISM-4} yields a significantly simpler circuit, depicted in. Rather than having five 4-controlled gates, it can be reduced to one 4-controlled gate and two Toffolis. 
+One such tool is called \textsc{Exorcism-4} \cite{Mishchenko2001}. \textsc{Exorcism-4} acts on Boolean functions represented in ESOP (exclusive-OR sum of product) form.
+While the name is descriptive, it is always helpful to see an example.
+Consider again the circuit in \autoref{fig:basic-qrom}. 
+Each MPMCT can be expressed as a product term of the variables that multiplies to 1 for the correct input address.
+Then, all of these product terms are summed together with the exclusive-OR (XOR) operation\footnote{XOR, denoted by $\oplus$, is essentially addition modulo 2: $0 \oplus 0 = 1 \oplus 1 = 0$, and $0 \oplus 1 = 1 \oplus 0 = 1$.}.
+Explicitly,
+\begin{equation}
+ f(a_0, a_1, a_2, a_3) = \bar{a}_0 \bar{a}_1 \bar{a}_2 a_3 \oplus \bar{a}_0 \bar{a}_1 a_2 a_3 \oplus \bar{a}_0 a_1 \bar{a}_2 a_3 \oplus a_0 \bar{a}_1 a_2 a_3 \oplus a_0 a_1 \bar{a}_2 a_3,
+\end{equation}
+where $\bar{a}$ denotes NOT($a$).
+If we feed $f$ an address that contains a 1, the associated product term will evalaute to 1 while the rest are 0, and the combined XOR of all terms will be 1.
+If an address storing 0 is input, then none of the product terms produce a 1 and the output is 0.
 
+Using the implementation of \textsc{Exorcism-4} provided in \texttt{abc} \cite{abc}, we can simplify the circuit in \autoref{fig:basic-qrom} to obtain a significantly smaller circuit, depicted in \autoref{fig:basic-qrom-exorcised}. 
+Rather than having five 4-controlled gates, it can be reduced to one 4-controlled gate and two Toffolis! 
+It would be interesting to determine if this a typical improvement.
 
-\begin{figure}
+\begin{figure}[ht]
  \centering
  \captionsetup{width=0.89\linewidth}
  \includegraphics[scale=1.6]{images/basic-qrom-exorcised}
  \caption{Basic qROMs can be greatly simplified using Boolean circuit optimization techniques. On the right is shown an optimized version of the circuit on the left, obtained using EXORCISM-4. The resource counts are significantly reduced. Understanding what savings are available on average is an interesting research topic.}
- \label{fig:basic-qrom}
+ \label{fig:basic-qrom-exorcised}
 \end{figure}
+
+To test this, we generated random memories and computed resources before and after optimization with \textsc{Exorcism-4}. 
+For each number of address bits $n = 5, \ldots 14$, we generated 1000 random qROMs where $2^{n-1}$ memory cells contain a 1.
+As $T$-count and $T$-depth are typically the metrics of interest, we present them in \autoref{fig:qrom-exorcism-tcount} and \autoref{fig:qrom-exorcism-tdepth}. 
+
+\begin{figure}[ht]
+ \centering
+ \captionsetup{width=0.89\linewidth}
+ \includegraphics[scale=0.6]{images/exorcism-t-count}
+ \caption{$T$-counts averaged over 1000 random, half-full qROMs computed from naive resource estimation (as per \cite{DiMatteo2020}) and optimization with \textsc{Exorcism-4}. Optimization yields a little shy of an order of magnitude reduction in $T$-count.}
+ \label{fig:qrom-exorcism-tcount}
+\end{figure}
+
+\begin{figure}[ht]
+ \centering
+ \captionsetup{width=0.89\linewidth}
+ \includegraphics[scale=0.6]{images/exorcism-t-depth}
+ \caption{$T$-depth of 1000 random qROMs computed from naive resource estimation (as per \cite{DiMatteo2020}) and optimization with \textsc{Exorcism-4}. As with $T$-count, optimization yielded a less than an order of magnitude reduction in $T$-depth.}
+ \label{fig:qrom-exorcism-tdepth}
+\end{figure}
+
+While we see a little less than an order of magnitude reduction in both $T$-count and depth, the scaling with address size doesn't undergo any fundamental changes.
+\todo{Try exorcism with the case of fixed $n$ and varying memory fullness to see how savings depend on sparsity. Maybe something neat there.}
+To obtain further improvement, we have to look to different circuit constructions.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\subsection{\textsc{SelectSwap}  qROM}
+\subsection{\textsc{SelectSwap} qROM}
 
-The qROM in \autoref{fig:basic-qrom} represents just one extreme of a spectrum of space-time tradeoffs that can be made. One not-so-efficient way of making that tradeoff is to make multiple copies of the address register, perform all the MPMCTs in parallel, and then apply a parity operation of those results to get the output bit. While this works, and would work quickly, the qubit overhead is \emph{astronomical} and so this isn't really something we would want to do in practice \cite{DiMatteo2020}. Instead it pays off to look for something ``in between'' the two extremes - can we add \emph{some} extra qubits to reduce the time without going full parallel?
+The qROM in \autoref{fig:basic-qrom} represents just one extreme of a spectrum of space-time tradeoffs that can be made. One not-so-efficient way of making that tradeoff is to make multiple copies of the address register, perform all the MPMCTs in parallel, and then apply a parity operation of those results to get the output bit. While this works, and would work quickly, the qubit overhead is \emph{astronomical} and so this isn't really something we would want to do in practice \cite{DiMatteo2020}. Instead it pays off to look for something in between the two extremes - can we add \emph{some} extra qubits to reduce the time without going full parallel?
 
 Some ``hybrid'' circuits to that effect were explored in \cite{DiMatteo2018, DiMatteo2020}, though around the same time as \cite{DiMatteo2018}, a better approach was presented in \cite{Vadym2018}. These are called the \textsc{SelectSwap} circuits, after their two-part structure.
 
@@ -727,7 +757,7 @@ However, it comes at a significant cost: the number of auxiliary qubits that mus
 The authors of \cite{Alexandru2020} found a more efficient way to parallelize this by taking advantage of some circuit identities that can be applied when two neighbouring Toffolis share a control bit. 
 In fact, this gives a significant advantage - the $T$-depth will go from $O(2^n)$ to $O(n)$ \emph{without} adding any auxiliary qubits!
 
-\begin{figure}
+\begin{figure}[ht]
  \centering 
  \captionsetup{width=.89\linewidth}
  \includegraphics[scale=2]{images/ccz}
@@ -735,7 +765,7 @@ In fact, this gives a significant advantage - the $T$-depth will go from $O(2^n)
  \label{fig:ccz}
 \end{figure}
 
-\begin{figure}
+\begin{figure}[ht]
  \centering
   \captionsetup{width=.89\linewidth}
  \includegraphics[scale=0.8]{images/ccz-clifford-t}
