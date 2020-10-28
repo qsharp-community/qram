@@ -21,7 +21,7 @@
             let expectedValue = ConstantArray(2^addressSize, [false]);
             let data = EmptyQRAM(addressSize);
             let result = CreateBitQueryMeasureAllQRAM(data);
-            let pairs = Zip(result, expectedValue);
+            let pairs = Zipped(result, expectedValue);
             Ignore(Mapped(
                 AllEqualityFactB(_, _, $"Expecting memory contents {expectedValue}, got {result}."), 
                 pairs
@@ -36,7 +36,7 @@
             let expectedValue = ConstantArray(2^addressSize, [true]);
             let data = FullQRAM(addressSize);
             let result = CreateBitQueryMeasureAllQRAM(data);
-            let pairs = Zip(result, expectedValue);
+            let pairs = Zipped(result, expectedValue);
             Ignore(Mapped(
                 AllEqualityFactB(_, _, $"Expecting memory contents {expectedValue}, got {result}."), 
                 pairs
@@ -51,7 +51,7 @@
             let expectedValue = [[true]] + ConstantArray(2^addressSize-1, [false]);
             let data = FirstCellFullQRAM();
             let result = CreateBitQueryMeasureAllQRAM(data);
-            let pairs = Zip(result, expectedValue);
+            let pairs = Zipped(result, expectedValue);
             Ignore(Mapped(
                 AllEqualityFactB(_, _, $"Expecting memory contents {expectedValue}, got {result}."), 
                 pairs
@@ -66,7 +66,7 @@
             let expectedValue = [[false], [true]] + ConstantArray(2^addressSize-2, [false]);
             let data = SecondCellFullQRAM();
             let result = CreateBitQueryMeasureAllQRAM(data);
-            let pairs = Zip(result, expectedValue);
+            let pairs = Zipped(result, expectedValue);
             Ignore(Mapped(
                 AllEqualityFactB(_, _, $"Expecting memory contents {expectedValue}, got {result}."), 
                 pairs
@@ -81,7 +81,7 @@
             let expectedValue = ConstantArray(2^addressSize-1, [false]) + [[true]];
             let data = LastCellFullQRAM(addressSize);
             let result = CreateBitQueryMeasureAllQRAM(data);
-            let pairs = Zip(result, expectedValue);
+            let pairs = Zipped(result, expectedValue);
             Ignore(Mapped(
                 AllEqualityFactB(_, _, $"Expecting memory contents {expectedValue}, got {result}."), 
                 pairs

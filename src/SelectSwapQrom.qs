@@ -58,14 +58,34 @@
 ///////////////////////////////////////////////////////////////////////////
 // INTERNAL IMPLEMENTATION
 ///////////////////////////////////////////////////////////////////////////
-
+   
     /// # Summary
     /// Creates circuitry for SelectSWAP qROM in two parts. 
     /// # Input
-    /// ## dataValues
+    /// ## memoryBank
     /// A MemoryBank contained the addresses and contents of the memory
-    /// # Output
-    /// An operation that can be used to look up data `value` at `address`.
+    /// ## tradeoffParameter
+    /// An integer representing the number of address bits that will be "split off"
+    /// to perform the mixed-polarity gates that detail the memory contents. This also
+    /// affects the size of the auxiliary registers, making 2^(addressBits - tradeoffParameter). 
+    /// copies. Valid tradeoff parameters are integers from 1 to addressBits - 1.
+    ///   Example 1:
+    ///   A memory has 4 address bits. Rather than doing mixed-polarity gates with 4 controls,
+    ///   and holding a single copy of the target register, we can make a tradeoff. Setting
+    ///   tradeoffParameter = 1 will "splinter off" 1 address bit from the rest, and make 
+    ///   2^(4-1) = 8 copies of the auxiliary register. The select portion will be controlled on 
+    ///   that first address bits, whereas the swap network is controlled on the remaining 3.
+    ///   Example 2: (as shown in the paper)
+    ///   Setting tradeoffParameter = 2 partitions the address space such 2^(4-2) = 4 copies
+    ///   of the auxiliary register are created. The select portion uses the first 2 address bits 
+    ///   as controls, and the swap network uses the remaining 2.
+    /// (Note: the original paper uses a different definition of the tradeoffParameter in which
+    ///  the number of auxiliary copies does not need to be a power of 2, however this complicates
+    ///  the implementation. Here we consider only the more straightforward case.)
+    /// ## addressRegister
+    /// Memory address that we want to look up.
+    /// ## targetRegister
+    /// Where we want the data we look up to be transferer to.
     internal operation selectSwap(
         memoryBank : MemoryBank, 
         tradeoffParameter : Int,
@@ -91,7 +111,7 @@
             }
             apply {
                 // Copy the memory contents from the topmost auxiliary register to a target register 
-                ApplyToEachCA(CNOT, Zip(partitionedAuxRegister[0],targetRegister));
+                ApplyToEachCA(CNOT, Zipped(partitionedAuxRegister[0],targetRegister));
             }
         }
     }
@@ -106,8 +126,9 @@
     /// the bit string of memory contents stored in cell $j$.
     ///
     /// # Input
-    /// ## addressRegister
-    /// A qubit register holding the address (or superposition of addresses) to be queried.  
+    /// ## addressSubRegister
+    /// A qubit register holding the part of the address to be queried, as 
+    /// determined by the algorithm.  
     /// ## auxRegister
     /// A qubit register on which the contents of the memory will be written to
     /// enable further processing.
@@ -156,7 +177,7 @@
         let addressSubspace = (Chunks(multiplexSize, RangeAsIntArray(0..2^bank::AddressSize-1)))[subAddress];
         let dataSubspace = Mapped(DataAtAddress(bank, _), addressSubspace);
 
-        for((value, aux) in Zip(dataSubspace, auxRegister)) {
+        for((value, aux) in Zipped(dataSubspace, auxRegister)) {
             ApplyPauliFromBitString(PauliX, true, value, aux);
         }
     }
@@ -167,7 +188,7 @@
     /// # Input
     /// ## addressSubregister
     /// A (sub)register of address bits that will be used to control a swap network.
-    /// ## partitionedAuxiliaryRegister
+    /// ## auxRegister
     /// A register of qubits, organized into memory chunks, that will be swapped.
     internal operation ApplySwapNetwork(
         addressSubregister : Qubit[],
