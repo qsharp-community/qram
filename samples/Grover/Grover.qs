@@ -8,13 +8,25 @@
     open Microsoft.Quantum.Diagnostics;
     open Microsoft.Quantum.Arithmetic;
 
-    open Qram;
+    open QsharpCommunity.Qram;
 
     /// # Summary
     /// This sample is an adaptation of the Grover sample in the QDK documentation
     /// that uses a BucketBrigadeQRAM as an oracle, rather than the usual reflection
     /// about marked states.
     /// https://github.com/microsoft/Quantum/tree/master/samples/algorithms/simple-grover
+    /// # Input
+    /// ## addressSize
+    /// How many bits to use for your address.
+    /// ## markedElements
+    /// The index of the element you want to search for.
+    /// # Output
+    /// The index of the marked element.
+    /// # Remarks
+    /// ## Example
+    /// ```ps
+    /// dotnet run -- --address-size 3 --marked-elements 4
+    /// ```
     @EntryPoint()
     operation GroverSearch(addressSize : Int, markedElements : Int[]) : Int {
         // First, set up a qRAM with marked elements set to 1.

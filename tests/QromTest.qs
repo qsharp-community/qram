@@ -9,7 +9,7 @@
     open Microsoft.Quantum.Diagnostics;
     open Microsoft.Quantum.Measurement;
     open Microsoft.Quantum.Logical;
-    open Qram;    
+    open QsharpCommunity.Qram;    
 
     // Basic lookup with all addresses checked for single-bit data
     @Test("QuantumSimulator")

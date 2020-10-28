@@ -1,4 +1,4 @@
-namespace Qram{
+namespace QsharpCommunity.Qram{
     open Microsoft.Quantum.Intrinsic;
     open Microsoft.Quantum.Canon;
     open Microsoft.Quantum.Logical;

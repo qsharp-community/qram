@@ -1,4 +1,4 @@
-﻿namespace Qram{
+﻿namespace QsharpCommunity.Qram{
     
     open Microsoft.Quantum.Math;
     open Microsoft.Quantum.Convert;

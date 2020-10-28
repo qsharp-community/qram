@@ -6,7 +6,7 @@ namespace ResourceEstimation {
     open Microsoft.Quantum.Convert;
     open Microsoft.Quantum.Intrinsic;
     open Microsoft.Quantum.Measurement;
-    open Qram;
+    open QsharpCommunity.Qram;
     
     operation QromQuerySample(rawData : (Int, Bool[])[], queryAddress : Int) : Int {
         // Generate a (Int, Bool[]) array of data.

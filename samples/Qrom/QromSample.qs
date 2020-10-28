@@ -8,7 +8,7 @@
     open Microsoft.Quantum.Intrinsic;
     open Microsoft.Quantum.Measurement;
     
-    open Qram;
+    open QsharpCommunity.Qram;
     
     /// # Summary
     /// Does a quick test of creating an implicit QRAM and then looks up a

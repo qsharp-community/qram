@@ -10,7 +10,7 @@ namespace Tests {
     open Microsoft.Quantum.Measurement;
     open Microsoft.Quantum.Logical;
     open Microsoft.Quantum.Random;
-    open Qram;
+    open QsharpCommunity.Qram;
 
     // Hardcoded data set
     internal function SingleBitData() : MemoryBank {

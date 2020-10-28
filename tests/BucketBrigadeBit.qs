@@ -9,7 +9,7 @@
     open Microsoft.Quantum.Diagnostics;
     open Microsoft.Quantum.Measurement;
     open Microsoft.Quantum.Logical;
-    open Qram;    
+    open QsharpCommunity.Qram;    
 
     // NB: Much better extensible approach
     // AssertOperationEqualsReferenced(Memory that prepares bell state, BellState)

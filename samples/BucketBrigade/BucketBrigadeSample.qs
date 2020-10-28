@@ -8,7 +8,7 @@
     open Microsoft.Quantum.Intrinsic;
     open Microsoft.Quantum.Measurement;
     
-    open Qram;
+    open QsharpCommunity.Qram;
 
     /// # Summary
     /// Generates a Bucket Brigade Qram and looks up the data 
