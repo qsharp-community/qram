@@ -35,5 +35,5 @@ jobs:
       working-directory: src
     
     - name: Push to GitHub Packages
-      run: dotnet nuget push (Join-Path "drop" "*.nupkg")
+      run: dotnet nuget push (Join-Path "drop" "*.nupkg") --api-key ${{secrets.NUGET_API_KEY}}
       shell: pwsh
