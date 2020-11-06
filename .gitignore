@@ -1,3 +1,7 @@
+# DocFX
+_site/
+docs/apidoc/
+
 # Python temporary files
 .ipynb_checkpoints
 .pytest_cache

@@ -1,4 +1,4 @@
-﻿namespace Qram{
+﻿namespace QsharpCommunity.Qram{
     
     open Microsoft.Quantum.Math;
     open Microsoft.Quantum.Convert;
@@ -48,7 +48,7 @@
     /// # Input
     /// ## memoryRegister
     /// Register that represents the memory you are writing to.
-    /// ## dataValue
+    /// ## dataCell
     /// The tuple of (address, data) that you want written to the memory.
     operation BucketBrigadeWrite(
         memoryRegister : MemoryRegister, 
@@ -159,7 +159,7 @@
     ) 
     : Unit is Adj + Ctl {
         for ((idx, aux) in Enumerated(auxRegister)) {
-            let valuePairs = Zip((memoryRegister!)[idx], targetRegister);
+            let valuePairs = Zipped((memoryRegister!)[idx], targetRegister);
             ApplyToEachCA(CCNOT(aux, _, _), valuePairs);
         }
         

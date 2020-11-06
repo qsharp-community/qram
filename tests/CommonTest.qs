@@ -10,7 +10,7 @@ namespace Tests {
     open Microsoft.Quantum.Measurement;
     open Microsoft.Quantum.Logical;
     open Microsoft.Quantum.Random;
-    open Qram;
+    open QsharpCommunity.Qram;
 
     // Hardcoded data set
     internal function SingleBitData() : MemoryBank {
@@ -34,14 +34,14 @@ namespace Tests {
     internal function EmptyQRAM(addressSize : Int) : MemoryBank {
         let addresses = SequenceI(0, 2^addressSize - 1);
         let data = ConstantArray(2^addressSize, [false]);
-        return GeneratedMemoryBank(Mapped(MemoryCell,Zip(addresses, data)));
+        return GeneratedMemoryBank(Mapped(MemoryCell,Zipped(addresses, data)));
     }
 
     // QRAM where every memory cell contains a 1
     internal function FullQRAM(addressSize : Int) : MemoryBank {
         let addresses = SequenceI(0, 2^addressSize - 1);
         let data = ConstantArray(2^addressSize, [true]);
-        return GeneratedMemoryBank(Mapped(MemoryCell,Zip(addresses, data)));
+        return GeneratedMemoryBank(Mapped(MemoryCell,Zipped(addresses, data)));
     }
 
     // QRAM where only the first memory cell contains a 1

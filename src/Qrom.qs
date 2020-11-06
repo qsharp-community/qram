@@ -1,4 +1,4 @@
-﻿namespace Qram{
+﻿namespace QsharpCommunity.Qram{
     
     open Microsoft.Quantum.Math;
     open Microsoft.Quantum.Convert;
@@ -32,16 +32,14 @@
 ///////////////////////////////////////////////////////////////////////////
 // INTERNAL IMPLEMENTATION
 ///////////////////////////////////////////////////////////////////////////
-    
+        
     /// # Summary
     /// Returns an operation that represents a QROM with one non-zero data value.
     /// # Input
-    /// ## address
-    /// The address where the data is non-zero.
-    /// ## value
-    /// The value (as a Bool[]) representing the data at `address`
+    /// ## cell
+    /// A memory cell which contains the data value and the address to write.
     /// # Output
-    /// An operation that can be used to look up data `value` at `address`.
+    /// An operation that can be used to look up data `value` at `address`. 
     internal function SingleValueWriter(cell : MemoryCell)
     : ((LittleEndian, Qubit[]) => Unit is Adj + Ctl) {
         return WriteSingleValue(cell::Address, cell::Value, _, _);

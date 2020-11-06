@@ -8,14 +8,12 @@
     open Microsoft.Quantum.Intrinsic;
     open Microsoft.Quantum.Measurement;
     
-    open Qram;
+    open QsharpCommunity.Qram;
     
     /// # Summary
     /// Does a quick test of creating an implicit QRAM and then looks up a
     /// specific data value stored in it.
     /// # Input
-    /// ## queryAddress
-    /// The address you want to lookup.
     /// ## tradeoffParameter
     /// VALID VALUES HERE ARE {1, 2, 3}
     /// # Output
@@ -23,7 +21,7 @@
     /// # Remarks
     /// ## Example
     /// ```ps
-    /// dotnet run -- --query-address 2 --tradeoff-parameter 2
+    /// dotnet run -- --tradeoff-parameter 2
     /// ```
     @EntryPoint()
     operation QromQuerySample(tradeoffParameter : Int) : Int[] {

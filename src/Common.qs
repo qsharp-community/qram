@@ -1,4 +1,4 @@
-namespace Qram{
+namespace QsharpCommunity.Qram{
     open Microsoft.Quantum.Intrinsic;
     open Microsoft.Quantum.Canon;
     open Microsoft.Quantum.Logical;
@@ -25,8 +25,10 @@ namespace Qram{
 
     /// # Summary
     /// Type representing a generic QRAM type.
-    /// # Input
-    /// ## Read
+    /// # Named Items
+    /// ## QueryPhase
+    /// Takes an address, memory, and target qubit to perform the lookup.
+    /// ## QueryBit
     /// Takes an address, memory, and target qubit to perform the lookup.
     /// ## Write
     /// Writes a data value at address Int, with the value Bool[] to a MemoryRegister.
@@ -236,9 +238,10 @@ namespace Qram{
     /// # Summary
     /// Swap qubits at the level of registers
     /// # Input
-    /// Two registers with the same number of qubits
-    /// # Output
-    /// 
+    /// ## registerA
+    /// The first register to swap.
+    /// ## registerB
+    /// The second register to swap.
     operation SwapFullRegisters(registerA : Qubit[], registerB : Qubit[]) 
     : Unit is Adj + Ctl {
         EqualityFactB(Length(registerA) == Length(registerB), true, "Cannot SWAP registers of unequal size.");

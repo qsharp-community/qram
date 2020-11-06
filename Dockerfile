@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/quantum/iqsharp-base:latest
+FROM mcr.microsoft.com/quantum/iqsharp-base:0.13.20102604
 
 ENV IQSHARP_HOSTING_ENV=QRAM_DOCKER
 USER root
