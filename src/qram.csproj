@@ -13,7 +13,7 @@
     <RepositoryUrl>https://github.com/qsharp-community/qram.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <QsharpDocsGeneration>true</QsharpDocsGeneration>
-    <QsharpDocsOutputPath>../docs/apidoc/</QsharpDocsOutputPath>
+    <!-- <QsharpDocsOutputPath>../docs/apidoc/</QsharpDocsOutputPath> -->
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Update="Microsoft.Quantum.QSharp.Core" Version="0.13.20102604" />
