@@ -42,5 +42,5 @@ jobs:
       uses: brandedoutcast/publish-nuget@v2.5.5
       with:
         PROJECT_FILE_PATH: src/qram.csproj
-        #NUGET_KEY: ${{secrets.NUGET_API_KEY}}
+        NUGET_KEY: ${{secrets.NUGET_API_KEY}}
         VERSION_STATIC: 0.1.$Env:GITHUB_RUN_NUMBER
