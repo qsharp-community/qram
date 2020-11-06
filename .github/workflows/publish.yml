@@ -6,7 +6,7 @@ name: Publish to GitHub Packages
 # events but only for the master branch
 on:
   push:
-    branches: [ master ]
+    branches: [ semver-release ]
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -37,3 +37,10 @@ jobs:
     - name: Push to GitHub Packages
       run: dotnet nuget push (Join-Path "drop" "*.nupkg")
       shell: pwsh
+    
+    - name: Publish NuGet.org
+      uses: brandedoutcast/publish-nuget@v2.5.5
+      with:
+        PROJECT_FILE_PATH: src/qram.csproj
+        #NUGET_KEY: ${{secrets.NUGET_API_KEY}}
+        VERSION_STATIC: 0.1.$Env:GITHUB_RUN_NUMBER
