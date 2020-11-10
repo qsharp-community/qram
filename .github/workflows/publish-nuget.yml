@@ -27,8 +27,11 @@ jobs:
       name: Determine version change
       uses: zwaldowski/match-label-action@v1
       with:
-        allowed: major,minor,patch
-    - id: version
+        allowed: >
+          major
+          minor
+          patch
+    - id: semver
       uses: zwaldowski/semver-release-action@v1
       name: Create new version number for this release
       with:
@@ -47,7 +50,7 @@ jobs:
         
     # Runs a set of commands using the runners shell
     - name: .NET pack
-      run: dotnet pack -c Release -o ../drop /p:Version=${{ steps.version.outputs.version }}
+      run: dotnet pack -c Release -o ../drop /p:Version=${{ steps.semver.outputs.version }}
       shell: pwsh
       working-directory: src
     
