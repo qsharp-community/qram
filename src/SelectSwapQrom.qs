@@ -98,21 +98,20 @@
 
         // Partition the auxiliary register into chunks of the right size; can't use
         // the PartitionMemoryBank operation because aux register size depends on the tradeoffParameter
-        using (auxRegister = Qubit[numAuxQubits]) {
-            let partitionedAuxRegister = Chunks(memoryBank::DataSize, auxRegister);
-            let partitionedAddressRegister = Partitioned([tradeoffParameter], Reversed(addressRegister!));
-            
-            within {
-                // Perform the select operation that "writes" memory contents to the aux register 
-                // using the first tradeoffParameter address bits
-                ApplySelect(partitionedAddressRegister[0], partitionedAuxRegister, memoryBank);
-                // Apply the swap network controlled on the remaining address qubits
-                ApplySwapNetwork(partitionedAddressRegister[1], partitionedAuxRegister);
-            }
-            apply {
-                // Copy the memory contents from the topmost auxiliary register to a target register 
-                ApplyToEachCA(CNOT, Zipped(partitionedAuxRegister[0],targetRegister));
-            }
+        use auxRegister = Qubit[numAuxQubits];
+        let partitionedAuxRegister = Chunks(memoryBank::DataSize, auxRegister);
+        let partitionedAddressRegister = Partitioned([tradeoffParameter], Reversed(addressRegister!));
+        
+        within {
+            // Perform the select operation that "writes" memory contents to the aux register 
+            // using the first tradeoffParameter address bits
+            ApplySelect(partitionedAddressRegister[0], partitionedAuxRegister, memoryBank);
+            // Apply the swap network controlled on the remaining address qubits
+            ApplySwapNetwork(partitionedAddressRegister[1], partitionedAuxRegister);
+        }
+        apply {
+            // Copy the memory contents from the topmost auxiliary register to a target register 
+            ApplyToEachCA(CNOT, Zipped(partitionedAuxRegister[0],targetRegister));
         }
     }
 
@@ -140,7 +139,7 @@
         bank : MemoryBank
     ) 
     : Unit is Adj + Ctl {
-        for (subAddress in 0..2^Length(addressSubRegister)-1) {
+        for subAddress in 0..2^Length(addressSubRegister)-1 {
             ApplyControlledOnInt(
                 subAddress, 
                 FanoutMemoryContents(bank, _, subAddress), 
@@ -177,7 +176,7 @@
         let addressSubspace = (Chunks(multiplexSize, RangeAsIntArray(0..2^bank::AddressSize-1)))[subAddress];
         let dataSubspace = Mapped(DataAtAddress(bank, _), addressSubspace);
 
-        for((value, aux) in Zipped(dataSubspace, auxRegister)) {
+        for (value, aux) in Zipped(dataSubspace, auxRegister) {
             ApplyPauliFromBitString(PauliX, true, value, aux);
         }
     }
@@ -201,7 +200,7 @@
         // Determine how many full registers we have to swap (should be 2^(Length(addressSubregister)))
         let auxCopies = Length(auxRegister);
 
-        for ((idx, addressBit) in Enumerated(Reversed(addressSubregister))) {
+        for (idx, addressBit) in Enumerated(Reversed(addressSubregister)) {
             let stride = 2^(idx);
             let registerPairs = Chunks(2, RangeAsIntArray(0..stride..auxCopies-1));
             

@@ -25,7 +25,7 @@
     operation BucketBrigadeQRAMOracle(dataValues : MemoryCell[], memoryRegister : MemoryRegister) : QRAM {
         let bank = GeneratedMemoryBank(dataValues);
 
-        for (cell in bank::DataSet) {
+        for cell in bank::DataSet {
             BucketBrigadeWrite(memoryRegister, cell);
         }
 
@@ -76,15 +76,14 @@
         targetRegister : Qubit[]
     ) 
     : Unit is Adj + Ctl {
-        using (auxRegister = Qubit[2^Length(addressRegister!)]) {
-            within {
-                X(Head(auxRegister));
-                ApplyAddressFanout(addressRegister, auxRegister);
-            }
-            apply {
-                ReadoutMemoryBit(memoryRegister, auxRegister, targetRegister);
-            }
-        } 
+        use auxRegister = Qubit[2^Length(addressRegister!)];
+        within {
+            X(Head(auxRegister));
+            ApplyAddressFanout(addressRegister, auxRegister);
+        }
+        apply {
+            ReadoutMemoryBit(memoryRegister, auxRegister, targetRegister);
+        }
     }
 
 
@@ -103,15 +102,14 @@
         targetRegister : Qubit[]
     ) 
     : Unit is Adj + Ctl {
-        using (auxRegister = Qubit[2^Length(addressRegister!)]) {
-            within {
-                X(Head(auxRegister));
-                ApplyAddressFanout(addressRegister, auxRegister);
-            }
-            apply {
-                ReadoutMemoryPhase(memoryRegister, auxRegister, targetRegister);
-            }
-        } 
+        use auxRegister = Qubit[2^Length(addressRegister!)];
+        within {
+            X(Head(auxRegister));
+            ApplyAddressFanout(addressRegister, auxRegister);
+        }
+        apply {
+            ReadoutMemoryPhase(memoryRegister, auxRegister, targetRegister);
+        }
     }
 
     /// # Summary
@@ -128,13 +126,13 @@
         auxRegister : Qubit[]
     ) 
     : Unit is Adj + Ctl {
-        for ((idx, addressBit) in Enumerated(addressRegister!)) {
-            if (idx == 0) {
+        for (idx, addressBit) in Enumerated(addressRegister!) {
+            if idx == 0 {
                 Controlled X([addressRegister![0]],auxRegister[1]);
                 Controlled X([auxRegister[1]],auxRegister[0]);
             }
             else {
-                for (n in 0..(2^idx-1)) {
+                for n in 0..(2^idx-1) {
                     Controlled X([addressRegister![idx], auxRegister[n]],auxRegister[n+2^idx]);
                     Controlled X([auxRegister[n+2^idx]],auxRegister[n]);
                 }
@@ -158,7 +156,7 @@
         targetRegister : Qubit[]
     ) 
     : Unit is Adj + Ctl {
-        for ((idx, aux) in Enumerated(auxRegister)) {
+        for (idx, aux) in Enumerated(auxRegister) {
             let valuePairs = Zipped((memoryRegister!)[idx], targetRegister);
             ApplyToEachCA(CCNOT(aux, _, _), valuePairs);
         }

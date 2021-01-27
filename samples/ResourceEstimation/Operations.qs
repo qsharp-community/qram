@@ -18,12 +18,11 @@ namespace ResourceEstimation {
     }
 
     operation QueryAndMeasureQROM(memory : QROM, queryAddress : Int) : Int {
-        using ((addressRegister, targetRegister) = (Qubit[memory::AddressSize], Qubit[memory::DataSize])) {
-            ApplyPauliFromBitString (PauliX, true, IntAsBoolArray(queryAddress, memory::AddressSize), addressRegister);
-            memory::Read(LittleEndian(addressRegister), targetRegister);
-            ResetAll(addressRegister);
-            return MeasureInteger(LittleEndian(targetRegister));
-        }
+        use (addressRegister, targetRegister) = (Qubit[memory::AddressSize], Qubit[memory::DataSize]);
+        ApplyPauliFromBitString (PauliX, true, IntAsBoolArray(queryAddress, memory::AddressSize), addressRegister);
+        memory::Read(LittleEndian(addressRegister), targetRegister);
+        ResetAll(addressRegister);
+        return MeasureInteger(LittleEndian(targetRegister));
     }
 
     function ParseMemoryData(data : (Int, Bool[])[]) : MemoryBank{

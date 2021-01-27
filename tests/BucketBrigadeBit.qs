@@ -17,7 +17,7 @@
     // Verify empty qRAMs are empty
     @Test("QuantumSimulator") 
     operation BucketBrigadeOracleBitEmptyMatchResults() : Unit {
-        for (addressSize in 1..3) {
+        for addressSize in 1..3 {
             let expectedValue = ConstantArray(2^addressSize, [false]);
             let data = EmptyQRAM(addressSize);
             let result = CreateBitQueryMeasureAllQRAM(data);
@@ -32,7 +32,7 @@
     // Verify full qRAMs are full
     @Test("QuantumSimulator") 
     operation BucketBrigadeOracleBitFullMatchResults() : Unit {
-        for (addressSize in 1..3) {
+        for addressSize in 1..3 {
             let expectedValue = ConstantArray(2^addressSize, [true]);
             let data = FullQRAM(addressSize);
             let result = CreateBitQueryMeasureAllQRAM(data);
@@ -47,7 +47,7 @@
     // Verify things work when only the first cell is full
     @Test("QuantumSimulator") 
     operation BucketBrigadeOracleBitFirstCellFullMatchResults() : Unit {
-        for (addressSize in 1..3) {
+        for addressSize in 1..3 {
             let expectedValue = [[true]] + ConstantArray(2^addressSize-1, [false]);
             let data = FirstCellFullQRAM();
             let result = CreateBitQueryMeasureAllQRAM(data);
@@ -62,7 +62,7 @@
     // Verify things work when only the second cell is full
     @Test("QuantumSimulator") 
     operation BucketBrigadeOracleBitSecondCellFullMatchResults() : Unit {
-        for (addressSize in 1..3) {
+        for addressSize in 1..3 {
             let expectedValue = [[false], [true]] + ConstantArray(2^addressSize-2, [false]);
             let data = SecondCellFullQRAM();
             let result = CreateBitQueryMeasureAllQRAM(data);
@@ -77,7 +77,7 @@
     // Verify things work when only the last cell is full
     @Test("QuantumSimulator") 
     operation BucketBrigadeOracleBitLastCellFullMatchResults() : Unit {
-        for (addressSize in 1..3) {
+        for addressSize in 1..3 {
             let expectedValue = ConstantArray(2^addressSize-1, [false]) + [[true]];
             let data = LastCellFullQRAM(addressSize);
             let result = CreateBitQueryMeasureAllQRAM(data);
@@ -94,28 +94,25 @@
     internal operation CreateBitQueryMeasureAllQRAM(bank : MemoryBank) : Bool[][] {
         mutable result = new Bool[][2^bank::AddressSize];
 
-        using ((addressRegister, flatMemoryRegister, targetRegister) =
+        use (addressRegister, flatMemoryRegister, targetRegister) =
             (Qubit[bank::AddressSize], 
             Qubit[bank::DataSize*(2^bank::AddressSize)], 
-            Qubit[bank::DataSize])
-        ) 
-        {
-            let memoryRegister = Most(Partitioned(ConstantArray(2^bank::AddressSize, bank::DataSize), flatMemoryRegister));
-            let memory = BucketBrigadeQRAMOracle(bank::DataSet, MemoryRegister(memoryRegister));
+            Qubit[bank::DataSize]); 
+        let memoryRegister = Most(Partitioned(ConstantArray(2^bank::AddressSize, bank::DataSize), flatMemoryRegister));
+        let memory = BucketBrigadeQRAMOracle(bank::DataSet, MemoryRegister(memoryRegister));
 
-            // Query each address sequentially and store in results array
-            for (queryAddress in 0..2^bank::AddressSize-1) {
-                // Prepare the address register for the lookup
-                PrepareIntAddressRegister(queryAddress, addressRegister);
-                // Read out the memory at that address
-                memory::QueryBit(AddressRegister(addressRegister), MemoryRegister(memoryRegister), targetRegister);
-                // Measure the target register and log the results
-                set result w/= queryAddress <- ResultArrayAsBoolArray(MultiM(targetRegister));
-                ResetAll(addressRegister + targetRegister);
-            }
-            // Done with the memory register now
-            ResetAll(flatMemoryRegister);
+        // Query each address sequentially and store in results array
+        for queryAddress in 0..2^bank::AddressSize-1 {
+            // Prepare the address register for the lookup
+            PrepareIntAddressRegister(queryAddress, addressRegister);
+            // Read out the memory at that address
+            memory::QueryBit(AddressRegister(addressRegister), MemoryRegister(memoryRegister), targetRegister);
+            // Measure the target register and log the results
+            set result w/= queryAddress <- ResultArrayAsBoolArray(MultiM(targetRegister));
+            ResetAll(addressRegister + targetRegister);
         }
+        // Done with the memory register now
+        ResetAll(flatMemoryRegister);
         return result;
     }
 

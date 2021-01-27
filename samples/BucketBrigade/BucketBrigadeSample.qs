@@ -29,24 +29,22 @@
         // Generate a (Int, Bool[]) array of data.
         let data = GenerateMemoryData();
         // Create the QRAM.
-        using (flatMemoryRegister = Qubit[(2^data::AddressSize) * data::DataSize]){
-            let memoryRegister = Most(
-                Partitioned(
-                    ConstantArray(2^data::AddressSize, data::DataSize), 
-                    flatMemoryRegister
-                )
-            );
+        use flatMemoryRegister = Qubit[(2^data::AddressSize) * data::DataSize];
+        let memoryRegister = Most(
+            Partitioned(
+                ConstantArray(2^data::AddressSize, data::DataSize), 
+                flatMemoryRegister
+            )
+        );
 
-            let memory = BucketBrigadeQRAMOracle(
-                data::DataSet, 
-                MemoryRegister(memoryRegister)
-            );
-            // Measure and return the data value stored at `queryAddress`.
-            let value = QueryAndMeasureQRAM(memory, MemoryRegister(memoryRegister), queryAddress); 
-            ResetAll(flatMemoryRegister);
-            return value;
-        }
-
+        let memory = BucketBrigadeQRAMOracle(
+            data::DataSet, 
+            MemoryRegister(memoryRegister)
+        );
+        // Measure and return the data value stored at `queryAddress`.
+        let value = QueryAndMeasureQRAM(memory, MemoryRegister(memoryRegister), queryAddress); 
+        ResetAll(flatMemoryRegister);
+        return value;
     }
 
     /// # Summary
@@ -67,19 +65,17 @@
         queryAddress : Int
     ) 
     : Int {
-        using ((addressRegister, targetRegister) = 
-            (Qubit[memory::AddressSize],  Qubit[memory::DataSize])
-        ) {
-            ApplyPauliFromBitString(PauliX, true, 
-                IntAsBoolArray(queryAddress, memory::AddressSize), 
-                addressRegister
-            );
-            memory::QueryBit(AddressRegister(addressRegister), 
-                memoryRegister, targetRegister
-            );
-            ResetAll(addressRegister);
-            return ResultArrayAsInt(MultiM(targetRegister));
-        }
+        use (addressRegister, targetRegister) = 
+            (Qubit[memory::AddressSize],  Qubit[memory::DataSize]);
+        ApplyPauliFromBitString(PauliX, true, 
+            IntAsBoolArray(queryAddress, memory::AddressSize), 
+            addressRegister
+        );
+        memory::QueryBit(AddressRegister(addressRegister), 
+            memoryRegister, targetRegister
+        );
+        ResetAll(addressRegister);
+        return ResultArrayAsInt(MultiM(targetRegister));
     }
 
     /// # Summary

@@ -210,8 +210,8 @@ namespace QsharpCommunity.Qram{
         mutable valueSize = 0;
         
         // Determine largest size of stored value to set output qubit register size
-        for (cell in dataSet){
-            if(Length(cell::Value) > valueSize){
+        for cell in dataSet {
+            if Length(cell::Value) > valueSize {
                 set valueSize = Length(cell::Value);
             }
         }
@@ -224,7 +224,7 @@ namespace QsharpCommunity.Qram{
 
     operation ApplyCNOTCascade(controls : Qubit[], targets : Qubit[]) :  Unit is Adj + Ctl
     {
-        for (control in controls) {
+        for control in controls {
             ApplyToEachCA(CNOT(control, _), targets);
         }
     }
@@ -247,7 +247,7 @@ namespace QsharpCommunity.Qram{
         EqualityFactB(Length(registerA) == Length(registerB), true, "Cannot SWAP registers of unequal size.");
 
         // TODO: find a way to do this in one line with ApplyToEach 
-        for (qubitIndex in RangeAsIntArray(0..Length(registerA)-1)) {
+        for qubitIndex in RangeAsIntArray(0..Length(registerA)-1) {
             SWAP(registerA[qubitIndex], registerB[qubitIndex]);
         }
     }

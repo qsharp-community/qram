@@ -34,43 +34,40 @@
         mutable groverMemoryContents = Mapped<Int,MemoryCell>(MemoryCell(_, [false]), RangeAsIntArray(0..2^addressSize - 1));
 
         // Set the data value to true for each marked address.
-        for (markedElement in markedElements) {
+        for markedElement in markedElements {
             set groverMemoryContents w/= markedElement <- MemoryCell(markedElement, [true]);
 		}
 
-        using ((groverQubits, targetQubit, flatMemoryRegister) = 
-            (Qubit[addressSize], Qubit[1], Qubit[2^addressSize])
-        ) {
-                // Create a structured register to make indexing through the memory easier.
-                let memoryRegister = PartitionMemoryRegister(
-                    flatMemoryRegister, 
-                    GeneratedMemoryBank(groverMemoryContents)
-                );
-                // Prepare the memory register with the initial data. 
-                let memory = BucketBrigadeQRAMOracle(groverMemoryContents, memoryRegister);
+        use (groverQubits, targetQubit, flatMemoryRegister) = 
+            (Qubit[addressSize], Qubit[1], Qubit[2^addressSize]);
+        // Create a structured register to make indexing through the memory easier.
+        let memoryRegister = PartitionMemoryRegister(
+            flatMemoryRegister, 
+            GeneratedMemoryBank(groverMemoryContents)
+        );
+        // Prepare the memory register with the initial data. 
+        let memory = BucketBrigadeQRAMOracle(groverMemoryContents, memoryRegister);
 
-                // Initialize a uniform superposition over all possible inputs.
-                PrepareUniform(groverQubits);
+        // Initialize a uniform superposition over all possible inputs.
+        PrepareUniform(groverQubits);
 
-                // Grover iterations - the reflection about the marked element is implemented
-                // as a QRAM phase query. Only the memory cells storing a 1 will produce a phase.
-                for (idxIteration in 0..NIterations(nMarkedElements, addressSize) - 1) {
+        // Grover iterations - the reflection about the marked element is implemented
+        // as a QRAM phase query. Only the memory cells storing a 1 will produce a phase.
+        for idxIteration in 0..NIterations(nMarkedElements, addressSize) - 1 {
 
-                    memory::QueryPhase(AddressRegister(groverQubits), memoryRegister, targetQubit);
-                    ReflectAboutUniform(groverQubits);
+            memory::QueryPhase(AddressRegister(groverQubits), memoryRegister, targetQubit);
+            ReflectAboutUniform(groverQubits);
 
-                    // It's necessary to remove phase since QueryPhase only sets phase 
-                    // on the specific address instead of inverting like traditional Grover's.
-                    ApplyToEach(Z, targetQubit);
-                    ResetAll(targetQubit);
-                }
-                ResetAll(flatMemoryRegister);
-
-        
-            // Measure and return the answer.
+            // It's necessary to remove phase since QueryPhase only sets phase 
+            // on the specific address instead of inverting like traditional Grover's.
+            ApplyToEach(Z, targetQubit);
             ResetAll(targetQubit);
-            return MeasureInteger(LittleEndian(groverQubits));
         }
+        ResetAll(flatMemoryRegister);
+
+        // Measure and return the answer.
+        ResetAll(targetQubit);
+        return MeasureInteger(LittleEndian(groverQubits));
     }
 
     /// # Summary

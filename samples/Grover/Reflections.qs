@@ -17,19 +17,18 @@ namespace GroverSample {
     /// search.
     operation ReflectAboutMarked(inputQubits : Qubit[], idxMarkedItem : Int) : Unit {
         Message("Reflecting about marked state...");
-        using (outputQubit = Qubit()) {
-            within {
-                // We initialize the outputQubit to (|0⟩ - |1⟩) / √2,
-                // so that toggling it results in a (-1) phase.
-                X(outputQubit);
-                H(outputQubit);
-                // Flip the outputQubit for marked states.
-                // Here, we get the state with alternating 0s and 1s by using
-                // the X instruction on every other qubit.
-                //ApplyToEachA(X, inputQubits[...2...]);
-            } apply {
-                (ControlledOnInt(idxMarkedItem, X))(inputQubits, outputQubit);
-            }
+        use outputQubit = Qubit();
+        within {
+            // We initialize the outputQubit to (|0⟩ - |1⟩) / √2,
+            // so that toggling it results in a (-1) phase.
+            X(outputQubit);
+            H(outputQubit);
+            // Flip the outputQubit for marked states.
+            // Here, we get the state with alternating 0s and 1s by using
+            // the X instruction on every other qubit.
+            //ApplyToEachA(X, inputQubits[...2...]);
+        } apply {
+            (ControlledOnInt(idxMarkedItem, X))(inputQubits, outputQubit);
         }
     }
 
