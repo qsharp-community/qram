@@ -40,7 +40,7 @@ namespace QsharpCommunity.Qram {
                 within {
                     X(tail);
                 } apply {
-                   Controlled ApplySelectNetwork([tail], (parts[0], LittleEndian(most), target)); 
+                    Controlled ApplySelectNetwork([tail], (parts[0], LittleEndian(most), target)); 
                 }
 
                 Controlled ApplySelectNetwork([tail], (parts[1], LittleEndian(most), target)); 
