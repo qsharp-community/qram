@@ -83,7 +83,7 @@ namespace QsharpCommunity.Qram {
             Fact(Length(ctls) == 1, "table lookup can only be controlled with single control line");
             let ctl = Head(ctls);
 
-            if (N == 1) { // base case
+            if N == 1 { // base case
                 Controlled WriteMemoryContents(ctls, (Head(data), target));
             } else {
                 use helper = Qubit();
