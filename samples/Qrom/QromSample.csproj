@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.Quantum.Sdk/0.15.2101125897">
+<Project Sdk="Microsoft.Quantum.Sdk/0.18.2107153439">
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\qram.csproj" />
