@@ -1,15 +1,18 @@
 # This is a basic workflow to help you get started with Actions
 
-name: Publish to GitHub Packages
+name: Publish to nuget.org
 
 # Controls when the action will run. Triggers the workflow on push or pull request
 # events but only for the master branch
 on:
-  push:
-    branches: [ master ]
+  pull_request:
+    branches:
+      - master
+    #types: [closed]
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
+  #if: github.event.pull_request.merged == true
   # This workflow contains a single job called "build"
   build:
     # The type of runner that the job will run on
@@ -19,22 +22,38 @@ jobs:
     steps:
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - uses: actions/checkout@v2
+
+    - id: bump
+      name: Determine version change
+      uses: zwaldowski/match-label-action@v1
+      with:
+        allowed: >
+          major
+          minor
+          patch
+    - id: semver
+      uses: zwaldowski/semver-release-action@v1
+      name: Create new version number for this release
+      with:
+        bump: ${{ steps.bump.outputs.match }}
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+
     # https://stackoverflow.com/questions/57889719/how-to-push-nuget-package-in-github-actions
     - name: "Setup .NET Core @ Latest"
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: '3.1.x'
-        source-url: https://nuget.pkg.github.com/qsharp-community/index.json
+        source-url: https://api.nuget.org/v3/index.json
       env:
-        NUGET_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}       
+        NUGET_AUTH_TOKEN: ${{secrets.NUGET_API_KEY}}      
       
+        
     # Runs a set of commands using the runners shell
     - name: .NET pack
-      run: dotnet pack -c Release -o ../drop /p:Version="0.1.$Env:GITHUB_RUN_NUMBER"
+      run: dotnet pack -c Release -o ../drop /p:Version=${{ steps.semver.outputs.version }}
       shell: pwsh
       working-directory: src
     
-    - name: Push to GitHub Packages
-      run: dotnet nuget push (Join-Path "drop" "*.nupkg")
-      shell: pwsh
-  
+   # - name: Push to nuget.org
+    #  run: dotnet nuget push (Join-Path "drop" "*.nupkg") --api-key ${{secrets.NUGET_API_KEY}}
+    #  shell: pwsh
